@@ -103,7 +103,8 @@ rate) :
   (elles remplissent les logs).
 - `bots.sma` : chaque bot de [server/bots.txt](../../server/bots.txt) joue le plus souvent sa propre race de War3FT,
   porte son propre skin dans chaque équipe, et a un niveau de 1 à 5 à chaque carte (son XP ne s'additionne jamais :
-  pas plus fort que les humains). Le nom d'un humain perd `[AI]` et `Game Master` (seule l'IA les porte), et `<` et `>`.
+  pas plus fort que les humains). Le nom d'un humain perd les tags que seuls l'IA et les classements donnent
+  (`[AI]`, `Game Master`, `[Champion]`, `[#3]`…), et `<` et `>`.
 - `csdm_active.sma` : active le mode deathmatch de War3FT (une nouvelle session à chaque réapparition) ;
   ReDeathmatch fait réapparaître les joueurs. Sauvegarde aussi l'XP de tous toutes les 5 minutes : War3FT
   sauvegarde en fin de manche, qui n'arrive jamais ici.
@@ -117,6 +118,7 @@ rate) :
 - `monthly.sma` : le classement du mois (kills - morts, repart de zéro le 1er), sur la page de stats. À chaque
   carte, la place du joueur ce mois-ci. Compte aussi les MVP du mois de chaque humain (premier du tableau des scores
   en fin de carte, bots compris, quand au moins deux humains ont marqué).
+- `name_spam.sma` : un humain qui change de pseudo 10 fois en 10 minutes est expulsé pour une heure.
 - `no_spray.sma` : pas de sprays (la touche T) ; `sv_allowupload 0` cache déjà les images perso ; les bots :
   `yb_spraypaints 0`.
 - `rank_tag.sma` : le top 10 affiche sa place dans le chat, `[#3] nom : message` ; le top 3 du mois passé,

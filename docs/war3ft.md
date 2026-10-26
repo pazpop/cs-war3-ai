@@ -109,7 +109,8 @@ What each one does: `/itemsinfo` and `/itemsinfo2` in game.
 - **No hate**: no racism, sexism, homophobia or slurs, in any language, in the chat or in your name.
 - **Nothing sexual or illegal**, and no personal information, yours or anyone else's.
 - **No cheating**: no hacks, scripts, or bugs used on purpose.
-- **No spam**, and no ads for other servers.
+- **No spam**, and no ads for other servers. Changing your name 10 times within 10 minutes gets you kicked for an
+  hour.
 - Away for **60 seconds** (no key, no mouse move): you become a spectator. A ping over **300 ms** for 50 seconds
   gets you kicked.
 

@@ -112,7 +112,8 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2` en jeu.
   chat ni dans ton pseudo.
 - **Rien de sexuel ni d'illégal**, et aucune information personnelle, ni la tienne ni celle d'un autre.
 - **Pas de triche** : ni hack, ni script, ni bug utilisé exprès.
-- **Pas de spam**, ni de pub pour d'autres serveurs.
+- **Pas de spam**, ni de pub pour d'autres serveurs. Changer de pseudo 10 fois en 10 minutes te fait expulser pour
+  une heure.
 - Absent **60 secondes** (aucune touche, souris immobile) : tu passes en spectateur. Un ping au-dessus de
   **300 ms** pendant 50 secondes te fait expulser.
 

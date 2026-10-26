@@ -97,7 +97,8 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
 - `block_test.sma`: blocks War3FT's debug commands `test` and `test2`, open to every player (they fill the logs).
 - `bots.sma`: each bot of [server/bots.txt](../server/bots.txt) most often plays its own War3FT race, wears its own
   skin on each team, and has a level of 1 to 5 at each map (its XP never adds up: no stronger than the humans).
-  A human's name loses `[AI]` and `Game Master` (only the AI wears them), and `<` and `>`.
+  A human's name loses the tags only the AI and the rankings give (`[AI]`, `Game Master`, `[Champion]`, `[#3]`...),
+  and `<` and `>`.
 - `csdm_active.sma`: turns on War3FT's deathmatch mode (a new session at every respawn); ReDeathmatch does the
   respawns. Saves everyone's XP every 5 minutes too: War3FT saves at a round's end, which never comes here.
 - `damage.sma`: the damage the player deals, under the crosshair, at each hit.
@@ -110,6 +111,7 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
 - `monthly.sma`: the ranking of the month (kills - deaths, from zero on the 1st), on the stats page. At each map, the
   player's place this month. Also each human's map MVPs of the month (on top of the scoreboard at a map's end, bots
   included, when two humans or more scored).
+- `name_spam.sma`: a human who changes their name 10 times within 10 minutes is kicked for an hour.
 - `no_spray.sma`: no sprays (the T key): `sv_allowupload 0` already hides custom images; the bots: `yb_spraypaints 0`.
 - `rank_tag.sma`: the top 10 show their place in the chat, `[#3] name: message`; last month's top 3, `[Champion]`.
 - `rtv.sma`: `rtv` in chat; at 60 % of all the humans on the server, adminvote's vote on 4 random maps (not in the
