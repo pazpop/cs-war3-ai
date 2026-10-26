@@ -201,8 +201,8 @@ scp -P 2222 deploy@<domaine>:/srv/collect/players.csv .
 
 ## Les rapports du chat
 
-Chaque nuit à 0 h 30 UTC, [ansible/files/chat_report.py](../../ansible/files/chat_report.py) écrit le chat de la
-veille (UTC) dans `/srv/collect/chat/<date>.txt`, à partir des logs du jeu (gardés 14 jours) : les humains (le chat
+Chaque nuit à 0 h 30, [ansible/files/chat_report.py](../../ansible/files/chat_report.py) écrit le chat de la
+veille (à l'heure du VPS, comme les logs du jeu) dans `/srv/collect/chat/<date>.txt`, à partir des logs du jeu (gardés 14 jours) : les humains (le chat
 d'équipe signalé), les bots, le maître du jeu et le coach, avec les arrivées et les départs. Seulement les noms, ni
 SteamID ni IP ; lisible par root seulement. Un jour sans chat n'écrit rien. Un autre jour, tout de suite :
 `sudo cs-war3-ai-chat-report 2026-10-26`.

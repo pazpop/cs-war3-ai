@@ -39,6 +39,8 @@ trap 'exit 1' TERM INT
 game=$(docker volume inspect -f '{{.Mountpoint}}' cs-war3-ai_hlds)/cstrike/addons/amxmodx/data
 relay=$(docker volume inspect -f '{{.Mountpoint}}' cs-war3-ai_ai)
 cp -a "$game" "$work/data"
+# A journal copied during a write would be replayed onto the clean copy below, at restore: never kept.
+rm -f "$work"/data/sqlite3/*-journal "$work"/data/sqlite3/*-wal "$work"/data/sqlite3/*-shm
 mkdir "$work/ai"
 
 # The two databases again, with SQLite's backup (a plain copy made during a write could be broken), owned as before.

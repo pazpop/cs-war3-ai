@@ -189,8 +189,8 @@ scp -P 2222 deploy@<domain>:/srv/collect/players.csv .
 
 ## Chat reports
 
-Every night at 0:30 UTC, [ansible/files/chat_report.py](../ansible/files/chat_report.py) writes the day before's
-chat (UTC) into `/srv/collect/chat/<date>.txt`, from the game's logs (kept 14 days): the humans (team chat marked),
+Every night at 0:30, [ansible/files/chat_report.py](../ansible/files/chat_report.py) writes the day before's
+chat (the VPS's time, like the game's logs) into `/srv/collect/chat/<date>.txt`, from the game's logs (kept 14 days): the humans (team chat marked),
 the bots, the Game Master and the coach, with arrivals and departures. Names only, no SteamID or IP; readable by root
 only. A day with no chat writes nothing. Another day, at once: `sudo cs-war3-ai-chat-report 2026-10-26`.
 

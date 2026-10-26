@@ -202,7 +202,7 @@
 
             [Install]
             WantedBy=timers.target
-        # Yesterday's chat (UTC), every night, long before the game's logs are deleted (14 days).
+        # Yesterday's chat, every night, long before the game's logs are deleted (14 days).
         - name: cs-war3-ai-chat-report.service
           content: |
             [Unit]
@@ -217,7 +217,7 @@
             Description=Write yesterday's chat into /srv/collect/chat, every night
 
             [Timer]
-            OnCalendar=*-*-* 00:30:00 UTC
+            OnCalendar=*-*-* 00:30
             Persistent=true
 
             [Install]

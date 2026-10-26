@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # Installed by deploy.yml as /usr/local/sbin/cs-war3-ai-chat-report, run every night by cs-war3-ai-chat-report.timer.
-# Writes a day's chat (UTC) into /srv/collect/chat/<date>.txt, from the game's logs (kept 14 days): the humans, the
-# bots, the Game Master and the coach, with arrivals and departures. Names only: no SteamID, no IP. Readable by root.
+# Writes a day's chat into /srv/collect/chat/<date>.txt, from the game's logs (kept 14 days; the VPS's time): the
+# humans, the bots, the Game Master and the coach, with arrivals and departures. Names only: no SteamID, no IP.
+# Readable by root.
 #   cs-war3-ai-chat-report              yesterday
 #   cs-war3-ai-chat-report 2026-10-26   that day
 import datetime
@@ -38,8 +39,7 @@ def report(lines, day):
 
 
 def main():
-    day = sys.argv[1] if len(sys.argv) > 1 else str(datetime.datetime.now(datetime.timezone.utc).date()
-                                                    - datetime.timedelta(days=1))
+    day = sys.argv[1] if len(sys.argv) > 1 else str(datetime.date.today() - datetime.timedelta(days=1))
     volume = subprocess.run(["docker", "volume", "inspect", "-f", "{{.Mountpoint}}", "cs-war3-ai_hlds"],
                             capture_output=True, text=True, check=True).stdout.strip()
     lines = []
@@ -51,7 +51,7 @@ def main():
         return
     os.makedirs(OUT, mode=0o700, exist_ok=True)
     with open(f"{OUT}/{day}.txt", "w", encoding="utf-8") as file:
-        file.write(f"Chat on {day} (UTC)\n" + "\n".join(out) + "\n")
+        file.write(f"Chat on {day}\n" + "\n".join(out) + "\n")
 
 
 if __name__ == "__main__":

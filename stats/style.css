@@ -30,9 +30,11 @@ header.top {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
   padding: 8px 16px; background: #0d0e09; border-bottom: 3px solid #ffb000;
 }
-.brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-size: 1.6em;
+.brand { display: flex; align-items: center; color: #fff; text-decoration: none; font-size: 1.6em;
   letter-spacing: 0.04em; }
-.brand span { color: #ffb000; }
+/* A margin, not "gap": the game's old browser knows no gap in a flex row (the guide shows there). */
+.brand img { margin-right: 10px; }
+.brand span { margin-left: 0.3em; color: #ffb000; }
 .menu a { margin-left: 16px; color: #e8e3cf; text-decoration: none; text-transform: uppercase; font-size: 0.9em;
   letter-spacing: 0.06em; }
 .menu a:hover { color: #ffb000; }

@@ -33,6 +33,8 @@ services:
     tty: true
     volumes:
       - hlds:/hlds
+      # The VPS's time zone (a container is in UTC otherwise): the game's logs and /thetime show the VPS's time.
+      - /etc/localtime:/etc/localtime:ro
 
   # The AI relay (ai/relay.py): the game's plugin (server/plugins/ai.sma) asks it, it asks Claude. Only the game
   # can reach it, at a fixed address (the plugin does not look up names: a lookup can block the game); its port is
