@@ -23,8 +23,8 @@ répondent, et un maître du jeu. Et le code pour monter le tien.
   dernière carte ensemble ; tue-en un souvent, et il te garde rancune. Et un maître du jeu (une IA) lance des primes,
   des duels et d'autres surprises, nomme le MVP de chaque carte, et écrit chaque nuit le journal du serveur.
 - Un objectif de la semaine, le même pour tous (`/goal`), avec son tableau sur le site de stats.
-- `/coach` : un coach IA regarde tes chiffres sur cette carte et te donne un conseil, en privé. Un bilan vers la
-  fin de chaque carte.
+- `/coach` : un coach IA regarde tes chiffres sur cette carte et te donne un conseil, en privé, ou répond à ta
+  question sur eux (`/coach what is my best weapon?`). Un bilan vers la fin de chaque carte.
 - Un annonceur pour le premier kill, les multi-kills et les séries, jusqu'à GODLIKE. Tes dégâts s'affichent sous
   le viseur.
 - 14 succès à débloquer (`/ach`, le plus proche s'affiche à chaque carte), et la place du top 10 affichée dans le

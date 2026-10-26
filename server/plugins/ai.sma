@@ -221,6 +221,12 @@ public on_say(id)
 	read_args(message, charsmax(message))
 	remove_quotes(message)
 	trim(message)
+	// "/coach <question>": the coach answers it in private, from the player's numbers; not shown in the chat.
+	if (equali(message, "/coach ", 7))
+	{
+		ask_coach(id, message[7])
+		return PLUGIN_HANDLED
+	}
 	if (!message[0] || message[0] == '/' || message[0] == '!' || is_command(message))
 		return PLUGIN_CONTINUE
 
@@ -558,9 +564,15 @@ win(winner, victim, const what[])
 // /coach: a tip in private, from the player's numbers on this map. The relay allows one a minute.
 public cmd_coach(id)
 {
-	client_print_color(id, print_team_default, "^4[AI Coach]^1 Looking at your game...")
-	send_coach(id, "")
+	ask_coach(id, "")
 	return PLUGIN_HANDLED
+}
+
+// /coach, with or without a question: a word at once (the answer takes a few seconds), then the relay's answer.
+ask_coach(id, const question[])
+{
+	client_print_color(id, print_team_default, "^4[AI Coach]^1 Looking at your game...")
+	send_coach(id, "", question)
 }
 
 // Deaths in a row, and what killed the player; after COACH_AFTER deaths in a row, a tip on its own, once per map.
@@ -599,13 +611,16 @@ public check_summary()
 }
 
 // The player's numbers on this map: kills, deaths, headshots, shots and hits, where the hits landed, each weapon used,
-// deaths in a row, and the weapon that killed them most. kind: "" (asked), "auto" or "summary".
-send_coach(id, const kind[])
+// deaths in a row, and the weapon that killed them most. kind: "" (asked), "auto" or "summary"; question: the
+// player's, if any.
+send_coach(id, const kind[], const question[] = "")
 {
 	new JSON:event = player(id)
 	json_object_set_string(event, "type", "coach")
 	if (kind[0])
 		json_object_set_bool(event, kind, true)
+	if (question[0])
+		json_object_set_string(event, "question", question)
 
 	new stats[STATSX_MAX_STATS], body[MAX_BODYHITS]
 	get_user_wstats(id, 0, stats, body)

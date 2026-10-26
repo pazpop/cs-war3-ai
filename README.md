@@ -22,8 +22,8 @@ Game Master. And the code to run your own.
   grudge. And a Game Master (an AI) starts bounties, duels and other surprises, names each map's MVP, and writes the
   server's journal each night.
 - A goal of the week, the same for everyone (`/goal`), with its board on the stats site.
-- `/coach`: an AI coach looks at your numbers on this map and gives you a tip, in private. A summary near each
-  map's end.
+- `/coach`: an AI coach looks at your numbers on this map and gives you a tip, in private, or answers your
+  question about them (`/coach what is my best weapon?`). A summary near each map's end.
 - An announcer for first blood, multi-kills and kill streaks, up to GODLIKE. Your damage shows under the crosshair.
 - 14 achievements to unlock (`/ach`, the closest one is shown at each map), and the top 10's place shown in the
   chat. Last month's top 3 get a `[Champion]` tag and a place in the hall of fame.

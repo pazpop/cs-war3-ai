@@ -36,7 +36,7 @@ Every command works with a `/` in front.
 | `/rank`, `/top15` | Your combat rank, the top 15 (the top 10 show their place in the chat) |
 | `/ach` | Your achievements: 14 goals, from your first kill to 10,000 |
 | `/mystats` | The link to your page on the stats site |
-| `/coach` | A tip from the AI coach, from your numbers on this map, in private |
+| `/coach` | A tip from the AI coach, from your numbers on this map, in private; or ask it a question: `/coach what is my best weapon?` |
 | `/goal` | The goal of the week, the same for everyone, and your count |
 | `/statsme`, `/rankstats` | Your stats on this map, your overall stats |
 | `/nextmap`, `/timeleft` | The next map, time left on this one |

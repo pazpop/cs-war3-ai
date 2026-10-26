@@ -168,7 +168,8 @@ sudo docker compose start hlds ai
   [pazpop.net](https://pazpop.net) shows it. Asked to the game at most every 15 seconds.
 - `https://<domain>/bots.php`: the bots, their race, character and portrait (from [server/bots.txt](../server/bots.txt)).
   The images (`stats/img/`) were made with [PixelLab](https://pixellab.ai): see its `CREDITS.txt`. Also the bots'
-  latest lines, from the AI relay's database (its volume, read-only).
+  latest lines and the great rivalries (each bot's score against each human), from the AI relay's database (its
+  volume, read-only), with the names from the game's.
 - `http://<domain>/guide.html`: the guide, shown on connect. The in-game browser (MOTD) is too old for today's
   HTTPS: in game, only `http://` pages open.
 - `http://<domain>/cstrike/…`: FastDL. The game's own download (UDP) crashes the client on War3FT's files.
@@ -226,7 +227,7 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
   (the guide is about 1,200 tokens), so a little dearer.
 - **The coach**: `/coach` sends the player's numbers on this map (CSX: kills, deaths, headshots, hits and where,
   each weapon's accuracy, deaths in a row, the weapon that killed them most) and gets one tip back, in private, one a
-  minute at most. After 5 deaths in a row, a tip comes on its own, once per map; 60 seconds before the map's end,
+  minute at most. `/coach <question>`: the answer to a question about these numbers, never shown in the chat. After 5 deaths in a row, a tip comes on its own, once per map; 60 seconds before the map's end,
   each human who played gets a summary: one strength, one thing to work on.
 - **The Game Master**: every 10 minutes, it reads the score and may start an event: a bounty on a player far ahead,
   a duel between two players, a challenge (kills, headshots, knife or grenade kills, in 2 minutes), a boss (a bot

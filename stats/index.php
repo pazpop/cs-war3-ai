@@ -114,13 +114,6 @@ try {
     $failed = failed($exception);
 }
 
-// The name, with a link to the player's page when War3FT knows the player.
-function player_link(array $row): string
-{
-    $name = e((string) $row['name']);
-    return $row['player_id'] ? '<a href="/player.php?id=' . (int) $row['player_id'] . '">' . $name . '</a>' : $name;
-}
-
 page_start('War3FT: rankings');
 ?>
 <img class="banner" src="/img/banner.png" alt="" width="400" height="160">

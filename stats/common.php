@@ -131,6 +131,13 @@ function race_icon(int $race): string
     return '<img class="icon" src="/img/races/' . $race . '.png" alt="" width="24" height="24">';
 }
 
+// The name, with a link to the player's page when War3FT knows the player.
+function player_link(array $row): string
+{
+    $name = e((string) $row['name']);
+    return $row['player_id'] ? '<a href="/player.php?id=' . (int) $row['player_id'] . '">' . $name . '</a>' : $name;
+}
+
 // The top of every page: the menu, then who plays right now and the join button.
 function page_start(string $title): void
 {

@@ -179,8 +179,9 @@ sudo docker compose start hlds ai
   d'autres sites : [pazpop.net](https://pazpop.net) l'affiche. Le jeu est interrogé au plus toutes les 15 secondes.
 - `https://<domaine>/bots.php` : les bots, leur race, leur caractère et leur portrait (tirés de
   [server/bots.txt](../../server/bots.txt)). Les images (`stats/img/`) ont été faites avec
-  [PixelLab](https://pixellab.ai) : voir son `CREDITS.txt`. Aussi les dernières répliques des bots, tirées de la
-  base du relais de l'IA (son volume, en lecture seule).
+  [PixelLab](https://pixellab.ai) : voir son `CREDITS.txt`. Aussi les dernières répliques des bots et les grandes
+  rivalités (le score de chaque bot contre chaque humain), tirées de la base du relais de l'IA (son volume, en lecture
+  seule), avec les noms tirés de celle du jeu.
 - `http://<domaine>/guide.html` : le guide, affiché à la connexion. Le navigateur du jeu (MOTD) est trop vieux pour
   le HTTPS d'aujourd'hui : en jeu, seules les pages `http://` s'ouvrent.
 - `http://<domaine>/cstrike/…` : le FastDL. Le téléchargement par le jeu (UDP) fait planter le client sur les
@@ -242,7 +243,7 @@ des actions :
   requêtes sont plus longues (le guide fait environ 1 200 tokens), donc un peu plus chères.
 - **Le coach** : `/coach` envoie les chiffres du joueur sur cette carte (CSX : kills, morts, headshots, touches et
   où, précision de chaque arme, morts d'affilée, l'arme qui l'a le plus tué) et reçoit un conseil, en privé, un par
-  minute au plus. Après 5 morts d'affilée, un conseil arrive tout seul, une fois par carte ; 60 secondes avant la fin
+  minute au plus. `/coach <question>` : la réponse à une question sur ces chiffres, jamais affichée dans le chat. Après 5 morts d'affilée, un conseil arrive tout seul, une fois par carte ; 60 secondes avant la fin
   de la carte, chaque humain qui a joué reçoit un bilan : un point fort, une chose à travailler.
 - **Le maître du jeu** : toutes les 10 minutes, il lit le score et peut lancer un événement : une prime sur un
   joueur très en avance, un duel entre deux joueurs, un défi (kills, headshots, kills au couteau ou à la grenade,

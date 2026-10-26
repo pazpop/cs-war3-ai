@@ -19,6 +19,35 @@ try {
     error_log('bots: ' . $exception->getMessage());
 }
 
+// The great rivalries: the AI relay counts the kills between each bot and each human. The names and pages come from
+// the game's database: the relay keeps only SteamIDs, never shown here.
+const GRUDGE = 5;  // ai/relay.py's GRUDGE: killed this many times by a player, and more than it killed them
+$rivalries = [];
+try {
+    $rivalries = db('/ai/ai.sq3')->query(
+        'SELECT bot, steamid, human_wins, bot_wins FROM rivals ORDER BY human_wins + bot_wins DESC LIMIT 10'
+    )->fetchAll();
+    $names = [];
+    if ($rivalries) {
+        $ids = array_column($rivalries, 'steamid');
+        $query = db()->prepare(
+            'SELECT n.steamid, n.name, p.player_id FROM cs_war3_ai_names n
+             LEFT JOIN wc3_player p ON p.player_steamid = n.steamid
+             WHERE n.steamid IN (' . implode(', ', array_fill(0, count($ids), '?')) . ')'
+        );
+        $query->execute($ids);
+        foreach ($query->fetchAll() as $row) {
+            $names[$row['steamid']] = $row;
+        }
+    }
+    foreach ($rivalries as $i => $rivalry) {
+        $rivalries[$i]['name'] = $names[$rivalry['steamid']]['name'] ?? '?';
+        $rivalries[$i]['player_id'] = $names[$rivalry['steamid']]['player_id'] ?? null;
+    }
+} catch (PDOException $exception) {
+    error_log('rivalries: ' . $exception->getMessage());
+}
+
 page_start('War3FT: the bots');
 ?>
 <h1>The bots</h1>
@@ -37,6 +66,25 @@ hold a grudge.</p>
 <td><?= date('M j, H:i T', (int) $quote['time']) ?></td>
 </tr>
 <?php endforeach; ?>
+</table>
+<?php endif; ?>
+
+<?php if ($rivalries): ?>
+<h2>The great rivalries</h2>
+<p>Each bot keeps the score against each human. Kill one <?= GRUDGE ?> times, more than it killed you, and it holds a
+grudge: it teases you, and greets you first.</p>
+<table class="ranking">
+<thead><tr><th>Bot</th><th>Player</th><th>Bot's kills</th><th>Player's kills</th></tr></thead>
+<tbody>
+<?php foreach ($rivalries as $rivalry): ?>
+<tr>
+<td><img class="icon" src="/img/bots/<?= e(strtolower((string) $rivalry['bot'])) ?>.png" alt="" width="24" height="24"><b><?= e((string) $rivalry['bot']) ?></b></td>
+<td><?= player_link($rivalry) ?><?= (int) $rivalry['human_wins'] >= GRUDGE && $rivalry['human_wins'] > $rivalry['bot_wins'] ? ' (grudge)' : '' ?></td>
+<td><?= (int) $rivalry['bot_wins'] ?></td>
+<td><?= (int) $rivalry['human_wins'] ?></td>
+</tr>
+<?php endforeach; ?>
+</tbody>
 </table>
 <?php endif; ?>
 

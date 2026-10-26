@@ -172,6 +172,16 @@ class Relay(unittest.TestCase):
         entry = relay.db.execute("SELECT text FROM journal WHERE day = ?", (day,)).fetchone()
         self.assertEqual(entry, ("Ann ruled de_dust2.",))
 
+    def test_coach_question(self):
+        # /coach with a question: it reaches the coach as data, and the moderator checks the answer against it.
+        event = {"type": "coach", "id": 3, "name": "Ann", "steamid": "STEAM_0:1:6", "kills": 9, "deaths": 4,
+                 "weapons": [{"name": "ak47", "kills": 7, "shots": 90, "hits": 30}], "question": "my best weapon?"}
+        with mock.patch.object(relay, "claude", return_value="The AK-47: 7 kills.") as claude, \
+                mock.patch.object(relay, "safe", return_value=True) as safe:
+            self.assertEqual(relay.on_coach(event)["coach"]["text"], "The AK-47: 7 kills.")
+        self.assertIn('Their question: "my best weapon?"', claude.call_args[0][1])
+        self.assertEqual(safe.call_args[0], ("The AK-47: 7 kills.", "my best weapon?"))
+
     def test_gm_no_repeat(self):
         # The same event twice in a row: the second is dropped.
         rain = json.dumps({"event": "xp_rain", "target": 0, "target2": 0, "challenge": "", "count": 0,
