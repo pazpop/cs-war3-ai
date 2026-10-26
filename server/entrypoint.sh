@@ -57,6 +57,8 @@ done
 
 # HLDS and AMX Mod X write a log file per map: keep two weeks.
 find logs addons/amxmodx/logs -name '*.log' -mtime +14 -delete 2>/dev/null || true
+# War3FT's log of admin commands: bots.sma sets each bot's level through one at every spawn, and War3FT never trims it.
+rm -f addons/amxmodx/configs/war3ft/wc3_admin.log
 
 # stats_domain: the stats site, for /mystats (server/plugins/web_stats.sma); set before the plugins load. The domain
 # only: on this line, the game would read the // of https:// as the start of a comment.

@@ -397,7 +397,8 @@ game_master(JSON:gm)
 		new players[32], count
 		get_players(players, count, "ch")
 		for (new i = 0; i < count; i++)
-			give_xp(players[i], XP_RAIN)
+			if (in_team(players[i]))
+				give_xp(players[i], XP_RAIN)
 	}
 	else if (equal(event, "item_gift"))
 		server_cmd("wc3_giveitem @ALL %d", GIFTS[random(sizeof GIFTS)])
@@ -520,15 +521,20 @@ check_events(killer, victim, bool:headshot, const weapon[])
 // victim 0: a challenge, nobody to name.
 win(winner, victim, const what[])
 {
-	new name[32], prey[32], text[128]
+	new name[32], prey[32], prize[32], text[128]
 	get_user_name(winner, name, charsmax(name))
+	// A bot gets the money, not the XP (see give_xp).
+	if (is_user_bot(winner))
+		formatex(prize, charsmax(prize), "$%d", REWARD)
+	else
+		formatex(prize, charsmax(prize), "$%d and %d XP", REWARD, XP_REWARD)
 	if (victim)
 	{
 		get_user_name(victim, prey, charsmax(prey))
-		formatex(text, charsmax(text), "%s %s %s: $%d and %d XP!", name, what, prey, REWARD, XP_REWARD)
+		formatex(text, charsmax(text), "%s %s %s: %s!", name, what, prey, prize)
 	}
 	else
-		formatex(text, charsmax(text), "%s %s: $%d and %d XP!", name, what, REWARD, XP_REWARD)
+		formatex(text, charsmax(text), "%s %s: %s!", name, what, prize)
 	give_money(winner, REWARD)
 	give_xp(winner, XP_REWARD)
 	end_event()
@@ -647,6 +653,13 @@ give_xp(id, xp)
 {
 	if (!is_user_bot(id))
 		server_cmd("changexp %d %d", id, xp)
+}
+
+// T or CT: not a spectator (an AFK player is moved there).
+bool:in_team(id)
+{
+	new CsTeams:team = cs_get_user_team(id)
+	return team == CS_TEAM_T || team == CS_TEAM_CT
 }
 
 announce(const text[])

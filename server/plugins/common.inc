@@ -7,7 +7,9 @@ stock bool:is_real_steamid(const authid[])
 }
 
 // A chat command typed without / or !: not a chat line.
-stock const COMMANDS[][] = { "help", "votekick", "rtv", "nextmap", "currentmap", "timeleft", "thetime" }
+stock const COMMANDS[][] = { "help", "votekick", "rtv", "nextmap", "currentmap", "timeleft", "thetime",
+	"changerace", "selectskill", "selectskills", "skillsinfo", "resetskills", "playerskills", "level", "shopmenu",
+	"shopmenu2", "itemsinfo", "itemsinfo2", "war3menu", "war3help" }
 
 stock bool:is_command(const message[])
 {

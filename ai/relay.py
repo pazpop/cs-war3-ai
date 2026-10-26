@@ -176,9 +176,10 @@ def today():
 
 def clean(text, limit):
     """One line the game can show: no control characters (the chat colors are bytes 1 to 4), no Markdown stars, no
-    quotes around it, at most limit bytes (the plugin's buffers count bytes, and an accent takes two), cut at a word."""
+    quotes around it (inside, ' instead of ": the game's log lines quote it), at most limit bytes (the plugin's
+    buffers count bytes, and an accent takes two), cut at a word."""
     text = "".join(c if c.isprintable() else " " for c in text).replace("*", "")
-    text = " ".join(text.split()).strip('" ')
+    text = " ".join(text.split()).strip('" ').replace('"', "'")
     if len(text.encode()) > limit:
         # One byte more: a word that ends right at the limit stays. A single word longer than the limit is cut.
         words = text.encode()[:limit + 1].decode("utf-8", "ignore").rsplit(" ", 1)[0]

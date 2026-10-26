@@ -113,6 +113,7 @@ class Relay(unittest.TestCase):
 
     def test_clean_bot_line(self):
         self.assertEqual(relay.clean("buy with **G** now", 100), "buy with G now")
+        self.assertEqual(relay.clean('He said "gg" to me', 100), "He said 'gg' to me")  # the game's log lines quote it
 
     def test_forget_memory(self):
         # A player gone for two days: the relay drops what it held about them; one seen now stays.

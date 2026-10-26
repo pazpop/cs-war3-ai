@@ -9,7 +9,6 @@
 
 #define TAGGED 10  // the places that get a tag
 
-// Words our plugins read as commands; slash_commands.sma also sends /nextmap... here again without the slash.
 new g_champions[3][35]  // last month's top 3, by SteamID
 
 public plugin_init()

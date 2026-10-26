@@ -61,7 +61,7 @@ public on_mystats(fail_state, Handle:query, error[], errnum, data[], size)
 }
 
 // After plugin_init: queries run in order. CSX saves its ranking at the end of a map (every 30 minutes, see
-// server.cfg): copying it at the start of the next one is enough.
+// game.cfg in server/Dockerfile): copying it at the start of the next one is enough.
 public plugin_cfg()
 {
 	export_combat_ranking()
