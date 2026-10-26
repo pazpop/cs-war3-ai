@@ -44,6 +44,12 @@ class Relay(unittest.TestCase):
         self.assertIsNone(relay.valid_gm({"event": "duel", "target": 3, "target2": 9, "line": "x"}, PLAYERS))
         self.assertIsNotNone(relay.valid_gm({"event": "duel", "target": 3, "target2": 7, "line": "x"}, PLAYERS))
         self.assertIsNone(relay.valid_gm({"event": "kick_all", "target": 0, "target2": 0, "line": "x"}, PLAYERS))
+        # A boss is always a bot; a challenge's count stays within its bounds.
+        self.assertIsNone(relay.valid_gm({"event": "boss", "target": 3, "target2": 0, "line": "x"}, PLAYERS))
+        self.assertEqual(relay.valid_gm({"event": "boss", "target": 7, "target2": 0, "line": "x"}, PLAYERS)["target"], 7)
+        challenge = {"event": "challenge", "target": 0, "target2": 0, "challenge": "kills", "count": 50, "line": "x"}
+        self.assertEqual(relay.valid_gm(challenge, PLAYERS)["count"], 6)
+        self.assertIsNone(relay.valid_gm(dict(challenge, challenge="suicide"), PLAYERS))
 
     def test_memory(self):
         relay.remember("STEAM_0:1:1", "bot_kills")

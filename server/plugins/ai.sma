@@ -4,6 +4,7 @@
 // Relay down, or no API key: no answer, and the game is unchanged.
 #include <amxmodx>
 #include <cstrike>
+#include <fun>  // set_user_health(), set_user_rendering()
 #include <json>
 #include <sockets>
 #include "common.inc"
@@ -14,13 +15,17 @@
 #define RELAY_PORT 27100
 #define TIMEOUT 10.0          // seconds to wait for an answer
 #define MAX_PENDING 8
-#define STATE_EVERY 240.0     // seconds between two looks of the Game Master
-#define EVENT_TIME 180.0      // seconds a bounty or a duel lasts
-#define REWARD 3000           // a bounty or a duel's prize, in dollars
+#define STATE_EVERY 600.0     // seconds between two looks of the Game Master
+#define EVENT_TIME 180.0      // seconds a bounty, a duel or a boss lasts
+#define CHALLENGE_TIME 120.0  // seconds to meet a challenge
+#define REWARD 3000           // the prize of a bounty, a duel, a challenge or a boss, in dollars
+#define BOSS_HEALTH 500
 #define GOLD 1500             // gold_rain: for everyone
 #define LOW_GRAVITY 300       // sv_gravity during low_gravity (the game's own is 800)
 #define GREET_AFTER 10.0      // seconds after a human enters, before a bot says hello
 #define TASK_GRAVITY 1        // the task that ends low_gravity
+#define TASK_EVENT 2          // the task that ends a bounty, a duel, a challenge or a boss
+#define TASK_RED 3            // the task that keeps the boss red
 #define TASK_JOIN 100         // + the player's slot: the task that greets them
 
 new g_socket[MAX_PENDING]
@@ -28,9 +33,10 @@ new bool:g_sent[MAX_PENDING]
 new Float:g_deadline[MAX_PENDING]
 new g_out[MAX_PENDING][1536]
 
-// userid of the bounty, and of the two duelists: a userid, unlike a slot, is never given to the next player.
-new g_bounty, g_duel[2]
-new Float:g_event_end
+// The event running, one at a time: the bounty, the two duelists, the boss (their userids: a userid, unlike a slot, is
+// never given to the next player), or the challenge (its kind, how many, each player's count).
+new g_bounty, g_duel[2], g_boss
+new g_challenge[16], g_goal, g_progress[33]
 new g_gravity
 
 public plugin_init()
@@ -47,6 +53,7 @@ public plugin_init()
 // they see the game.
 public client_putinserver(id)
 {
+	g_progress[id] = 0
 	if (!is_user_bot(id) && !is_user_hltv(id))
 		set_task(GREET_AFTER, "send_join", TASK_JOIN + id)
 }
@@ -54,6 +61,9 @@ public client_putinserver(id)
 public client_disconnected(id)
 {
 	remove_task(TASK_JOIN + id)
+	// The boss leaves: its glow must not stay on its slot.
+	if (g_boss && get_user_userid(id) == g_boss)
+		end_event()
 }
 
 public send_join(task)
@@ -72,9 +82,10 @@ public plugin_end()
 	for (new i = 0; i < MAX_PENDING; i++)
 		if (g_socket[i] > 0)
 			socket_close(g_socket[i])
-	// The gravity stays from one map to the next: never leave it low.
+	// The gravity and a bot's glow stay from one map to the next: never leave them.
 	if (g_gravity)
 		set_cvar_num("sv_gravity", g_gravity)
+	end_event()
 }
 
 // ---- To the relay ----
@@ -200,13 +211,14 @@ public on_death()
 {
 	new killer = read_data(1)
 	new victim = read_data(2)
-	check_events(killer, victim)
+	new bool:headshot = bool:read_data(3)
+	new weapon[32]
+	read_data(4, weapon, charsmax(weapon))
+	check_events(killer, victim, headshot, weapon)
 	// Only a bot against a human: the bots talk to the humans.
 	if (!killer || killer == victim || !is_user_connected(killer) || is_user_bot(killer) == is_user_bot(victim))
 		return
 
-	new weapon[32]
-	read_data(4, weapon, charsmax(weapon))
 	new JSON:event = json_init_object()
 	new JSON:who = player(killer)
 	json_object_set_string(event, "type", "kill")
@@ -216,7 +228,7 @@ public on_death()
 	json_object_set_value(event, "victim", who)
 	json_free(who)
 	json_object_set_string(event, "weapon", weapon)
-	json_object_set_bool(event, "headshot", bool:read_data(3))
+	json_object_set_bool(event, "headshot", headshot)
 	send(event)
 }
 
@@ -309,22 +321,10 @@ game_master(JSON:gm)
 	new target = find_player("k", json_object_get_number(gm, "target"))
 	new target2 = find_player("k", json_object_get_number(gm, "target2"))
 
-	if (equal(event, "bounty"))
+	if (equal(event, "bounty") || equal(event, "duel") || equal(event, "challenge") || equal(event, "boss"))
 	{
-		if (!target)
+		if (!start_event(gm, event, target, target2))
 			return
-		g_bounty = get_user_userid(target)
-		g_duel[0] = g_duel[1] = 0
-		g_event_end = get_gametime() + EVENT_TIME
-	}
-	else if (equal(event, "duel"))
-	{
-		if (!target || !target2 || target == target2)
-			return
-		g_duel[0] = get_user_userid(target)
-		g_duel[1] = get_user_userid(target2)
-		g_bounty = 0
-		g_event_end = get_gametime() + EVENT_TIME
 	}
 	else if (equal(event, "low_gravity"))
 	{
@@ -354,29 +354,115 @@ public end_low_gravity()
 	announce("Gravity is back.")
 }
 
-// A kill that ends a bounty or a duel.
-check_events(killer, victim)
+// A bounty, a duel, a challenge or a boss: one at a time, so it ends the one running. False when it cannot start.
+bool:start_event(JSON:gm, const event[], target, target2)
 {
-	if (!killer || killer == victim || !is_user_connected(killer) || get_gametime() > g_event_end)
+	new challenge[16]
+	json_object_get_string(gm, "challenge", challenge, charsmax(challenge))
+	if (equal(event, "bounty") && !target
+		|| equal(event, "duel") && (!target || !target2 || target == target2)
+		|| equal(event, "boss") && (!target || !is_user_bot(target) || !is_user_alive(target))
+		|| equal(event, "challenge") && !equal(challenge, "kills") && !equal(challenge, "headshots")
+			&& !equal(challenge, "knife") && !equal(challenge, "grenade"))
+		return false
+	end_event()
+
+	if (equal(event, "bounty"))
+		g_bounty = get_user_userid(target)
+	else if (equal(event, "duel"))
+	{
+		g_duel[0] = get_user_userid(target)
+		g_duel[1] = get_user_userid(target2)
+	}
+	else if (equal(event, "boss"))
+	{
+		g_boss = get_user_userid(target)
+		set_user_health(target, BOSS_HEALTH)
+		keep_boss_red()
+		set_task(1.0, "keep_boss_red", TASK_RED, _, _, "b")
+	}
+	else
+	{
+		copy(g_challenge, charsmax(g_challenge), challenge)
+		g_goal = clamp(json_object_get_number(gm, "count"), 1, 6)
+		arrayset(g_progress, 0, sizeof g_progress)
+	}
+	set_task(equal(event, "challenge") ? CHALLENGE_TIME : EVENT_TIME, "time_up", TASK_EVENT)
+	return true
+}
+
+// The red glow, again every second: a War3FT skill (invisibility...) may change how the boss looks.
+public keep_boss_red()
+{
+	new boss = find_player("k", g_boss)
+	if (boss && is_user_alive(boss))
+		set_user_rendering(boss, kRenderFxGlowShell, 255, 0, 0, kRenderNormal, 25)
+}
+
+public time_up()
+{
+	if (g_boss)
+		announce("The boss survived. Too strong for you all!")
+	else if (g_goal)
+		announce("Time is up: nobody met the challenge.")
+	end_event()
+}
+
+end_event()
+{
+	remove_task(TASK_EVENT)
+	remove_task(TASK_RED)
+	new boss = find_player("k", g_boss)
+	if (g_boss && boss)
+		set_user_rendering(boss)
+	g_bounty = g_duel[0] = g_duel[1] = g_boss = g_goal = 0
+	g_challenge[0] = 0
+}
+
+// A kill that wins the event running.
+check_events(killer, victim, bool:headshot, const weapon[])
+{
+	new victim_id = get_user_userid(victim)
+	if (!killer || killer == victim || !is_user_connected(killer))
+	{
+		// A boss that dies on its own (a fall...): nobody wins.
+		if (g_boss && victim_id == g_boss)
+			end_event()
 		return
-	new killer_id = get_user_userid(killer), victim_id = get_user_userid(victim)
-	new name[32], prey[32], text[128]
-	get_user_name(killer, name, charsmax(name))
-	get_user_name(victim, prey, charsmax(prey))
+	}
+	new killer_id = get_user_userid(killer)
 	if (g_bounty && victim_id == g_bounty)
-	{
-		g_bounty = 0
-		give_money(killer, REWARD)
-		formatex(text, charsmax(text), "%s claims the bounty on %s: $%d!", name, prey, REWARD)
-		announce(text)
-	}
+		win(killer, victim, "claims the bounty on")
 	else if (g_duel[0] && (killer_id == g_duel[0] && victim_id == g_duel[1] || killer_id == g_duel[1] && victim_id == g_duel[0]))
+		win(killer, victim, "wins the duel against")
+	else if (g_boss && victim_id == g_boss)
+		win(killer, victim, "takes down the boss")
+	// A challenge: humans only, and only the kills it asks for.
+	else if (g_goal && !is_user_bot(killer) && (equal(g_challenge, "kills") || equal(g_challenge, "headshots") && headshot
+		|| equal(g_challenge, weapon)))
 	{
-		g_duel[0] = g_duel[1] = 0
-		give_money(killer, REWARD)
-		formatex(text, charsmax(text), "%s wins the duel against %s: $%d!", name, prey, REWARD)
-		announce(text)
+		if (++g_progress[killer] >= g_goal)
+			win(killer, 0, "meets the challenge")
+		else
+			client_print(killer, print_chat, "[Challenge] %d / %d", g_progress[killer], g_goal)
 	}
+}
+
+// victim 0: a challenge, nobody to name.
+win(winner, victim, const what[])
+{
+	new name[32], prey[32], text[128]
+	get_user_name(winner, name, charsmax(name))
+	if (victim)
+	{
+		get_user_name(victim, prey, charsmax(prey))
+		formatex(text, charsmax(text), "%s %s %s: $%d!", name, what, prey, REWARD)
+	}
+	else
+		formatex(text, charsmax(text), "%s %s: $%d!", name, what, REWARD)
+	give_money(winner, REWARD)
+	end_event()
+	announce(text)
 }
 
 give_money(id, amount)

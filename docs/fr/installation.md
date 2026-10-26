@@ -91,7 +91,7 @@ plusieurs partagent) :
 - `achievements.sma` : 14 succès (`/ach`), gardés dans la base de War3FT ; les pages des joueurs les affichent. À
   chaque carte, le plus proche ; un mot au joueur quand il en reste 10 %.
 - `afk.sma` : 60 secondes sans toucher une touche ni bouger la souris, et un joueur passe en spectateur.
-- `ai.sma` : envoie le chat, les kills entre bots et humains, et toutes les 4 minutes l'état de la partie au
+- `ai.sma` : envoie le chat, les kills entre bots et humains, et toutes les 10 minutes l'état de la partie au
   relais de l'IA, et fait ce qu'il répond (voir [L'IA](#lia-optionnel)).
 - `announcer.sma` : les voix et les messages du premier kill, des multi-kills et des séries. Les joueurs téléchargent
   les voix en HTTP (FastDL).
@@ -206,9 +206,11 @@ des actions :
   bot. Chaque bot de [server/bots.txt](../../server/bots.txt) a son caractère, le même pour YaPB, le relais et
   la page de stats, et s'affiche `[AI] Zed` dans le tableau des scores. Les bots se souviennent de chaque humain (par
   SteamID, dans le volume du relais) : depuis quand il joue, comment il s'en sort contre eux.
-- **Le maître du jeu** : toutes les 4 minutes, il lit le score et peut lancer un événement : une prime sur un
-  joueur très en avance, un duel entre deux joueurs, 30 secondes de gravité basse, de l'argent pour tous. Il ne
-  choisit que dans cette liste : le plugin vérifie chaque événement et le lance lui-même.
+- **Le maître du jeu** : toutes les 10 minutes, il lit le score et peut lancer un événement : une prime sur un
+  joueur très en avance, un duel entre deux joueurs, un défi (kills, headshots, kills au couteau ou à la grenade,
+  en 2 minutes), un boss (un bot à 500 points de vie, entouré d'un halo rouge), 30 secondes de gravité basse, de
+  l'argent pour tous. Chaque prix vaut 3000 $, et personne n'est obligé de participer. Il ne choisit que dans
+  cette liste : le plugin vérifie chaque événement et le lance lui-même.
 
 Ce que l'IA peut dire : un prompt système strict, puis un modérateur (une seconde requête) vérifie chaque ligne
 avant qu'elle s'affiche : pas d'insulte raciste, de haine, de contenu sexuel, de menace, d'activité illégale, de

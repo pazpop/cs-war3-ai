@@ -87,7 +87,7 @@ share):
 - `achievements.sma`: 14 achievements (`/ach`), saved in War3FT's database; the player pages show them. At each map, the
   closest one; a word to the player when 10 % is left.
 - `afk.sma`: 60 seconds without a key or a mouse move, and a player goes to spectator.
-- `ai.sma`: sends the chat, the kills between bots and humans, and every 4 minutes the state of the game to the AI
+- `ai.sma`: sends the chat, the kills between bots and humans, and every 10 minutes the state of the game to the AI
   relay, and does what it answers (see [The AI](#the-ai-optional)).
 - `announcer.sma`: the voices and messages for first blood, multi-kills and kill streaks. Players download the voices
   over HTTP (FastDL).
@@ -195,9 +195,10 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
   bot. Each bot of [server/bots.txt](../server/bots.txt) has its own character, the same for YaPB, the
   relay and the stats page, and shows as `[AI] Zed` in the scoreboard. The bots remember each human (by SteamID, in the relay's
   volume): since when they play, how they fare against bots.
-- **The Game Master**: every 4 minutes, it reads the score and may start an event: a bounty on a player far ahead,
-  a duel between two players, 30 seconds of low gravity, money for everyone. It can only pick from this list: the
-  plugin checks each event and runs it itself.
+- **The Game Master**: every 10 minutes, it reads the score and may start an event: a bounty on a player far ahead,
+  a duel between two players, a challenge (kills, headshots, knife or grenade kills, in 2 minutes), a boss (a bot
+  with 500 health and a red glow), 30 seconds of low gravity, money for everyone. Each prize is $3000, and nobody
+  has to take part. It can only pick from this list: the plugin checks each event and runs it itself.
 
 What the AI may say: a strict system prompt, then a moderator (a second request) checks every line before it is
 shown: no slurs, hate, sexual content, threats, illegal activity, politics or personal information, in any

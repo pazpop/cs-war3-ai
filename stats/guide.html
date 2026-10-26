@@ -57,23 +57,62 @@ ultimate: comes back once</td></tr>
 </table>
 
 <h2>On this server</h2>
-<p><b>Respawn</b>: you come back at once in your team's base. No rounds, no bomb. <b>G</b>: the weapon menu.<br>
-3 seconds of protection after each respawn: you take no damage, until you shoot.<br>
-$800 to start, and more with each kill, for the shops' items.<br>
-Levels come twice as fast as usual: half the XP per level. A race you have never played starts at level 3.<br>
-Bots fill the server up to 10 players; a bot leaves when a human joins. Their level is a mix, from average
-to strong.<br>
-The bots (<b>[AI]</b> in their name) talk back: write a bot's name in the chat, like <i>zed, nice shot</i>. Each one
-has its own character, and they remember you. A Game Master (an AI) starts bounties, duels and other surprises.
-Your chat messages and your name go to Claude, Anthropic's AI, for that; nothing else about you.<br>
-The first human to join a server of bots only restarts the game: everyone starts from zero.<br>
-Every 30 minutes, a vote picks the next map.<br>
-Your damage shows under the crosshair at each hit. An announcer for first blood, multi-kills and kill
-streaks.<br>
-At each map: your place this month and your closest achievement.<br>
-The top 10 show their place in the chat; last month's top 3, a <b>[Champion]</b> tag.<br>
-Away for 60 seconds (no key, no mouse move): you become a spectator. A ping over 300 ms for 50 seconds gets
-you kicked.</p>
+<div class="cards">
+<div class="card">
+<h3>The game</h3>
+<ul>
+<li><b>Respawn</b>: you come back at once in your team's base. No rounds, no bomb.</li>
+<li><b>G</b>: the weapon menu.</li>
+<li><b>3 seconds of protection</b> after each respawn, until you shoot.</li>
+<li><b>$800</b> to start, more with each kill, for the shops.</li>
+<li>Every 30 minutes, a <b>vote</b> picks the next map.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Your progress</h3>
+<ul>
+<li>Levels come <b>twice as fast</b>. A race you have never played starts at level 3.</li>
+<li>Your <b>damage</b> shows under the crosshair. An announcer for first blood and kill streaks.</li>
+<li>At each map: your <b>place this month</b> and your closest achievement.</li>
+<li>The top 10 show their place in the chat; last month's top 3 a <b>[Champion]</b> tag.</li>
+</ul>
+</div>
+<div class="card">
+<h3>The bots</h3>
+<ul>
+<li>They fill the server up to 10 players; one leaves when a human joins.</li>
+<li><b>They talk back</b> (<b>[AI]</b> in their name): write a bot's name in the chat, like <i>zed, nice shot</i>.
+Each one has its own character, and they remember you.</li>
+<li>Join a server of bots only, and the game <b>restarts</b>: everyone starts from zero.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Rules</h3>
+<ul>
+<li>Away for <b>60 seconds</b> (no key, no mouse move): you become a spectator.</li>
+<li>A ping over <b>300 ms</b> for 50 seconds gets you kicked.</li>
+<li><code>/votekick</code>: the players can kick a cheater together.</li>
+</ul>
+</div>
+</div>
+
+<h2>The Game Master</h2>
+<p>An AI watches the score. Every 10 minutes, it may start one of these, announced in the chat and on your screen.
+Nothing is forced on you: play as you like, the prizes are a bonus.</p>
+<table>
+<tr><td><b>Bounty</b></td><td>A player far ahead gets a price on their head: <b>$3000</b> to whoever kills them, for
+3 minutes.</td></tr>
+<tr><td><b>Duel</b></td><td>Two players of opposite teams: the first to kill the other gets <b>$3000</b>, within
+3 minutes.</td></tr>
+<tr><td><b>Challenge</b></td><td>A goal for every human, within 2 minutes: kills, headshots, knife or grenade kills.
+The first to reach it gets <b>$3000</b>. Your count shows in the chat.</td></tr>
+<tr><td><b>Boss</b></td><td>A bot glows red, with 500 health: whoever takes it down gets <b>$3000</b>. It survives
+3 minutes, and it is gone.</td></tr>
+<tr><td><b>Low gravity</b></td><td>30 seconds of huge jumps for everyone.</td></tr>
+<tr><td><b>Gold rain</b></td><td><b>$1500</b> for every player alive.</td></tr>
+</table>
+<p class="note">The bots' lines and the Game Master's come from Claude, Anthropic's AI: your chat messages and your
+name are sent to it, nothing else about you. A second check refuses anything offensive.</p>
 
 <h2>More</h2>
 <p><a href="/index.php">Rankings and player stats</a> · <a href="/bots.php">The bots</a></p>

@@ -88,6 +88,15 @@ tbody tr:hover { background: #262a1e; }
 /* Achievements not unlocked yet: dimmed. */
 .locked { color: #6b6f5e; }
 
+/* The guide's "On this server": a card per subject. */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.card { padding: 4px 16px 10px; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--khaki);
+  border-radius: 6px; }
+.card h3 { font-family: var(--title); font-weight: normal; font-size: 1.3em; text-transform: uppercase;
+  letter-spacing: 0.04em; }
+.card ul { margin: 0; padding-left: 18px; }
+.card li { margin-bottom: 6px; }
+
 /* The bots' page: one card each. */
 .bots { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-top: 16px; }
 .bot { padding: 14px; text-align: center; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
