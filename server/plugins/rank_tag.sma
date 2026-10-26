@@ -4,13 +4,12 @@
 #include <amxmodx>
 #include <csstats>
 #include <sqlx>
+#include "common.inc"
 #include "database.inc"
 
 #define TAGGED 10  // the places that get a tag
 
 // Words our plugins read as commands; slash_commands.sma also sends /nextmap... here again without the slash.
-new const COMMANDS[][] = { "help", "votekick", "rtv", "nextmap", "currentmap", "timeleft", "thetime" }
-
 new g_champions[3][35]  // last month's top 3, by SteamID
 
 public plugin_init()
@@ -86,12 +85,4 @@ public on_say(id)
 	log_message("^"%s<%d><%s><%s>^" say ^"%s^"", name, get_user_userid(id), authid, team, message)
 	// The plugins after this one still see the message; only the game's own copy is not shown.
 	return PLUGIN_HANDLED_MAIN
-}
-
-bool:is_command(const message[])
-{
-	for (new i = 0; i < sizeof COMMANDS; i++)
-		if (equali(message, COMMANDS[i]))
-			return true
-	return false
 }

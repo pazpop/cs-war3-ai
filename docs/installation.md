@@ -192,7 +192,7 @@ scp -P 2222 deploy@<domain>:/srv/collect/players.csv .
 Every night at 0:30, [ansible/files/chat_report.py](../ansible/files/chat_report.py) writes the day before's
 chat (the VPS's time, like the game's logs) into `/srv/collect/chat/<date>.txt`, from the game's logs (kept 14 days): the humans (team chat marked),
 the bots, the Game Master and the coach, with arrivals and departures. Names only, no SteamID or IP; readable by root
-only. A day with no chat writes nothing. Another day, at once: `sudo cs-war3-ai-chat-report 2026-10-26`.
+only, kept 90 days. A day with no chat writes nothing. Another day, at once: `sudo cs-war3-ai-chat-report 2026-10-26`.
 
 ## The AI (optional)
 
@@ -205,9 +205,9 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
   relay and the stats page, and shows as `[AI] Zed` in the scoreboard. The bots remember each human (by SteamID, in
   the relay's volume): since when they play, how they fare against bots, and each bot's score against them. A bot
   killed 5 times by a player, more than it killed them, holds a grudge: it teases them, and greets them first.
-- **Questions**: a message with a `?` always gets an answer from a bot, which has the mod's guide
+- **Questions**: a message with a `?` usually gets an answer from a bot, which has the mod's guide
   ([docs/war3ft.md](war3ft.md)) at hand; a newcomer gets a tip from it with the hello. These requests are longer
-  (the guide is about 2,500 tokens), so a little dearer.
+  (the guide is about 1,200 tokens), so a little dearer.
 - **The coach**: `/coach` sends the player's numbers on this map (CSX: kills, deaths, headshots, hits and where,
   each weapon's accuracy, deaths in a row, the weapon that killed them most) and gets one tip back, in private, one a
   minute at most. After 5 deaths in a row, a tip comes on its own, once per map; 60 seconds before the map's end,

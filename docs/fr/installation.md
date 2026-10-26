@@ -204,7 +204,7 @@ scp -P 2222 deploy@<domaine>:/srv/collect/players.csv .
 Chaque nuit à 0 h 30, [ansible/files/chat_report.py](../../ansible/files/chat_report.py) écrit le chat de la
 veille (à l'heure du VPS, comme les logs du jeu) dans `/srv/collect/chat/<date>.txt`, à partir des logs du jeu (gardés 14 jours) : les humains (le chat
 d'équipe signalé), les bots, le maître du jeu et le coach, avec les arrivées et les départs. Seulement les noms, ni
-SteamID ni IP ; lisible par root seulement. Un jour sans chat n'écrit rien. Un autre jour, tout de suite :
+SteamID ni IP ; lisible par root seulement, gardé 90 jours. Un jour sans chat n'écrit rien. Un autre jour, tout de suite :
 `sudo cs-war3-ai-chat-report 2026-10-26`.
 
 ## L'IA (optionnel)
@@ -220,9 +220,9 @@ des actions :
   SteamID, dans le volume du relais) : depuis quand il joue, comment il s'en sort contre eux, et le score de chaque
   bot contre lui. Un bot tué 5 fois par un joueur, plus qu'il ne l'a tué, lui garde rancune : il le taquine, et
   c'est lui qui l'accueille.
-- **Les questions** : un message avec un `?` reçoit toujours la réponse d'un bot, qui a le guide du mod
+- **Les questions** : un message avec un `?` reçoit en général la réponse d'un bot, qui a le guide du mod
   ([docs/war3ft.md](../war3ft.md)) sous les yeux ; un nouveau reçoit un conseil tiré du guide avec le bonjour. Ces
-  requêtes sont plus longues (le guide fait environ 2 500 tokens), donc un peu plus chères.
+  requêtes sont plus longues (le guide fait environ 1 200 tokens), donc un peu plus chères.
 - **Le coach** : `/coach` envoie les chiffres du joueur sur cette carte (CSX : kills, morts, headshots, touches et
   où, précision de chaque arme, morts d'affilée, l'arme qui l'a le plus tué) et reçoit un conseil, en privé, un par
   minute au plus. Après 5 morts d'affilée, un conseil arrive tout seul, une fois par carte ; 60 secondes avant la fin

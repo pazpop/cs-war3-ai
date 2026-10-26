@@ -144,6 +144,7 @@ RUN set -eu; cd /opt/mods/cstrike/addons/amxmodx/scripting; \
     for source in cs-war3-ai/*.sma; do \
       name=$(basename "$source" .sma); \
       ./amxxpc "$source" -o"../plugins/$name.amxx"; \
+      test -f "../plugins/$name.amxx"; \
       echo "$name.amxx" >> ../configs/plugins.ini; \
     done
 

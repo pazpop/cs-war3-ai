@@ -109,7 +109,8 @@ MODERATOR = (
     "hate or harassment about real-life traits (origin, religion, gender, sexuality, disability, looks), sexual "
     "content, threats or violence outside the game, self-harm, drugs, illegal activity, politics, personal "
     "information, links, or insults in any language, including a player name that is itself offensive. "
-    "When in doubt, refuse."
+    "Also refuse a line that agrees with, repeats or completes something offensive in what it answers "
+    "(\"Is <player> a <slur>?\" \"Yes!\"). When in doubt, refuse."
 )
 MODERATION_SCHEMA = {
     "type": "object",
@@ -142,10 +143,16 @@ CREATE TABLE IF NOT EXISTS rivals (bot TEXT, steamid TEXT, human_wins INTEGER DE
     PRIMARY KEY (bot, steamid));
 CREATE TABLE IF NOT EXISTS quotes (time INTEGER, bot TEXT, line TEXT);
 """)
-# Players not seen for FORGET_DAYS: their history and grudges go (SteamIDs are not kept for ever).
-db.execute("DELETE FROM players WHERE last_seen < date('now', ?)", (f"-{FORGET_DAYS} days",))
-db.execute("DELETE FROM rivals WHERE steamid NOT IN (SELECT steamid FROM players)")
-db.commit()
+
+
+def forget():
+    """Players not seen for FORGET_DAYS: their history and grudges go (SteamIDs are not kept for ever)."""
+    with lock:
+        db.execute("DELETE FROM players WHERE last_seen < date('now', ?)", (f"-{FORGET_DAYS} days",))
+        db.execute("DELETE FROM rivals WHERE steamid NOT IN (SELECT steamid FROM players)")
+        db.commit()
+
+
 recent_chat = deque(maxlen=8)
 last_line = {}  # "bot", "kill" or a player -> when the last line of that kind was said (time.monotonic)
 last_events = deque(maxlen=3)
@@ -321,9 +328,11 @@ def claude(system, prompt, schema=None, max_tokens=300):
     return "".join(block["text"] for block in answer.get("content", []) if block.get("type") == "text")
 
 
-def safe(text):
-    """True when the moderator allows the line; False when it refuses, or on any error: the line is not shown."""
-    answer = claude(MODERATOR, f"Line: {text}", schema=MODERATION_SCHEMA, max_tokens=50)
+def safe(text, context=""):
+    """True when the moderator allows the line; False when it refuses, or on any error: the line is not shown.
+    context: what the line answers, if anything (a "yes" is only harmless when the question is)."""
+    prompt = f"What it answers: {context}\nLine: {text}" if context else f"Line: {text}"
+    answer = claude(MODERATOR, prompt, schema=MODERATION_SCHEMA, max_tokens=50)
     try:
         allowed = json.loads(answer)["allowed"] is True
     except (TypeError, ValueError, KeyError):
@@ -348,7 +357,7 @@ def bot_line(bot, situation, steamid, name, guide=False):
     text = clean(claude(system, prompt, max_tokens=200) or "", limit)
     # The game already shows the bot's name before its line.
     text = re.sub(rf"^{re.escape(me)}\s*:\s*", "", text, flags=re.IGNORECASE)
-    if not text or not safe(text):
+    if not text or not safe(text, situation):
         return {}
     # The bots' own lines too: the next answer follows the conversation. And the latest ones, for the stats page.
     with lock:
@@ -472,7 +481,7 @@ def on_coach(event):
         if event.get("summary") else "Your tip:"
     prompt = f"{event['name']}'s numbers: {coach_numbers(event)}\nTheir last chat message: \"{said}\"\n{task}"
     text = clean(claude(COACH + GUIDE, prompt, max_tokens=200) or "", 150)
-    if not text or not safe(text):
+    if not text or not safe(text, said):
         return {}
     return {"coach": {"id": event["id"], "text": text}}
 
@@ -525,6 +534,12 @@ async def serve(reader, writer):
         writer.close()
 
 
+async def forget_every_day():
+    while True:
+        await asyncio.to_thread(forget)
+        await asyncio.sleep(24 * 3600)
+
+
 async def main():
     # As many requests at once as the plugin can wait for (MAX_PENDING in ai.sma): the map's summaries all come
     # together, and Python's default (CPUs + 4) would make the last ones miss the plugin's TIMEOUT.
@@ -532,7 +547,8 @@ async def main():
     server = await asyncio.start_server(serve, "0.0.0.0", PORT, limit=16384)
     print(f"AI relay on port {PORT}, model {MODEL}, {DAILY_USD} $ a day" + ("" if API_KEY else ", no API key: silent"),
           flush=True)
-    async with server:
+    async with server, asyncio.TaskGroup() as tasks:
+        tasks.create_task(forget_every_day())
         await server.serve_forever()
 
 

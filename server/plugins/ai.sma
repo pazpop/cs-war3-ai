@@ -209,7 +209,7 @@ public on_say(id)
 	read_args(message, charsmax(message))
 	remove_quotes(message)
 	trim(message)
-	if (!message[0] || message[0] == '/' || message[0] == '!')
+	if (!message[0] || message[0] == '/' || message[0] == '!' || is_command(message))
 		return PLUGIN_CONTINUE
 
 	new JSON:event = player(id)
@@ -478,7 +478,12 @@ end_event()
 	remove_task(TASK_RED)
 	new boss = find_player("k", g_boss)
 	if (g_boss && boss)
+	{
 		set_user_rendering(boss)
+		// Back to a normal bot: no more than 100 HP.
+		if (is_user_alive(boss) && get_user_health(boss) > 100)
+			set_user_health(boss, 100)
+	}
 	g_bounty = g_duel[0] = g_duel[1] = g_boss = g_goal = 0
 	g_challenge[0] = 0
 }
