@@ -91,8 +91,8 @@ plusieurs partagent) :
 - `achievements.sma` : 14 succès (`/ach`), gardés dans la base de War3FT ; les pages des joueurs les affichent. À
   chaque carte, le plus proche ; un mot au joueur quand il en reste 10 %.
 - `afk.sma` : 60 secondes sans toucher une touche ni bouger la souris, et un joueur passe en spectateur.
-- `ai.sma` : envoie le chat, les kills entre bots et humains, et toutes les 10 minutes l'état de la partie au
-  relais de l'IA, et fait ce qu'il répond (voir [L'IA](#lia-optionnel)).
+- `ai.sma` : envoie le chat, les kills entre bots et humains, toutes les 10 minutes l'état de la partie, et les
+  chiffres d'un joueur pour le coach au relais de l'IA, et fait ce qu'il répond (voir [L'IA](#lia-optionnel)).
 - `announcer.sma` : les voix et les messages du premier kill, des multi-kills et des séries. Les joueurs téléchargent
   les voix en HTTP (FastDL).
 - `block_test.sma` : bloque les commandes de débogage `test` et `test2` de War3FT, ouvertes à tous les joueurs
@@ -212,6 +212,10 @@ des actions :
 - **Les questions** : un message avec un `?` reçoit toujours la réponse d'un bot, qui a le guide du mod
   ([docs/war3ft.md](../war3ft.md)) sous les yeux ; un nouveau reçoit un conseil tiré du guide avec le bonjour. Ces
   requêtes sont plus longues (le guide fait environ 2 500 tokens), donc un peu plus chères.
+- **Le coach** : `/coach` envoie les chiffres du joueur sur cette carte (CSX : kills, morts, headshots, touches et
+  où, précision de chaque arme, morts d'affilée, l'arme qui l'a le plus tué) et reçoit un conseil, en privé, un par
+  minute au plus. Après 5 morts d'affilée, un conseil arrive tout seul, une fois par carte ; 60 secondes avant la fin
+  de la carte, chaque humain qui a joué reçoit un bilan : un point fort, une chose à travailler.
 - **Le maître du jeu** : toutes les 10 minutes, il lit le score et peut lancer un événement : une prime sur un
   joueur très en avance, un duel entre deux joueurs, un défi (kills, headshots, kills au couteau ou à la grenade,
   en 2 minutes), un boss (un bot à 500 points de vie, entouré d'un halo rouge), 30 secondes de gravité basse, de
@@ -231,7 +235,8 @@ dépense au plus `AI_DAILY_USD` par jour (1 $ par défaut, dans `compose.yml` ; 
 minuit UTC ;
 mets aussi une limite mensuelle dans la console d'Anthropic.
 
-Ce qui sort du VPS : les messages du chat, les noms, le score. Jamais les SteamID ni les IP. Le guide le dit aux
+Ce qui sort du VPS : les messages du chat, les noms, le score, les chiffres de chaque joueur pour le coach. Jamais
+les SteamID ni les IP. Le guide le dit aux
 joueurs.
 
 Ses logs, sur le VPS : `cd /srv/cs-war3-ai && sudo docker compose logs ai`.

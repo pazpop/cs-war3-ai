@@ -36,6 +36,7 @@ Toutes les commandes marchent avec un `/` devant.
 | `/rank`, `/top15` | Ton rang au combat, le top 15 (le top 10 affiche sa place dans le chat) |
 | `/ach` | Tes succès : 14 objectifs, de ton premier kill jusqu'à 10 000 |
 | `/mystats` | Le lien vers ta page sur le site de stats |
+| `/coach` | Un conseil du coach IA, tiré de tes chiffres sur cette carte, en privé |
 | `/statsme`, `/rankstats` | Tes stats sur cette carte, tes stats au total |
 | `/nextmap`, `/timeleft` | La carte suivante, le temps restant |
 

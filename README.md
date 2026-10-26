@@ -18,7 +18,10 @@ Game Master. And the code to run your own.
 - Levels come twice as fast as usual, and a race you have never played starts at level 3: your ultimate
   (level 6) comes quickly.
 - Bots fill the server when few people play. One leaves for each human who joins. They talk back: name one in the
-  chat, or ask a question with a `?`. Kill one often, and it holds a grudge. And a Game Master (an AI) starts bounties, duels and other surprises.
+  chat, or ask a question with a `?`. Kill one often, and it holds a grudge. And a Game Master (an AI) starts
+  bounties, duels and other surprises.
+- `/coach`: an AI coach looks at your numbers on this map and gives you a tip, in private. A summary near each
+  map's end.
 - An announcer for first blood, multi-kills and kill streaks, up to GODLIKE. Your damage shows under the crosshair.
 - 14 achievements to unlock (`/ach`, the closest one is shown at each map), and the top 10's place shown in the
   chat. Last month's top 3 get a `[Champion]` tag and a place in the hall of fame.

@@ -21,7 +21,7 @@ anyone who wants to run their own server, and get players to come back and bring
   War3FT's own deathmatch mode.
 - The ranking of the month (`server/plugins/monthly.sma`, table `cs_war3_ai_monthly`): one row per month and player,
   so it starts from zero on the 1st without any reset job.
-- The AI (bots that talk back, a Game Master): `server/plugins/ai.sma` sends the game's news to `ai/relay.py` (its
+- The AI (bots that talk back, a Game Master, a coach with `/coach`): `server/plugins/ai.sma` sends the game's news to `ai/relay.py` (its
   own container, Python's standard library only, raw HTTP to the Messages API), which asks Claude Haiku 5.5 and
   answers with actions the plugin checks and runs itself (a fixed list of events, never free commands). A second
   request (the moderator) checks every line before it is shown; on any doubt or error, nothing is shown. The relay

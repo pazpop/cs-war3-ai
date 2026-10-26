@@ -1,4 +1,5 @@
 # The relay's checks, without the API: python3 -m unittest discover ai (from the repository's root)
+import json
 import os
 import unittest
 
@@ -79,6 +80,18 @@ class Relay(unittest.TestCase):
         bots = [{"id": 4, "name": "[AI] Zed"}, {"id": 7, "name": "[AI] Rex"}]
         self.assertEqual(relay.grudge_bot(bots, "STEAM_0:1:2")["id"], 7)
         self.assertIsNone(relay.grudge_bot(bots, "STEAM_0:1:3"))
+
+    def test_coach(self):
+        event = {"type": "coach", "id": 3, "name": "Ann", "steamid": "STEAM_0:1:4", "kills": 2, "deaths": 6,
+                 "shots": 50, "hits": 10, "body": {"head": 1, "legs": 5},
+                 "weapons": [{"name": "ak47", "kills": 2, "shots": 50, "hits": 10}], "streak": 5, "killed_by": "awp"}
+        numbers = relay.coach_numbers(event)
+        self.assertIn("20% of 50 shots hit", numbers)
+        self.assertIn("legs 50%", numbers)
+        self.assertIn("awp", numbers)
+        # No API key: no tip; asked again within the minute: told to wait, without any request.
+        self.assertEqual(relay.handle(json.dumps(event).encode()), {})
+        self.assertIn("One tip a minute", relay.handle(json.dumps(event).encode())["coach"]["text"])
 
     def test_guide(self):
         self.assertIn("Undead", relay.GUIDE)

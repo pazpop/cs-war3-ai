@@ -1,9 +1,10 @@
-// The AI: bots that talk back, and a Game Master. This plugin sends the chat, the kills between bots and humans,
-// and every few minutes the state of the game to the AI relay (ai/relay.py), which asks Claude. The relay answers
-// with actions; this plugin checks each one (the players must still be here) and does only what it knows.
-// Relay down, or no API key: no answer, and the game is unchanged.
+// The AI: bots that talk back, a Game Master, and a coach. This plugin sends the chat, the kills between bots and
+// humans, every few minutes the state of the game, and a player's numbers for the coach to the AI relay
+// (ai/relay.py), which asks Claude. The relay answers with actions; this plugin checks each one (the players must
+// still be here) and does only what it knows. Relay down, or no API key: no answer, and the game is unchanged.
 #include <amxmodx>
 #include <cstrike>
+#include <csx>  // get_user_wstats(): each player's numbers on this map, for the coach
 #include <fun>  // set_user_health(), set_user_rendering()
 #include <json>
 #include <sockets>
@@ -14,7 +15,7 @@
 #define RELAY_IP "10.27.15.10"
 #define RELAY_PORT 27100
 #define TIMEOUT 10.0          // seconds to wait for an answer
-#define MAX_PENDING 8
+#define MAX_PENDING 16        // requests waiting at once: the map's summary goes to every human together
 #define STATE_EVERY 600.0     // seconds between two looks of the Game Master
 #define EVENT_TIME 180.0      // seconds a bounty, a duel or a boss lasts
 #define CHALLENGE_TIME 120.0  // seconds to meet a challenge
@@ -25,6 +26,8 @@
 #define GOLD 1500             // gold_rain: for everyone
 #define LOW_GRAVITY 300       // sv_gravity during low_gravity (the game's own is 800)
 #define GREET_AFTER 10.0      // seconds after a human enters, before a bot says hello
+#define COACH_AFTER 5         // deaths in a row before the coach gives a tip on its own, once per map
+#define SUMMARY_AT 60         // seconds left in the map when the coach sends each human their summary
 #define TASK_GRAVITY 1        // the task that ends low_gravity
 #define TASK_EVENT 2          // the task that ends a bounty, a duel, a challenge or a boss
 #define TASK_RED 3            // the task that keeps the boss red
@@ -46,6 +49,11 @@ new g_bounty, g_duel[2], g_boss
 new g_challenge[16], g_goal, g_progress[33]
 new g_gravity
 
+// For the coach: deaths in a row, whether the tip after them was given on this map, and how often each weapon killed
+// the player; whether the map's summary was sent.
+new g_streak[33], bool:g_coached[33], g_killed_by[33][CSW_P90 + 1]
+new bool:g_summary_sent
+
 public plugin_init()
 {
 	register_plugin("AI", "1.0", "cs-war3-ai")
@@ -54,8 +62,11 @@ public plugin_init()
 	register_event("DeathMsg", "on_death", "a")
 	// A new round: in Respawn mode, only a restart (fresh_start.sma, sv_restart) or a new map.
 	register_event("HLTV", "on_new_round", "a", "1=0", "2=0")
+	register_clcmd("say /coach", "cmd_coach")
+	register_clcmd("say_team /coach", "cmd_coach")
 	set_task(0.1, "poll", _, _, _, "b")
 	set_task(STATE_EVERY, "send_state", _, _, _, "b")
+	set_task(10.0, "check_summary", _, _, _, "b")
 }
 
 // A human arrives (or comes back with the next map: the relay greets only real arrivals). A few seconds later, when
@@ -63,6 +74,9 @@ public plugin_init()
 public client_putinserver(id)
 {
 	g_progress[id] = 0
+	g_streak[id] = 0
+	g_coached[id] = false
+	arrayset(g_killed_by[id], 0, sizeof g_killed_by[])
 	if (!is_user_bot(id) && !is_user_hltv(id))
 		set_task(GREET_AFTER, "send_join", TASK_JOIN + id)
 }
@@ -230,6 +244,7 @@ public on_death()
 	new weapon[32]
 	read_data(4, weapon, charsmax(weapon))
 	check_events(killer, victim, headshot, weapon)
+	count_for_coach(killer, victim, weapon)
 	// Only a bot against a human: the bots talk to the humans.
 	if (!killer || killer == victim || !is_user_connected(killer) || is_user_bot(killer) == is_user_bot(victim))
 		return
@@ -306,6 +321,17 @@ do_actions(const answer[])
 	if (json_is_object(gm) && json_object_has_value(gm, "event", JSONString) && json_object_has_value(gm, "text", JSONString))
 		game_master(gm)
 	free(gm)
+	new JSON:coach = json_object_get_value(root, "coach")
+	if (json_is_object(coach) && json_object_has_value(coach, "text", JSONString))
+	{
+		new text[160]
+		json_object_get_string(coach, "text", text, charsmax(text))
+		new id = find_player("k", json_object_get_number(coach, "id"))
+		// In private: only the player sees it.
+		if (id && text[0])
+			client_print_color(id, print_team_default, "^4[Coach]^1 %s", text)
+	}
+	free(coach)
 	free(root)
 }
 
@@ -489,6 +515,107 @@ win(winner, victim, const what[])
 	give_xp(winner, XP_REWARD)
 	end_event()
 	announce(text)
+}
+
+// ---- The coach ----
+
+// /coach: a tip in private, from the player's numbers on this map. The relay allows one a minute.
+public cmd_coach(id)
+{
+	client_print_color(id, print_team_default, "^4[Coach]^1 Looking at your game...")
+	send_coach(id, "")
+	return PLUGIN_HANDLED
+}
+
+// Deaths in a row, and what killed the player; after COACH_AFTER deaths in a row, a tip on its own, once per map.
+count_for_coach(killer, victim, const weapon[])
+{
+	if (killer && killer != victim && !is_user_bot(killer))
+		g_streak[killer] = 0
+	if (is_user_bot(victim))
+		return
+	g_streak[victim]++
+	// The death notice says "grenade"; the weapon is called "hegrenade".
+	new full[32]
+	formatex(full, charsmax(full), "weapon_%s", equal(weapon, "grenade") ? "hegrenade" : weapon)
+	new weapon_id = get_weaponid(full)
+	if (weapon_id > 0 && weapon_id <= CSW_P90)
+		g_killed_by[victim][weapon_id]++
+	if (g_streak[victim] >= COACH_AFTER && !g_coached[victim])
+	{
+		g_coached[victim] = true
+		send_coach(victim, "auto")
+	}
+}
+
+// Near the map's end, each human who played gets their summary: one strength, one thing to work on.
+public check_summary()
+{
+	new left = get_timeleft()
+	if (g_summary_sent || left <= 0 || left > SUMMARY_AT)
+		return
+	g_summary_sent = true
+	new players[32], count, stats[STATSX_MAX_STATS], body[MAX_BODYHITS]
+	get_players(players, count, "ch")
+	for (new i = 0; i < count; i++)
+		if (get_user_wstats(players[i], 0, stats, body) && stats[0] + stats[1] > 0)
+			send_coach(players[i], "summary")
+}
+
+// The player's numbers on this map: kills, deaths, headshots, shots and hits, where the hits landed, each weapon used,
+// deaths in a row, and the weapon that killed them most. kind: "" (asked), "auto" or "summary".
+send_coach(id, const kind[])
+{
+	new JSON:event = player(id)
+	json_object_set_string(event, "type", "coach")
+	if (kind[0])
+		json_object_set_bool(event, kind, true)
+
+	new stats[STATSX_MAX_STATS], body[MAX_BODYHITS]
+	get_user_wstats(id, 0, stats, body)
+	// stats[]: 0 kills, 1 deaths, 2 headshots, 3 team kills, 4 shots, 5 hits, 6 damage.
+	json_object_set_number(event, "kills", stats[0])
+	json_object_set_number(event, "deaths", stats[1])
+	json_object_set_number(event, "headshots", stats[2])
+	json_object_set_number(event, "shots", stats[4])
+	json_object_set_number(event, "hits", stats[5])
+	new JSON:parts = json_init_object()
+	json_object_set_number(parts, "head", body[HIT_HEAD])
+	json_object_set_number(parts, "chest", body[HIT_CHEST])
+	json_object_set_number(parts, "stomach", body[HIT_STOMACH])
+	json_object_set_number(parts, "arms", body[HIT_LEFTARM] + body[HIT_RIGHTARM])
+	json_object_set_number(parts, "legs", body[HIT_LEFTLEG] + body[HIT_RIGHTLEG])
+	json_object_set_value(event, "body", parts)
+	json_free(parts)
+
+	new JSON:weapons = json_init_array(), name[32], worst, worst_count
+	for (new w = 1; w <= CSW_P90; w++)
+	{
+		if (g_killed_by[id][w] > worst_count)
+		{
+			worst = w
+			worst_count = g_killed_by[id][w]
+		}
+		if (!get_user_wstats(id, w, stats, body) || !stats[4])
+			continue
+		get_weaponname(w, name, charsmax(name))
+		new JSON:weapon = json_init_object()
+		json_object_set_string(weapon, "name", name[7])  // after "weapon_"
+		json_object_set_number(weapon, "kills", stats[0])
+		json_object_set_number(weapon, "shots", stats[4])
+		json_object_set_number(weapon, "hits", stats[5])
+		json_array_append_value(weapons, weapon)
+		json_free(weapon)
+	}
+	json_object_set_value(event, "weapons", weapons)
+	json_free(weapons)
+	if (worst)
+	{
+		get_weaponname(worst, name, charsmax(name))
+		json_object_set_string(event, "killed_by", name[7])
+	}
+	json_object_set_number(event, "streak", g_streak[id])
+	send(event)
 }
 
 give_money(id, amount)

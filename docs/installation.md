@@ -87,8 +87,8 @@ share):
 - `achievements.sma`: 14 achievements (`/ach`), saved in War3FT's database; the player pages show them. At each map, the
   closest one; a word to the player when 10 % is left.
 - `afk.sma`: 60 seconds without a key or a mouse move, and a player goes to spectator.
-- `ai.sma`: sends the chat, the kills between bots and humans, and every 10 minutes the state of the game to the AI
-  relay, and does what it answers (see [The AI](#the-ai-optional)).
+- `ai.sma`: sends the chat, the kills between bots and humans, every 10 minutes the state of the game, and a
+  player's numbers for the coach to the AI relay, and does what it answers (see [The AI](#the-ai-optional)).
 - `announcer.sma`: the voices and messages for first blood, multi-kills and kill streaks. Players download the voices
   over HTTP (FastDL).
 - `block_test.sma`: blocks War3FT's debug commands `test` and `test2`, open to every player (they fill the logs).
@@ -200,6 +200,10 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
 - **Questions**: a message with a `?` always gets an answer from a bot, which has the mod's guide
   ([docs/war3ft.md](war3ft.md)) at hand; a newcomer gets a tip from it with the hello. These requests are longer
   (the guide is about 2,500 tokens), so a little dearer.
+- **The coach**: `/coach` sends the player's numbers on this map (CSX: kills, deaths, headshots, hits and where,
+  each weapon's accuracy, deaths in a row, the weapon that killed them most) and gets one tip back, in private, one a
+  minute at most. After 5 deaths in a row, a tip comes on its own, once per map; 60 seconds before the map's end,
+  each human who played gets a summary: one strength, one thing to work on.
 - **The Game Master**: every 10 minutes, it reads the score and may start an event: a bounty on a player far ahead,
   a duel between two players, a challenge (kills, headshots, knife or grenade kills, in 2 minutes), a boss (a bot
   with 500 health and a red glow), 30 seconds of low gravity, money for everyone, 100 War3FT XP for every human
@@ -216,7 +220,8 @@ Setup: an API key from [console.anthropic.com](https://console.anthropic.com) in
 unchanged. It spends at most `AI_DAILY_USD` a day (1 $ by default, in `compose.yml`; `0` turns the AI off), then
 stays silent until midnight UTC; set a monthly limit in the Anthropic console too.
 
-What leaves the VPS: the chat messages, the names, the score. Never the SteamIDs or the IPs. The guide tells the
+What leaves the VPS: the chat messages, the names, the score, each player's numbers for the coach. Never the
+SteamIDs or the IPs. The guide tells the
 players.
 
 Its logs, on the VPS: `cd /srv/cs-war3-ai && sudo docker compose logs ai`.
