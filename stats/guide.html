@@ -14,8 +14,14 @@
 <main>
 <img class="banner" src="/img/banner.png" alt="" width="400" height="160">
 <h1>Welcome to War3FT!</h1>
-<p>Counter-Strike 1.6 with Warcraft 3 races and spells. Earn XP, level up, unlock skills.
-<b>Your XP is saved</b> (by SteamID) from one game to the next.</p>
+<p>Counter-Strike 1.6 with the races and spells of Warcraft 3: Frozen Throne (the War3FT mod).</p>
+<ul>
+<li>Pick a <b>race</b>: 3 skills and an <b>ultimate</b> (some also have a passive skill).</li>
+<li>Earn <b>XP</b>, mostly by killing. Each level gives a point for a skill (<code>/selectskill</code>); the
+ultimate unlocks at level 6.</li>
+<li><b>Your XP is saved</b>, race by race, under your SteamID: you get it back next time.</li>
+<li>With your CS money, buy <b>items</b> in two shops.</li>
+</ul>
 
 <h2>Rules</h2>
 <ul>
@@ -41,13 +47,19 @@ seconds gets you kicked.</li>
 <tr><td><code>/selectskill</code></td><td>pick your skills</td></tr>
 <tr><td><code>/skillsinfo</code></td><td>what your race's skills do</td></tr>
 <tr><td><code>/level</code></td><td>your race, level and skills</td></tr>
+<tr><td><code>/playerskills</code></td><td>the other players' skills</td></tr>
 <tr><td><code>/shopmenu</code>, <code>/shopmenu2</code></td><td>buy items</td></tr>
+<tr><td><code>/itemsinfo</code>, <code>/itemsinfo2</code></td><td>what the items do</td></tr>
+<tr><td><code>/war3help</code></td><td>War3FT's help</td></tr>
 <tr><td><code>/rtv</code></td><td>ask for a new map (vote at 60 % of humans)</td></tr>
 <tr><td><code>/votekick</code></td><td>vote to kick a player for 10 minutes: at 60 % of the other humans (at least 3 humans)</td></tr>
-<tr><td><code>/rank</code>, <code>/top15</code></td><td>your combat rank, the top 15</td></tr>
+<tr><td><code>/rank</code>, <code>/top15</code></td><td>your combat rank, the top 15 (the top 10 show their place in
+the chat)</td></tr>
 <tr><td><code>/ach</code></td><td>your achievements: 14 goals, from your first kill to 10,000</td></tr>
 <tr><td><code>/mystats</code></td><td>the link to your page on the stats site</td></tr>
-<tr><td><code>/coach</code></td><td>a tip from the AI coach, from your numbers on this map, in private; or ask it a question: <i>/coach what is my best weapon?</i> <code>/coach on</code>: a tip every 5 minutes.</td></tr>
+<tr><td><code>/coach</code></td><td>a tip from the AI coach, from your numbers on this map, in private; or ask it a
+question: <i>/coach what is my best weapon?</i> <code>/coach on</code>: a tip every 5 minutes (<code>/coach off</code>
+to stop).</td></tr>
 <tr><td><code>/goal</code></td><td>the goal of the week, the same for everyone, and your count</td></tr>
 <tr><td><code>/statsme</code>, <code>/rankstats</code></td><td>your stats on this map, your overall stats</td></tr>
 <tr><td><code>/nextmap</code>, <code>/timeleft</code></td><td>the next map, time left on this one</td></tr>
@@ -58,7 +70,8 @@ seconds gets you kicked.</li>
 <p><code>bind "mouse3" "ultimate"</code>: your ultimate<br>
 <code>bind "alt" "ability"</code>: your ability (the Serpent Ward)<br>
 <code>bind "-" "shopmenu"</code> and <code>bind "=" "shopmenu2"</code>: the shops<br>
-<code>bind "F3" "war3menu"</code>: the War3FT menu (race, skills, shops, help)</p>
+<code>bind "F3" "war3menu"</code>: the War3FT menu (race, skills, shops, help)<br>
+To keep them at every launch: the client config (see More).</p>
 
 <h2>Races</h2>
 <table>
@@ -73,8 +86,16 @@ ultimate: invincible for 2 seconds</td></tr>
 ultimate: comes back once</td></tr>
 <tr><td><img class="icon" src="/img/races/8.png" alt="" width="24" height="24"><b>Crypt Lord</b></td><td>impale, spiked carapace, beetles; ultimate: locust swarm</td></tr>
 </table>
+<p>Exact numbers (percentages, durations): <code>/skillsinfo</code> in the game.</p>
 <p class="note">Here everyone comes back at once, so what brings you back or keeps your gear does nothing: the Orcish
 Horde's equipment, the Blood Mage's revive, the Warden's ultimate, the ankh and the scroll.</p>
+
+<h2>Items</h2>
+<p><b>Shop 1</b>: ankh of reincarnation, boots of speed, claws of attack, cloak of shadows, mask of death, necklace
+of immunity, orb of frost, periapt of health, tome of experience.<br>
+<b>Shop 2</b>: scroll of respawning, mole protectant, helm of excellence, amulet of the cat, sock of the feather,
+flaming gloves of warmth, ring of regeneration, chameleon, mole.<br>
+What each one does: <code>/itemsinfo</code> and <code>/itemsinfo2</code>.</p>
 
 <h2>On this server</h2>
 <div class="cards">
@@ -91,7 +112,8 @@ Horde's equipment, the Blood Mage's revive, the Warden's ultimate, the ankh and 
 <div class="card">
 <h3>Your progress</h3>
 <ul>
-<li>Levels come <b>twice as fast</b>. A race you have never played starts at level 3.</li>
+<li>Levels come <b>twice as fast</b> (half the usual XP per level). A race you have never played starts at
+level 3.</li>
 <li>Your <b>damage</b> shows under the crosshair. An announcer for first blood and kill streaks.</li>
 <li>At each map: the month's <b>top 5</b> and your place. Your achievements: <code>/ach</code>.</li>
 <li>The <b>goal of the week</b>, the same for everyone, a new one every Monday: <code>/goal</code>, and its board on
@@ -99,15 +121,18 @@ the stats site.</li>
 <li><b>/coach</b>: a tip from the AI coach, in private. <code>/coach on</code>: one every 5 minutes
 (<code>/coach off</code> to stop). Near each map's end, you get a summary.</li>
 <li>The top 10 show their place in the chat; last month's top 3 a <b>[Champion]</b> tag.</li>
+<li>In the chat: <b>[HELP]</b> a command, <b>[INFO]</b> the server, <b>[STATS]</b> the month's top 5 at each map
+start, the map's MVP at its end, an achievement unlocked, the week's goal reached.</li>
 </ul>
 </div>
 <div class="card">
 <h3>The bots</h3>
 <ul>
-<li>They fill the server up to 10 players; one leaves when a human joins.</li>
+<li>They fill the server up to 10 players; one leaves when a human joins. Their skill: average to normal.</li>
 <li><b>They talk back</b> (<b>[AI]</b> in their name): write a bot's name in the chat, like <i>zed, nice shot</i>.
-Each one has its own character and War3FT race, and they remember you, and the last map you played together: kill
-one often, and it holds a grudge. The great rivalries are on the bots' page.</li>
+Each one has its own character and War3FT race, and they remember you, and the last map you played together, and
+what happened on the server yesterday: kill one often, and it calls you its rival. They never make fun of you. The
+great rivalries are on the bots' page.</li>
 <li>Bots are level 1 to 5, new at each map: your XP is yours, theirs never piles up.</li>
 <li><b>Ask them anything</b> about the game: a message with a <b>?</b> usually gets an answer, like
 <i>which race is good for a beginner?</i></li>
@@ -118,11 +143,12 @@ stay).</li>
 </div>
 
 <h2>The Game Master</h2>
-<p>An AI watches the score. Halfway through each map, it may start one of these, announced in the chat and on your screen.
-Nothing is forced on you: play as you like, the prizes are a bonus.</p>
+<p>An AI watches the score. Halfway through each map, it may start one of these, announced in the chat and on your
+screen. Nothing is forced on you: play as you like, the prizes are a bonus. It never picks the same player again
+right away.</p>
 <table>
-<tr><td><b>Bounty</b></td><td>A player far ahead gets a price on their head: the prize to whoever kills them, for
-3 minutes.</td></tr>
+<tr><td><b>Bounty</b></td><td>The player in the lead gets a price on their head: the prize to whoever kills
+them, for 3 minutes.</td></tr>
 <tr><td><b>Duel</b></td><td>Two players of opposite teams: the first to kill the other wins the prize, within
 3 minutes.</td></tr>
 <tr><td><b>Challenge</b></td><td>A goal for every human, within 2 minutes: kills, headshots or knife kills.
@@ -139,8 +165,8 @@ writes the server's journal on the stats site. At each map's end, a <b>[STATS]</
 (counted on the stats site when two humans or more scored).</p>
 <p class="note">Public on this site, for as long as the server runs: your name, XP, skills, stats, achievements
 (with their date) and rankings, kept under your SteamID (that is how your progress is saved); your rivalries with the
-bots, until their memory of you goes; a bot's line (with its time, 30 days at most) or the journal may name you too. To have your name
-taken off: ask an admin in the game, or open an issue at github.com/pazpop/cs-war3-ai. The server's logs (with your
+bots, until their memory of you goes; a bot's line (with its time, 30 days at most) or the journal may name you
+too. To have your name taken off: ask an admin in the game, or open an issue at github.com/pazpop/cs-war3-ai. The server's logs (with your
 IP) go after 14 days, its chat log (team chat and the coach's tips included) after 3 months.
 The bots, the coach and the Game Master are an AI: Claude, by Anthropic, which keeps what it gets under its own
 policy. Sent to it: your public chat messages, your name, your score and how you fare against the bots (since when and

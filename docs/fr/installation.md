@@ -253,10 +253,12 @@ des actions :
   bot. Chaque bot de [server/bots.txt](../../server/bots.txt) a sa race et son caractère, les mêmes pour YaPB,
   le jeu, le relais et la page de stats, et s'affiche `[AI] Zed` dans le tableau des scores. Les bots se souviennent
   de chaque humain (par SteamID, dans le volume du relais) : depuis quand il joue, la dernière carte jouée ensemble,
-  comment il s'en sort contre eux, et le score de chaque bot contre lui. Un bot tué 5 fois par un joueur, plus qu'il ne l'a tué, lui garde rancune : il le taquine, et
-  c'est lui qui l'accueille.
-- **Les questions** : un message avec un `?` reçoit en général la réponse d'un bot, qui a le guide du mod
-  ([docs/war3ft.md](../war3ft.md), environ 1 500 tokens) sous les yeux ; un nouveau reçoit un conseil tiré du guide
+  comment il s'en sort contre eux, et le score de chaque bot contre lui ; aussi l'entrée du journal d'hier, pour en
+  parler. Un bot tué 5 fois par un joueur, plus qu'il ne l'a tué, le voit comme son rival, et c'est lui qui
+  l'accueille. Les bots ne se moquent jamais des joueurs : leur prompt l'interdit, et le modérateur refuse une telle
+  réplique.
+- **Les questions** : un message avec un `?` reçoit en général la réponse d'un bot, qui a le guide des joueurs
+  ([stats/guide.html](../../stats/guide.html), en texte, environ 2 000 tokens) sous les yeux ; un nouveau reçoit un conseil tiré du guide
   avec le bonjour.
 - **Le coach** : `/coach` envoie les chiffres du joueur sur cette carte (CSX : kills, morts, headshots, touches et
   où, précision de chaque arme, morts d'affilée, l'arme qui l'a le plus tué) et reçoit un conseil, en privé, un par

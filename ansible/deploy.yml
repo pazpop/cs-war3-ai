@@ -40,7 +40,7 @@
     # would go public or into the image. Only the files git knows.
     - name: Check that the copied folders hold no file unknown to git
       ansible.builtin.command:  # noqa: command-instead-of-module
-        cmd: git status --porcelain --ignored --untracked-files=all -- server ai stats caddy docs compose.yml
+        cmd: git status --porcelain --ignored --untracked-files=all -- server ai stats caddy compose.yml
         chdir: "{{ playbook_dir }}/.."
       delegate_to: localhost
       become: false
@@ -65,7 +65,6 @@
         - "{{ app_dir }}"
         - "{{ app_dir }}/server"
         - "{{ app_dir }}/ai"
-        - "{{ app_dir }}/docs"
         - "{{ app_dir }}/caddy"
         - "{{ app_dir }}/stats"
         - /srv/collect
@@ -80,8 +79,6 @@
         - { src: ../.dockerignore, dest: .dockerignore }
         - { src: ../server/, dest: server/ }
         - { src: ../ai/, dest: ai/ }
-        # The mod's guide: the AI relay's image holds it (its bots answer questions from it).
-        - { src: ../docs/war3ft.md, dest: docs/war3ft.md }
         - { src: ../stats/, dest: stats/ }
 
     # Caddy does not reread its Caddyfile on its own: a change restarts it, at the end of the run.

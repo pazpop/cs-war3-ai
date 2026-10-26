@@ -237,10 +237,12 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
   bot. Each bot of [server/bots.txt](../server/bots.txt) has its own race and character, the same for
   YaPB, the game, the relay and the stats page, and shows as `[AI] Zed` in the scoreboard. The bots remember each
   human (by SteamID, in the relay's volume): since when they play, the last map played together, how they fare
-  against bots, and each bot's score against them. A bot
-  killed 5 times by a player, more than it killed them, holds a grudge: it teases them, and greets them first.
-- **Questions**: a message with a `?` usually gets an answer from a bot, which has the mod's guide
-  ([docs/war3ft.md](war3ft.md), about 1,500 tokens) at hand; a newcomer gets a tip from it with the hello.
+  against bots, and each bot's score against them; also yesterday's journal entry, to talk about. A bot killed 5
+  times by a player, more than it killed them, sees them as its rival, and greets them first. The bots never make
+  fun of players: their prompt forbids it, and the moderator refuses such a line.
+- **Questions**: a message with a `?` usually gets an answer from a bot, which has the players' guide
+  ([stats/guide.html](../stats/guide.html), as text, about 2,000 tokens) at hand; a newcomer gets a tip from it with
+  the hello.
 - **The coach**: `/coach` sends the player's numbers on this map (CSX: kills, deaths, headshots, hits and where,
   each weapon's accuracy, deaths in a row, the weapon that killed them most) and gets one tip back, in private, one a
   minute at most. `/coach <question>`: the answer to a question about these numbers, never shown in the chat.

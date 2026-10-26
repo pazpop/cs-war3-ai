@@ -46,7 +46,7 @@ Play in **fullscreen** (Options → Video). In windowed mode, Windows adds its o
 | `fps_max` | 100 | The engine was built around 100 FPS. Above that, movement changes slightly. |
 | `m_rawinput` | 1 | The mouse ignores Windows acceleration. |
 | `m_filter` | 0 | No mouse smoothing. |
-| `bind` | War3FT | The same keys as in the [mod's guide](war3ft.md). The War3FT menu also changes your race and skills. |
+| `bind` | War3FT | The same keys as in the [players' guide](../stats/guide.html). The War3FT menu also changes your race and skills. |
 
 On a weak connection (high ping, packet loss): `cl_updaterate 60`.
 

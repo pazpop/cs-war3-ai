@@ -46,7 +46,7 @@ Joue en **plein écran** (Options → Vidéo). En fenêtré, Windows ajoute sa p
 | `fps_max` | 100 | Le moteur a été pensé pour 100 FPS. Au-dessus, les déplacements changent un peu. |
 | `m_rawinput` | 1 | La souris ignore l'accélération de Windows. |
 | `m_filter` | 0 | Pas de lissage de la souris. |
-| `bind` | War3FT | Les mêmes touches que dans le [guide du mod](war3ft.md). Le menu War3FT change aussi ta race et tes compétences. |
+| `bind` | War3FT | Les mêmes touches que dans le [guide des joueurs](guide.md). Le menu War3FT change aussi ta race et tes compétences. |
 
 Avec une connexion faible (ping élevé, pertes) : `cl_updaterate 60`.
 

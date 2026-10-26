@@ -35,6 +35,18 @@ function e(string $text): string
     return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+// The joins that give a player's name (the one the stats page knows, web_stats.sma) as n.name, and War3FT's player id
+// (for the link) as p.player_id, to a table aliased $alias that has a steamid column.
+function with_names(string $alias): string
+{
+    return "LEFT JOIN wc3_player p ON p.player_steamid = $alias.steamid
+         LEFT JOIN cs_war3_ai_names n ON n.steamid = $alias.steamid";
+}
+
+// Only real SteamIDs count (STEAM_X:Y:digits): not the bots ("BOT"), nor STEAM_ID_PENDING or STEAM_ID_LAN, which many
+// players share. In SQL: player_steamid GLOB REAL_STEAMID.
+const REAL_STEAMID = "'STEAM_[0-5]:[01]:[0-9]*'";
+
 // Read-only: the pages cannot write anything into the game's database (or the AI relay's, /ai/ai.sq3).
 function db(string $path = '/data/war3ft.sq3'): PDO
 {

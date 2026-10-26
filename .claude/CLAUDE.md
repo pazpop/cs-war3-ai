@@ -27,7 +27,7 @@ anyone who wants to run their own server, and get players to come back and bring
   request (the moderator) checks every line before it is shown; on any doubt or error, nothing is shown. The relay
   has a fixed address on the internal `ai` network (no name lookup: it can block the game) and a daily budget
   (`AI_DAILY_USD`, 1/8 of it at most per hour). No SteamID or IP goes to the API. No key: silent. The relay's image
-  also holds docs/war3ft.md (the bots answer questions from it); the stats page reads its database read-only (the
+  also holds stats/guide.html, the players' guide (the bots answer questions from it); the stats page reads its database read-only (the
   bots' latest lines, the journal it writes each night from the Game Master's announcements and the bots' lines).
   In the game the AI shows as `[AI] <bot>`, `[AI Game Master]`, `[AI Coach]` (Anthropic requires the disclosure).
   Each human's name is checked on arrival and on each change (`NAME_CHECK`; the answer kept 30 days in the relay's

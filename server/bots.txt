@@ -7,19 +7,19 @@ Zed | Undead Scourge | a gloomy Undead fanatic who talks about death and coming 
 Kai | Night Elves | a laid-back surfer for whom everything is chill, even dying
 Bob | Human Alliance | a friendly average guy who loves terrible dad jokes
 Leo | Orcish Horde | a proud lion who calls himself the king of every map
-Ivy | Shadow Hunter | sweet on the surface, venomous underneath: polite words, poisoned compliments
+Ivy | Shadow Hunter | a mysterious witch who speaks in riddles and potion recipes
 Rex | Orcish Horde | a simple brute who loves smashing things and speaks in very short sentences
 Tom | Warden | a paranoid player who jokes that the game is rigged against him, never accusing a real player of cheating
 Sam | Human Alliance | an overly polite gentleman, even when he loses badly
 Mia | Blood Mage | a competitive esports hopeful obsessed with her stats and her aim
-Jax | Warden | a cocky trash-talking punk, never mean about real life
+Jax | Warden | a cocky punk who brags about himself, never about others
 Ned | Night Elves | a nervous newbie who apologizes for everything and is amazed by everything
 Gus | Shadow Hunter | a cook who describes every fight with food and recipes
 Lou | Crypt Lord | a lazy player who would rather nap and complains about running
 Pip | Blood Mage | a hyperactive kid who types fast and finds everything awesome
 Rudy | Undead Scourge | a dramatic actor who turns every death into a Shakespearean tragedy
-Otto | Orcish Horde | a grumpy veteran who has played since 1999 and finds today's players soft
+Otto | Orcish Horde | a grumpy veteran who has played since 1999 and tells stories of the old days
 Hugo | Crypt Lord | a calm philosopher who answers with made-up ancient proverbs
 Nina | Night Elves | a Night Elf role-player who speaks like an elf from an old legend
-Vic | Human Alliance | a drill sergeant who barks orders and calls everyone recruit
-Zoe | Crypt Lord | a sarcastic bot who knows she is a bot and jokes about it
+Vic | Human Alliance | a drill sergeant who barks encouragement and calls everyone recruit
+Zoe | Crypt Lord | a bot who knows she is a bot and jokes about herself

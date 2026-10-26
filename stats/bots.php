@@ -21,7 +21,7 @@ try {
 
 // The great rivalries: the AI relay counts the kills between each bot and each human. The names and pages come from
 // the game's database: the relay keeps only SteamIDs, never shown here.
-const GRUDGE = 5;  // ai/relay.py's GRUDGE: killed this many times by a player, and more than it killed them
+const RIVAL = 5;  // ai/relay.py's RIVAL: killed this many times by a player, and more than it killed them
 $rivalries = [];
 try {
     $rivalries = db('/ai/ai.sq3')->query(
@@ -53,8 +53,8 @@ page_start('War3FT: the bots');
 <h1>The bots</h1>
 <p>When few people play, bots fill the server, <code>[AI]</code> in their name. They talk back: write a bot's name in
 the chat, like <code>zed, nice shot</code>, or ask any question about the game with a <code>?</code>. Each one has its
-own character, greets you when you arrive, and remembers you from one game to the next: kill one often, and it will
-hold a grudge.</p>
+own character, greets you when you arrive, and remembers you from one game to the next: kill one often, and it calls
+you its rival. They never make fun of you.</p>
 
 <?php if ($quotes): ?>
 <h2>Overheard in the game</h2>
@@ -71,15 +71,15 @@ hold a grudge.</p>
 
 <?php if ($rivalries): ?>
 <h2>The great rivalries</h2>
-<p>Each bot keeps the score against each human. Kill one <?= GRUDGE ?> times, more than it killed you, and it holds a
-grudge: it teases you, and greets you first.</p>
+<p>Each bot keeps the score against each human. Kill one <?= RIVAL ?> times, more than it killed you, and you are its
+rival: it greets you first.</p>
 <table class="ranking">
 <thead><tr><th>Bot</th><th>Player</th><th>Bot's kills</th><th>Player's kills</th></tr></thead>
 <tbody>
 <?php foreach ($rivalries as $rivalry): ?>
 <tr>
 <td><img class="icon" src="/img/bots/<?= e(strtolower((string) $rivalry['bot'])) ?>.png" alt="" width="24" height="24"><b><?= e((string) $rivalry['bot']) ?></b></td>
-<td><?= player_link($rivalry) ?><?= (int) $rivalry['human_wins'] >= GRUDGE && $rivalry['human_wins'] > $rivalry['bot_wins'] ? ' (grudge)' : '' ?></td>
+<td><?= player_link($rivalry) ?><?= (int) $rivalry['human_wins'] >= RIVAL && $rivalry['human_wins'] > $rivalry['bot_wins'] ? ' (rival)' : '' ?></td>
 <td><?= (int) $rivalry['bot_wins'] ?></td>
 <td><?= (int) $rivalry['human_wins'] ?></td>
 </tr>

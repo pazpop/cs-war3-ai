@@ -24,7 +24,7 @@ if (is_int($id)) {
         $query = $db->prepare(
             "SELECT p.player_id, p.player_steamid, COALESCE(n.name, '?') AS name
              FROM wc3_player p LEFT JOIN cs_war3_ai_names n ON n.steamid = p.player_steamid
-             WHERE p.player_id = ? AND p.player_steamid GLOB 'STEAM_[0-5]:[01]:[0-9]*'"
+             WHERE p.player_id = ? AND p.player_steamid GLOB " . REAL_STEAMID
         );
         $query->execute([$id]);
         $player = $query->fetch() ?: null;

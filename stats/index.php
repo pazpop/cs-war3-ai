@@ -33,24 +33,20 @@ try {
         "SELECT COUNT(*) AS total,
                 COALESCE(SUM(time > julianday('now') - 30), 0) AS month,
                 COALESCE(SUM(time > julianday('now') - 90), 0) AS quarter
-         FROM wc3_player WHERE player_steamid GLOB 'STEAM_[0-5]:[01]:[0-9]*'"
+         FROM wc3_player WHERE player_steamid GLOB " . REAL_STEAMID
     )->fetch();
 
     // The current month (the VPS's time): kills minus deaths.
     $monthly = $db->query(
         "SELECT m.kills, m.deaths, m.headshots, p.player_id, COALESCE(n.name, '?') AS name
-         FROM cs_war3_ai_monthly m
-         LEFT JOIN wc3_player p ON p.player_steamid = m.steamid
-         LEFT JOIN cs_war3_ai_names n ON n.steamid = m.steamid
+         FROM cs_war3_ai_monthly m " . with_names('m') . "
          WHERE m.month = strftime('%Y-%m', 'now', 'localtime') ORDER BY m.kills - m.deaths DESC, m.kills DESC LIMIT 15"
     )->fetchAll();
 
     // The month's map MVPs: who was most often on top of the scoreboard at a map's end (server/plugins/monthly.sma).
     $mvps = $db->query(
         "SELECT v.count, p.player_id, COALESCE(n.name, '?') AS name
-         FROM cs_war3_ai_mvp v
-         LEFT JOIN wc3_player p ON p.player_steamid = v.steamid
-         LEFT JOIN cs_war3_ai_names n ON n.steamid = v.steamid
+         FROM cs_war3_ai_mvp v " . with_names('v') . "
          WHERE v.month = strftime('%Y-%m', 'now', 'localtime') ORDER BY v.count DESC LIMIT 5"
     )->fetchAll();
 
@@ -59,9 +55,7 @@ try {
         "SELECT month, player_id, name FROM (
              SELECT m.month, p.player_id, COALESCE(n.name, '?') AS name,
                     ROW_NUMBER() OVER (PARTITION BY m.month ORDER BY m.kills - m.deaths DESC, m.kills DESC) AS place
-             FROM cs_war3_ai_monthly m
-             LEFT JOIN wc3_player p ON p.player_steamid = m.steamid
-             LEFT JOIN cs_war3_ai_names n ON n.steamid = m.steamid
+             FROM cs_war3_ai_monthly m " . with_names('m') . "
              WHERE m.month < strftime('%Y-%m', 'now', 'localtime'))
          WHERE place <= 3 ORDER BY month DESC, place"
     )->fetchAll();
@@ -76,19 +70,15 @@ try {
     $goal = $db->query("SELECT goal, target FROM cs_war3_ai_weekly_goal WHERE week = $week")->fetch();
     $weekly = $db->query(
         "SELECT w.count, p.player_id, COALESCE(n.name, '?') AS name
-         FROM cs_war3_ai_weekly w
-         LEFT JOIN wc3_player p ON p.player_steamid = w.steamid
-         LEFT JOIN cs_war3_ai_names n ON n.steamid = w.steamid
+         FROM cs_war3_ai_weekly w " . with_names('w') . "
          WHERE w.week = $week ORDER BY w.count DESC LIMIT 10"
     )->fetchAll();
 
-    // Only real SteamIDs count (STEAM_X:Y:digits): not the bots ("BOT"), nor STEAM_ID_PENDING or STEAM_ID_LAN, which
-    // many players share.
     $sql = "SELECT p.player_id, COALESCE(n.name, '?') AS name, r.race_id, r.race_xp
             FROM wc3_player_race r
             JOIN wc3_player p ON p.player_id = r.player_id
             LEFT JOIN cs_war3_ai_names n ON n.steamid = p.player_steamid
-            WHERE p.player_steamid GLOB 'STEAM_[0-5]:[01]:[0-9]*' AND r.race_xp > 0 AND r.race_id BETWEEN 1 AND 8"
+            WHERE p.player_steamid GLOB " . REAL_STEAMID . " AND r.race_xp > 0 AND r.race_id BETWEEN 1 AND 8"
         . ($race ? ' AND r.race_id = :race' : '')
         . ' ORDER BY r.race_xp DESC LIMIT 50';
     $query = $db->prepare($sql);
@@ -99,9 +89,7 @@ try {
         // The name the stats page knows (it follows a renaming), rather than the one CS's ranking kept.
         "SELECT c.position, c.kills, c.deaths, c.headshots, c.shots, c.hits, p.player_id,
                 COALESCE(n.name, c.name) AS name
-         FROM cs_war3_ai_combat c
-         LEFT JOIN wc3_player p ON p.player_steamid = c.steamid
-         LEFT JOIN cs_war3_ai_names n ON n.steamid = c.steamid
+         FROM cs_war3_ai_combat c " . with_names('c') . "
          ORDER BY c.position LIMIT 15"
     )->fetchAll();
 
@@ -109,9 +97,7 @@ try {
 
     $latest = $db->query(
         "SELECT u.unlocked, l.name AS achievement, l.description, p.player_id, COALESCE(n.name, '?') AS name
-         FROM ach_unlocked u JOIN ach_list l ON l.id = u.achievement
-         LEFT JOIN wc3_player p ON p.player_steamid = u.steamid
-         LEFT JOIN cs_war3_ai_names n ON n.steamid = u.steamid
+         FROM ach_unlocked u JOIN ach_list l ON l.id = u.achievement " . with_names('u') . "
          ORDER BY u.unlocked DESC LIMIT 10"
     )->fetchAll();
 } catch (PDOException $exception) {

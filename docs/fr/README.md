@@ -14,7 +14,8 @@ répondent, et un maître du jeu. Et le code pour monter le tien.
 - Respawn, par équipes : tu reviens tout de suite. 8 races de Warcraft 3 avec leurs compétences et un ultime ; ton XP
   est gardée, race par race, et les niveaux viennent deux fois plus vite.
 - Des bots remplissent le serveur quand il y a peu de monde, et répondent : nomme-en un dans le chat, ou pose une
-  question avec un `?`. Ils se souviennent de toi, et gardent rancune.
+  question avec un `?`. Ils se souviennent de toi, te voient comme un rival si tu les bats souvent, et ne se moquent
+  jamais de toi.
 - Un maître du jeu IA : primes, duels, un boss, des défis ; un journal chaque nuit sur le site.
 - `/coach` : un conseil d'un coach IA, ou la réponse à ta question, tiré de tes chiffres sur la carte, en privé ;
   `/coach on` : un toutes les 5 minutes.
@@ -22,7 +23,7 @@ répondent, et un maître du jeu. Et le code pour monter le tien.
   [cs.pazpop.net](https://cs.pazpop.net).
 - Serveur à 1000 FPS, Amérique du Nord (est).
 
-Tout le reste (commandes, races, règlement) : [war3ft.md](war3ft.md).
+Tout le reste (commandes, races, règlement) : [guide.md](guide.md).
 
 ## Rejoindre le serveur
 

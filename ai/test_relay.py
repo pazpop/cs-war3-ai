@@ -7,7 +7,7 @@ from unittest import mock
 
 os.environ["AI_DB"] = ":memory:"
 os.environ.setdefault("AI_BOTS", os.path.join(os.path.dirname(__file__), "..", "server", "bots.txt"))
-os.environ.setdefault("AI_GUIDE", os.path.join(os.path.dirname(__file__), "..", "docs", "war3ft.md"))
+os.environ.setdefault("AI_GUIDE", os.path.join(os.path.dirname(__file__), "..", "stats", "guide.html"))
 os.environ.pop("ANTHROPIC_API_KEY", None)
 import relay  # noqa: E402
 
@@ -71,18 +71,18 @@ class Relay(unittest.TestCase):
         self.assertIn("killed 2 bots", relay.memory("STEAM_0:1:1", "Kim", "Zed"))
         self.assertIn("newcomer", relay.memory("", "Ann", "Zed"))
 
-    def test_grudge(self):
-        # Kim killed Rex 5 times and Rex killed him once: Rex holds a grudge, and greets him first.
+    def test_rival(self):
+        # Kim killed Rex 5 times and Rex killed them once: Kim is Rex's rival, and Rex greets them first.
         for _ in range(5):
             relay.rival("[AI] Rex", "STEAM_0:1:2", "human_wins")
         relay.rival("[AI] Rex", "STEAM_0:1:2", "bot_wins")
         relay.remember("STEAM_0:1:2")
         self.assertEqual(relay.score("Rex", "STEAM_0:1:2"), (5, 1))
-        self.assertIn("grudge", relay.memory("STEAM_0:1:2", "Kim", "Rex"))
-        self.assertNotIn("grudge", relay.memory("STEAM_0:1:2", "Kim", "Zed"))
+        self.assertIn("your rival", relay.memory("STEAM_0:1:2", "Kim", "Rex"))
+        self.assertNotIn("your rival", relay.memory("STEAM_0:1:2", "Kim", "Zed"))
         bots = [{"id": 4, "name": "[AI] Zed"}, {"id": 7, "name": "[AI] Rex"}]
-        self.assertEqual(relay.grudge_bot(bots, "STEAM_0:1:2")["id"], 7)
-        self.assertIsNone(relay.grudge_bot(bots, "STEAM_0:1:3"))
+        self.assertEqual(relay.rival_bot(bots, "STEAM_0:1:2")["id"], 7)
+        self.assertIsNone(relay.rival_bot(bots, "STEAM_0:1:3"))
 
     def test_coach(self):
         event = {"type": "coach", "id": 3, "name": "Ann", "steamid": "STEAM_0:1:4", "kills": 2, "deaths": 6,
@@ -203,6 +203,18 @@ class Relay(unittest.TestCase):
             self.assertEqual(relay.on_coach(event)["coach"]["text"], "The AK-47: 7 kills.")
         self.assertIn('Their question: "my best weapon?"', claude.call_args[0][1])
         self.assertEqual(safe.call_args[0], ("The AK-47: 7 kills.", "my best weapon?", "STEAM_0:1:6"))
+
+    def test_bots_know_yesterday_and_the_guide(self):
+        # The bots get yesterday's journal entry to talk about, and the guide as text, without its HTML.
+        relay.db.execute("INSERT OR REPLACE INTO journal VALUES (?, 'Bob won a long duel.')", (relay.yesterday(),))
+        with mock.patch.object(relay, "claude", return_value="gg") as claude, \
+                mock.patch.object(relay, "safe", return_value=True):
+            relay.bot_line({"id": 7, "name": "[AI] Zed"}, "Kim says hi.", None, "Kim")
+        self.assertIn('Yesterday on this server (mention it only when it fits): "Bob won a long duel."',
+                      claude.call_args[0][1])
+        self.assertIn("/coach", relay.GUIDE)
+        self.assertNotIn("<", relay.GUIDE)
+        relay.db.execute("DELETE FROM journal WHERE day = ?", (relay.yesterday(),))
 
     def test_gm_fair(self):
         # A bounty only on the leader; every event announced; a human just picked is not picked again.
