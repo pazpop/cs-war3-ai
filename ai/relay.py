@@ -62,13 +62,15 @@ GM_SYSTEM = (
     "You are the Game Master of a Counter-Strike 1.6 server with War3FT (Warcraft 3 races and skills), team "
     "deathmatch with instant respawn. Every few minutes you may spice up the game with one event:\n"
     "- bounty: on target, a player far ahead of the others; whoever kills them wins the prize.\n"
-    "- duel: target and target2, two players of opposite teams; the first to kill the other wins the prize.\n"
+    "- duel: target and target2, two players of opposite teams, at least one of them human; the first to kill the "
+    "other wins the prize.\n"
     "- low_gravity: 30 seconds of low gravity for everyone.\n"
     "- gold_rain: $1500 for everyone.\n"
     "- challenge: a goal for every human, within 2 minutes: challenge is kills, headshots, knife (knife kills) or "
     "grenade (grenade kills), count how many (kills 3-6, headshots 2-4, knife or grenade 1-2). The first human to "
     "reach it wins the prize; nobody has to take part.\n"
-    "- boss: target, a bot, becomes a boss: 500 health and a red glow; whoever kills it wins the prize.\n"
+    "- boss: target, a bot on a team that humans fight, becomes a boss: 500 health and a red glow; whoever kills it "
+    "wins the prize.\n"
     "- xp_rain: 100 War3FT XP for every human.\n"
     "- item_gift: a random War3FT shop item for everyone.\n"
     "The prize of a bounty, a duel, a challenge or a boss: $3000 and 200 War3FT XP.\n"
@@ -164,9 +166,12 @@ def valid_gm(answer, players):
         return None
     if event == "bounty" and target not in ids:
         return None
-    if event == "duel" and (target not in ids or target2 not in ids or ids[target]["team"] == ids[target2]["team"]):
+    # A duel has a human in it; a boss is a bot that humans can kill (no friendly fire: not on all the humans' team).
+    if event == "duel" and (target not in ids or target2 not in ids or ids[target]["team"] == ids[target2]["team"]
+                            or ids[target]["bot"] and ids[target2]["bot"]):
         return None
-    if event == "boss" and (target not in ids or not ids[target]["bot"]):
+    if event == "boss" and (target not in ids or not ids[target]["bot"]
+                            or not any(not p["bot"] and p["team"] != ids[target]["team"] for p in players)):
         return None
     challenge, count = answer.get("challenge"), answer.get("count")
     if event == "challenge":

@@ -44,9 +44,13 @@ class Relay(unittest.TestCase):
         self.assertIsNone(relay.valid_gm({"event": "duel", "target": 3, "target2": 9, "line": "x"}, PLAYERS))
         self.assertIsNotNone(relay.valid_gm({"event": "duel", "target": 3, "target2": 7, "line": "x"}, PLAYERS))
         self.assertIsNone(relay.valid_gm({"event": "kick_all", "target": 0, "target2": 0, "line": "x"}, PLAYERS))
-        # A boss is always a bot; a challenge's count stays within its bounds.
+        # A boss is a bot facing humans; a duel has a human; a challenge's count stays within its bounds.
         self.assertIsNone(relay.valid_gm({"event": "boss", "target": 3, "target2": 0, "line": "x"}, PLAYERS))
         self.assertEqual(relay.valid_gm({"event": "boss", "target": 7, "target2": 0, "line": "x"}, PLAYERS)["target"], 7)
+        teammate = PLAYERS + [{"id": 8, "name": "Leo", "bot": True, "team": "CT", "kills": 9, "deaths": 9}]
+        self.assertIsNone(relay.valid_gm({"event": "boss", "target": 8, "target2": 0, "line": "x"}, teammate))
+        bots = teammate + [{"id": 4, "name": "Zed", "bot": True, "team": "TERRORIST", "kills": 1, "deaths": 1}]
+        self.assertIsNone(relay.valid_gm({"event": "duel", "target": 4, "target2": 8, "line": "x"}, bots))
         challenge = {"event": "challenge", "target": 0, "target2": 0, "challenge": "kills", "count": 50, "line": "x"}
         self.assertEqual(relay.valid_gm(challenge, PLAYERS)["count"], 6)
         self.assertIsNone(relay.valid_gm(dict(challenge, challenge="suicide"), PLAYERS))

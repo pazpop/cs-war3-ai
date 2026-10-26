@@ -30,9 +30,10 @@
 #define TASK_RED 3            // the task that keeps the boss red
 #define TASK_JOIN 100         // + the player's slot: the task that greets them
 
-// item_gift: War3FT's shop items that help at once (its numbers, items.h); not the ankh, the tome, the scroll, the
-// mole and its protectant, nor the chameleon.
-new const GIFTS[] = { 1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14, 15 }
+// item_gift: War3FT's shop items that help at once (its numbers, items.h): boots, claws, cloak, mask, frost, periapt,
+// amulet, sock, gloves, ring. Not the ankh, tome, scroll, mole and protectant, chameleon; not the necklace (no
+// ultimate would work on anyone) nor the helm (no more headshots for anyone).
+new const GIFTS[] = { 1, 2, 3, 4, 6, 7, 12, 13, 14, 15 }
 
 new g_socket[MAX_PENDING]
 new bool:g_sent[MAX_PENDING]
