@@ -71,7 +71,8 @@ anyone who wants to run their own server, and get players to come back and bring
   the paths listed in `caddy/fastdl.Caddyfile` (War3FT precaches `wc3.css` too): a new client file needs its path.
 - The in-game browser (MOTD) cannot open today's HTTPS (error -113): the stats pages are also served over HTTP.
 - Docker Desktop on Windows forwards UDP badly: play tests happen on the VPS.
-- Caddy does not reread its Caddyfile: `deploy.yml` reloads it when it changes.
+- Caddy does not reread its Caddyfile: `deploy.yml` restarts it when it changes (`caddy reload` can leave the old
+  settings running).
 - YaPB's `yb_difficulty_auto` balances each bot against the others and pushes them up to Expert: keep it off,
   use `yb_difficulty_min`/`max`.
 - YaPB's English bot names include a racial slur: our own list replaces it. `server/bots.txt` is the one list of

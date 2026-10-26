@@ -5,7 +5,7 @@
 - name: The game server
   hosts: cs
   become: true
-  # If a task fails, the pending reload of Caddy still happens.
+  # If a task fails, the pending restart of Caddy still happens.
   force_handlers: true
   vars:
     app_dir: /srv/cs-war3-ai
@@ -67,15 +67,13 @@
         - { src: ../ai/, dest: ai/ }
         - { src: ../stats/, dest: stats/ }
 
-    # Caddy does not reread its Caddyfile on its own: a change reloads it, at the end of the run.
+    # Caddy does not reread its Caddyfile on its own: a change restarts it, at the end of the run.
     - name: Copy the Caddyfiles (the front and FastDL)
       ansible.builtin.copy:
         src: ../caddy/
         dest: "{{ app_dir }}/caddy/"
         mode: "0644"
-      notify:
-        - Reload Caddy
-        - Reload FastDL
+      notify: Restart Caddy
 
     # Compose reads .env by itself. Readable by root only.
     - name: Write the server's settings and secrets
@@ -216,15 +214,10 @@
         - cs-war3-ai-collect.timer
 
   handlers:
-    # No downtime; a broken Caddyfile is refused (the old one stays).
-    - name: Reload Caddy
+    # A restart, not "caddy reload": a reload can leave the old settings running. The site is off for a second or
+    # two; the game is not touched.
+    - name: Restart Caddy
       ansible.builtin.command:
-        cmd: docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
-        chdir: "{{ app_dir }}"
-      changed_when: true
-
-    - name: Reload FastDL
-      ansible.builtin.command:
-        cmd: docker compose exec -T fastdl caddy reload --config /etc/caddy/fastdl.Caddyfile
+        cmd: docker compose restart caddy fastdl
         chdir: "{{ app_dir }}"
       changed_when: true
