@@ -3,7 +3,7 @@
 # commits. pazpop.net is only pushed: GitHub Actions deploys it.
 # In Ubuntu, from anywhere:
 #   ./deploy-all.sh          the projects with commits not pushed yet
-#   ./deploy-all.sh --all    every project (the monthly rebuild, for the images' security updates)
+#   ./deploy-all.sh --all    every project (a new VPS, or the monthly rebuild for the images' security updates)
 # It shows what it will do and asks before doing it. Not config.yml: it can reboot the VPS, run it by hand.
 set -euo pipefail
 
@@ -45,8 +45,13 @@ fi
 read -rp "Push and deploy ${todo[*]}? [y/N] " answer
 [ "$answer" = y ] || exit 1
 
-# The same as vault.sh, for this run only.
-for project in "${todo[@]}"; do
+# The same as vault.sh, for this run only; the one from vault.sh, if this terminal still has it.
+if [ -n "${VAULT_PASSWORD:-}" ] && [ "$(date +%s)" -lt "${VAULT_PASSWORD_EXPIRY:-0}" ]; then
+  todo_vault=()
+else
+  todo_vault=("${todo[@]}")
+fi
+for project in "${todo_vault[@]}"; do
   if [ -f "$project/ansible/deploy.yml" ]; then
     read -rsp "Vault password: " VAULT_PASSWORD
     echo
