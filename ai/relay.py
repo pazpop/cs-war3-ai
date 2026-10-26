@@ -15,6 +15,7 @@ import threading
 import time
 import urllib.request
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 
 API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 MODEL = os.environ.get("AI_MODEL", "claude-haiku-5-5")
@@ -503,6 +504,9 @@ async def serve(reader, writer):
 
 
 async def main():
+    # As many requests at once as the plugin can wait for (MAX_PENDING in ai.sma): the map's summaries all come
+    # together, and Python's default (CPUs + 4) would make the last ones miss the plugin's 10 seconds.
+    asyncio.get_running_loop().set_default_executor(ThreadPoolExecutor(max_workers=16))
     server = await asyncio.start_server(serve, "0.0.0.0", PORT, limit=16384)
     print(f"AI relay on port {PORT}, model {MODEL}, {DAILY_USD} $ a day" + ("" if API_KEY else ", no API key: silent"),
           flush=True)
