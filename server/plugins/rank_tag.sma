@@ -19,11 +19,6 @@ public plugin_init()
 	load_champions()
 }
 
-public plugin_end()
-{
-	SQL_FreeHandle(g_db)
-}
-
 // Read again at each map start: a new month changes them.
 load_champions()
 {

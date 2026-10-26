@@ -37,7 +37,6 @@ new const ACH_COUNTER[ACHIEVEMENTS] = {
 }
 new const ACH_GOAL[ACHIEVEMENTS] = { 1, 100, 1000, 10000, 100, 1000, 10, 100, 100, 10, 20, 25, 10, 36000 }
 
-new g_steamid[33][35]             // empty: not counted (bot, or no SteamID)
 new g_saved[33][COUNTERS]          // what the database had when the player arrived on this map
 new g_new[33][COUNTERS]            // what they did since (best_streak: their best on this map)
 new bool:g_unlocked[33][ACHIEVEMENTS]
@@ -68,11 +67,6 @@ public plugin_init()
 	run("COMMIT")
 }
 
-public plugin_end()
-{
-	SQL_FreeHandle(g_db)
-}
-
 // Arrival, also at each map change: a clean slate until Steam confirms who the player is.
 public client_connect(id)
 {
@@ -87,10 +81,8 @@ public client_connect(id)
 // Steam has confirmed the SteamID: loads the counters and the unlocked achievements.
 public client_authorized(id, const authid[])
 {
-	if (is_user_bot(id) || !is_real_steamid(authid))
+	if (!keep_steamid(id, authid))
 		return
-	// Nothing to escape in a real SteamID, but it still goes through SQL_QuoteString.
-	SQL_QuoteString(Empty_Handle, g_steamid[id], charsmax(g_steamid[]), authid)
 	g_arrival[id] = get_systime()
 
 	new Handle:query = SQL_PrepareQuery(g_db,

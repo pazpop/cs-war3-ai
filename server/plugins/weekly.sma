@@ -22,7 +22,6 @@ new const GOALS[][Goal] = {
 
 new g_week[11]         // the week's Monday, "2026-10-26", as the stats page counts it (SQLite, the VPS's time)
 new g_goal             // this week's goal, in GOALS
-new g_steamid[33][35]  // empty: not counted (bot, or no SteamID)
 new g_count[33]        // the player's count this week
 new g_unsaved[33]      // the part of it not saved yet
 
@@ -51,11 +50,6 @@ public plugin_init()
 		g_week, GOALS[g_goal][TEXT], GOALS[g_goal][TARGET])
 }
 
-public plugin_end()
-{
-	SQL_FreeHandle(g_db)
-}
-
 public client_connect(id)
 {
 	g_steamid[id][0] = 0
@@ -65,9 +59,8 @@ public client_connect(id)
 
 public client_authorized(id, const authid[])
 {
-	if (is_user_bot(id) || !is_real_steamid(authid))
+	if (!keep_steamid(id, authid))
 		return
-	SQL_QuoteString(Empty_Handle, g_steamid[id], charsmax(g_steamid[]), authid)
 	new Handle:query = SQL_PrepareQuery(g_db, "SELECT count FROM cs_war3_ai_weekly WHERE week = '%s' AND steamid = '%s'",
 		g_week, g_steamid[id])
 	if (SQL_Execute(query) && SQL_MoreResults(query))

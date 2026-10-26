@@ -9,7 +9,6 @@
 #include "database.inc"
 #include "kills.inc"
 
-new g_steamid[33][35]  // empty: not counted (bot, or no SteamID)
 new g_kills[33]
 new g_deaths[33]
 new g_headshots[33]
@@ -51,11 +50,6 @@ humans_who_scored()
 	return scored
 }
 
-public plugin_end()
-{
-	SQL_FreeHandle(g_db)
-}
-
 public client_connect(id)
 {
 	remove_task(id)
@@ -67,8 +61,7 @@ public client_connect(id)
 
 public client_authorized(id, const authid[])
 {
-	if (!is_user_bot(id) && is_real_steamid(authid))
-		SQL_QuoteString(Empty_Handle, g_steamid[id], charsmax(g_steamid[]), authid)
+	keep_steamid(id, authid)
 }
 
 // At arrival and at each map start (every 20 minutes): the player's place this month, once the chat is in view.

@@ -1,7 +1,9 @@
 // War3FT's SQLite database (data/sqlite3/war3ft.sq3), for our plugins that keep their own tables in it:
-// #include "database.inc", after <sqlx>. Local SQLite: plain (not threaded) queries are fast enough, and simple to follow.
+// #include "database.inc", after <sqlx> and "common.inc", and call connect_db() in plugin_init; the plugin's end closes
+// it. Local SQLite: plain (not threaded) queries are fast enough, and simple to follow.
 
 new Handle:g_db
+stock g_steamid[33][35]  // each human's SteamID, escaped for the queries (keep_steamid); empty: not counted
 
 // In plugin_init: opens the database; without it, the plugin stops.
 stock connect_db()
@@ -11,6 +13,22 @@ stock connect_db()
 	g_db = SQL_Connect(SQL_MakeDbTuple("", "", "", "war3ft"), code, error, charsmax(error))
 	if (g_db == Empty_Handle)
 		set_fail_state("SQLite: %s", error)
+}
+
+public plugin_end()
+{
+	SQL_FreeHandle(g_db)
+}
+
+// In client_authorized: keeps the player's SteamID, and returns true, when it counts (a bot or a player without a
+// real SteamID: no). Nothing to escape in a real SteamID, but it still goes through SQL_QuoteString.
+stock bool:keep_steamid(id, const authid[])
+{
+	g_steamid[id][0] = 0
+	if (!is_real_steamid(authid))
+		return false
+	SQL_QuoteString(Empty_Handle, g_steamid[id], charsmax(g_steamid[]), authid)
+	return true
 }
 
 // Runs a query that returns nothing. Every value in it comes from the plugin or is escaped.
