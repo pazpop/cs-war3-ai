@@ -129,8 +129,8 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
   map's last 2 minutes, when mapchooser votes).
 - `slash_commands.sma`: `/nextmap`, `/currentmap`, `/timeleft`, `/thetime` (AMX Mod X only knows them without the
   slash): every command then works with a `/`.
-- `votekick.sma`: a player is kicked for 10 minutes once 60 % of the other humans chose them (at least 3 humans;
-  admins are not in the menu).
+- `votekick.sma`: a player is kicked once 60 % of the other humans chose them (at least 3 humans; admins are not in
+  the menu). Again within a day: banned 5 minutes, then 30 (counted by SteamID).
 - `web_stats.sma`: for the stats page, stores each human's name (in SQLite, War3FT only keeps the SteamID), and
   copies the top 100 of CS's combat ranking (`/rank`, `/top15`) at each map start. `/mystats`: the link to the
   player's page.

@@ -138,8 +138,8 @@ rate) :
   (pas dans les 2 dernières minutes de la carte, quand mapchooser vote).
 - `slash_commands.sma` : `/nextmap`, `/currentmap`, `/timeleft`, `/thetime` (AMX Mod X ne les connaît que sans le
   `/`) : toutes les commandes marchent alors avec un `/`.
-- `votekick.sma` : un joueur est exclu 10 minutes quand 60 % des autres humains l'ont choisi (3 humains au moins ;
-  les admins ne sont pas dans le menu).
+- `votekick.sma` : un joueur est expulsé quand 60 % des autres humains l'ont choisi (3 humains au moins ; les admins
+  ne sont pas dans le menu). De nouveau dans la journée : banni 5 minutes, puis 30 (compté par SteamID).
 - `web_stats.sma` : pour la page de stats, garde le nom de chaque humain (en SQLite, War3FT ne garde que le SteamID),
   et recopie le top 100 du classement de combat de CS (`/rank`, `/top15`) à chaque début de carte. `/mystats` : le
   lien vers la page du joueur.

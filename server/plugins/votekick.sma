@@ -1,12 +1,15 @@
-// "votekick" in chat: a menu of the other humans; a player is kicked for 10 minutes once 60 % of the other humans chose them.
+// "votekick" in chat: a menu of the other humans; a player is kicked once 60 % of the other humans chose them.
 // Counted against all the humans on the server, not only those who answer: one player alone never decides.
-// Admins are not in the menu (immunity).
+// Admins are not in the menu (immunity). The first time in a day: kicked; the second: banned 5 minutes; then 30
+// (counted by SteamID in War3FT's database, table cs_war3_ai_votekicks, so that a map change does not forget it).
 #include <amxmodx>
+#include <sqlx>
 #include "common.inc"
+#include "database.inc"
 
 #define SHARE 0.6           // share of the other humans needed
 #define KICK_MIN_HUMANS 3   // with 2, one player could kick the other alone
-#define BAN_MINUTES 10      // how long a player kicked by vote cannot come back
+#define KICKS_KEPT 86400    // seconds a kick by vote counts for the next one: a day
 
 new g_wants_kick[33]        // the userid each player wants to kick (0: nobody)
 new bool:g_told[33]         // whether everyone already saw this player's vote on this map
@@ -16,6 +19,8 @@ public plugin_init()
 	register_plugin("Votekick", "1.0", "cs-war3-ai")
 	register_clcmd("say votekick", "cmd_votekick")
 	register_clcmd("say /votekick", "cmd_votekick")
+	connect_db()
+	run("CREATE TABLE IF NOT EXISTS cs_war3_ai_votekicks (steamid TEXT PRIMARY KEY, count INTEGER, last INTEGER)")
 }
 
 public client_disconnected(id)
@@ -94,12 +99,36 @@ public on_votekick_choice(id, menu, item)
 	g_told[id] = true
 	if (votes >= goal)
 	{
-		new reason[48]
-		formatex(reason, charsmax(reason), "Kicked by vote for %d minutes", BAN_MINUTES)
-		kick_and_ban(target, BAN_MINUTES, reason)
+		punish(target)
 		for (new i = 1; i <= MaxClients; i++)
 			if (g_wants_kick[i] == userid)
 				g_wants_kick[i] = 0
 	}
 	return PLUGIN_HANDLED
+}
+
+// Kicked; banned 5 minutes the second time within a day, 30 the next times. Without a real SteamID: kicked only.
+punish(target)
+{
+	new authid[35], steamid[72], times = 1
+	get_user_authid(target, authid, charsmax(authid))
+	if (is_real_steamid(authid))
+	{
+		SQL_QuoteString(Empty_Handle, steamid, charsmax(steamid), authid)
+		run("INSERT INTO cs_war3_ai_votekicks VALUES ('%s', 1, strftime('%%s', 'now')) ON CONFLICT (steamid) DO UPDATE \
+			SET count = CASE WHEN last < strftime('%%s', 'now') - %d THEN 1 ELSE count + 1 END, last = excluded.last",
+			steamid, KICKS_KEPT)
+		new Handle:query = SQL_PrepareQuery(g_db, "SELECT count FROM cs_war3_ai_votekicks WHERE steamid = '%s'", steamid)
+		if (SQL_Execute(query) && SQL_MoreResults(query))
+			times = SQL_ReadResult(query, 0)
+		SQL_FreeHandle(query)
+	}
+	if (times == 1)
+		server_cmd("kick #%d ^"Kicked by vote^"", get_user_userid(target))
+	else
+	{
+		new minutes = times == 2 ? 5 : 30, reason[48]
+		formatex(reason, charsmax(reason), "Kicked by vote: banned %d minutes", minutes)
+		kick_and_ban(target, minutes, reason)
+	}
 }

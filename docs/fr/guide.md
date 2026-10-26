@@ -25,8 +25,8 @@ Counter-Strike 1.6, avec les races et les sorts de Warcraft 3 : Frozen Throne (l
   les succès). Un ping au-dessus de
   **300 ms** pendant 50 secondes te fait expulser.
 
-Les mêmes règles valent dans le chat d'équipe. Si tu les enfreins, les joueurs peuvent t'expulser 10 minutes
-(`/votekick`), ou un admin peut t'expulser ou te bannir.
+Les mêmes règles valent dans le chat d'équipe. Si tu les enfreins, les joueurs peuvent t'expulser (`/votekick` ;
+de nouveau dans la journée : banni 5 minutes, puis 30), ou un admin peut t'expulser ou te bannir.
 
 ## Pour commencer
 
@@ -45,7 +45,7 @@ Choisis une race dans le premier menu. Puis, dans le chat :
 | `/itemsinfo`, `/itemsinfo2` | Ce que font les objets |
 | `/war3help` | L'aide de War3FT |
 | `/rtv` | Demander une nouvelle carte (vote à 60 % des humains) |
-| `/votekick` | Voter pour exclure un joueur 10 minutes : à 60 % des autres humains (3 humains au moins) |
+| `/votekick` | Voter pour exclure un joueur : à 60 % des autres humains (3 humains au moins) |
 | `/rank`, `/top15` | Ton rang au combat, le top 15 (le top 10 affiche sa place dans le chat) |
 | `/ach` | Tes succès : 14 objectifs, de ton premier kill jusqu'à 10 000 |
 | `/mystats` | Le lien vers ta page sur le site de stats |
