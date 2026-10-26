@@ -111,6 +111,8 @@ plusieurs partagent) :
   [server/messages.txt](../../server/messages.txt) : ajouter le serveur aux favoris, la page de stats, les commandes.
 - `monthly.sma` : le classement du mois (kills - morts, repart de zéro le 1er), sur la page de stats. À chaque
   carte, la place du joueur ce mois-ci.
+- `no_spray.sma` : pas de sprays (la touche T) ; `sv_allowupload 0` cache déjà les images perso ; les bots :
+  `yb_spraypaints 0`.
 - `rank_tag.sma` : le top 10 affiche sa place dans le chat, `[#3] nom : message` ; le top 3 du mois passé,
   `[Champion]`.
 - `rtv.sma` : `rtv` dans le chat ; à 60 % de tous les humains du serveur, le vote d'adminvote sur 4 cartes au hasard

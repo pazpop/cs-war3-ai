@@ -105,6 +105,7 @@ share):
   add the server to your favorites, the stats page, the commands.
 - `monthly.sma`: the ranking of the month (kills - deaths, from zero on the 1st), on the stats page. At each map, the
   player's place this month.
+- `no_spray.sma`: no sprays (the T key): `sv_allowupload 0` already hides custom images; the bots: `yb_spraypaints 0`.
 - `rank_tag.sma`: the top 10 show their place in the chat, `[#3] name: message`; last month's top 3, `[Champion]`.
 - `rtv.sma`: `rtv` in chat; at 60 % of all the humans on the server, adminvote's vote on 4 random maps (not in the
   map's last 2 minutes, when mapchooser votes).
