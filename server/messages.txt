@@ -1,6 +1,10 @@
-; The messages in the chat, one every 2 minutes, in turn (server/plugins/messages.sma). One per line; ; starts a
-; comment. {domain} becomes the server's domain (the entrypoint replaces it).
-Like this server? Add it to your favorites, address {domain}:27015
-Your XP race by race, and the ranking of the month (from zero on the 1st): https://{domain}
-Type /help for the guide, /rank for your place, /ach for your achievements.
-A new goal every Monday, the same for everyone: /goal. And /coach for a tip from the AI coach.
+; The messages in the chat, one every 5 minutes, in turn (server/plugins/messages.sma). One per line, with its tag:
+; [HELP] for a command, [INFO] for the rest. ; starts a comment. {domain} becomes the server's domain (the
+; entrypoint replaces it).
+[INFO] Like this server? Add it to your favorites, address {domain}:27015
+[HELP] /help opens the guide: races, items, commands, rules.
+[HELP] /coach: a tip from the AI coach. /coach on: one every 5 minutes.
+[HELP] /goal: the goal of the week, the same for everyone.
+[HELP] /mystats: your page on {domain}, with your XP race by race.
+[HELP] /ach: your achievements.
+[HELP] rtv: vote for a new map.

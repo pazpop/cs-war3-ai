@@ -1,6 +1,7 @@
 // The ranking of the month, for the web page: each human's kills, deaths and headshots, per month (in
 // data/sqlite3/war3ft.sq3, table "cs_war3_ai_monthly"). A new month starts from zero: newcomers have a chance too.
 // Saved when a player leaves and at each map's end (every 20 minutes). Humans only (by SteamID): not the bots.
+// At each map start, each player sees the top 5 and their own place, in one [STATS] line.
 // Also each human's map MVPs per month (table "cs_war3_ai_mvp"): on top of the scoreboard, bots included, at a
 // map's end.
 #include <amxmodx>
@@ -64,28 +65,57 @@ public client_authorized(id, const authid[])
 	keep_steamid(id, authid)
 }
 
-// At arrival and at each map start (every 20 minutes): the player's place this month, once the chat is in view.
+// At arrival and at each map start (every 20 minutes), in one line: the month's top 5 and the player's place.
 public client_putinserver(id)
 {
-	set_task(10.0, "show_place", id)
+	set_task(10.0, "show_top", id)
 }
 
-public show_place(id)
+public show_top(id)
 {
-	if (!g_steamid[id][0])
+	if (!is_user_connected(id))
 		return
-	// The same order as the web page: kills - deaths, then kills.
-	new Handle:query = SQL_PrepareQuery(g_db,
-		"SELECT (SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month AND (o.kills - o.deaths > m.kills - m.deaths \
-		OR (o.kills - o.deaths = m.kills - m.deaths AND o.kills > m.kills))) + 1, \
-		(SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month) FROM cs_war3_ai_monthly m \
-		WHERE m.month = strftime('%%Y-%%m', 'now', 'localtime') AND m.steamid = '%s'", g_steamid[id])
-	if (SQL_Execute(query) && SQL_MoreResults(query))
-		client_print(id, print_chat, "[Month] You are #%d of %d this month (kills - deaths). Your page: /mystats",
-			SQL_ReadResult(query, 0), SQL_ReadResult(query, 1))
-	else
-		client_print(id, print_chat, "[Month] The ranking of the month counts your kills from now. Your page: /mystats")
+	// The same order as the web page: kills - deaths, then kills. The names the stats page knows (web_stats.sma).
+	new line[192], name[32], length = formatex(line, charsmax(line), "Top 5 this month:")
+	new Handle:query = SQL_PrepareQuery(g_db, "SELECT COALESCE(n.name, '?'), m.kills - m.deaths 		FROM cs_war3_ai_monthly m LEFT JOIN cs_war3_ai_names n ON n.steamid = m.steamid 		WHERE m.month = strftime('%%Y-%%m', 'now', 'localtime') ORDER BY m.kills - m.deaths DESC, m.kills DESC LIMIT 5")
+	new place = 0
+	if (SQL_Execute(query))
+	{
+		while (SQL_MoreResults(query))
+		{
+			SQL_ReadResult(query, 0, name, charsmax(name))
+			// Short names, so that the whole line fits; not cut inside a letter (UTF-8).
+			if (strlen(name) > 15)
+			{
+				new cut = 15
+				while (cut > 0 && (name[cut] & 0xC0) == 0x80)
+					cut--
+				name[cut] = 0
+			}
+			length += formatex(line[length], charsmax(line) - length, "%s %d. %s %+d", place ? "," : "", place + 1, name,
+				SQL_ReadResult(query, 1))
+			place++
+			SQL_NextRow(query)
+		}
+	}
 	SQL_FreeHandle(query)
+	if (!place)
+	{
+		client_print_color(id, print_team_default, "^4[STATS]^1 The ranking of the month starts: your kills count from now.")
+		return
+	}
+	if (g_steamid[id][0])
+	{
+		query = SQL_PrepareQuery(g_db,
+			"SELECT (SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month AND (o.kills - o.deaths > m.kills - m.deaths 			OR (o.kills - o.deaths = m.kills - m.deaths AND o.kills > m.kills))) + 1, 			(SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month) FROM cs_war3_ai_monthly m 			WHERE m.month = strftime('%%Y-%%m', 'now', 'localtime') AND m.steamid = '%s'", g_steamid[id])
+		if (SQL_Execute(query) && SQL_MoreResults(query))
+			formatex(line[length], charsmax(line) - length, " | You: #%d of %d", SQL_ReadResult(query, 0),
+				SQL_ReadResult(query, 1))
+		else
+			formatex(line[length], charsmax(line) - length, " | You: not ranked yet")
+		SQL_FreeHandle(query)
+	}
+	client_print_color(id, print_team_default, "^4[STATS]^1 %s", line)
 }
 
 // When a player leaves, and for every player at each map's end and when the server stops: AMX Mod X calls it then

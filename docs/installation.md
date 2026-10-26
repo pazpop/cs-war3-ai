@@ -86,12 +86,13 @@ liked CS 1.6 maps that the bots know.
 In [server/plugins/](../server/plugins/), compiled at build time (`common.inc`, `database.inc` and `kills.inc`: the
 code several share; `kills.inc` also gets the kills of War3FT's spells, which the game's death notice misses):
 
-- `achievements.sma`: 14 achievements (`/ach`), saved in War3FT's database; the player pages show them. At each map, the
-  closest one; a word to the player when 10 % is left.
+- `achievements.sma`: 14 achievements (`/ach`), saved in War3FT's database; the player pages show them. An unlock
+  shows to everyone (`[STATS]`).
 - `afk.sma`: 60 seconds without a key or a mouse move, and a player goes to spectator.
 - `ai.sma`: sends the chat, the kills between bots and humans, every 10 minutes the state of the game, a player's
-  arrivals, name changes and numbers for the coach, and the Game Master's announcements to the AI relay, and does what it answers (see
-  [The AI](#the-ai-optional)). At each map's end, the Game Master names the MVP: the top of the scoreboard.
+  arrivals, name changes and numbers for the coach, and the Game Master's announcements to the AI relay, and does
+  what it answers (see [The AI](#the-ai-optional)). At each map's end, a `[STATS]` line names the MVP: the top of the
+  scoreboard.
 - `announcer.sma`: the voices and messages for first blood, multi-kills and kill streaks. Players download the voices
   over HTTP (FastDL).
 - `block_test.sma`: blocks War3FT's debug commands `test` and `test2`, open to every player (they fill the logs).
@@ -106,11 +107,12 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
   score back to zero, a fair start. XP, the ranking of the month and the achievements stay.
 - `help.sma`: `/help` in chat, or `help` in the console, opens the guide again.
 - `high_ping.sma`: a ping over 300 ms for 50 seconds, and a player is kicked.
-- `messages.sma`: a message in the chat every 2 minutes, in turn, from [server/messages.txt](../server/messages.txt):
-  add the server to your favorites, the stats page, the commands.
+- `messages.sma`: a message in the chat every 5 minutes, in turn, from [server/messages.txt](../server/messages.txt):
+  `[HELP]` for a command, `[INFO]` for the rest (add the server to your favorites). One minute before the map's end:
+  the next map.
 - `monthly.sma`: the ranking of the month (kills - deaths, from zero on the 1st), on the stats page. At each map, the
-  player's place this month. Also each human's map MVPs of the month (on top of the scoreboard at a map's end, bots
-  included, when two humans or more scored).
+  top 5 and the player's place, in one line. Also each human's map MVPs of the month (on top of the scoreboard at a
+  map's end, bots included, when two humans or more scored).
 - `name_spam.sma`: a human who changes their name 10 times within 10 minutes is kicked for an hour.
 - `no_spray.sma`: no sprays (the T key): `sv_allowupload 0` already hides custom images; the bots: `yb_spraypaints 0`.
 - `rank_tag.sma`: the top 10 show their place in the chat, `[#3] name: message`; last month's top 3, `[Champion]`.
@@ -233,8 +235,9 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
 - **The coach**: `/coach` sends the player's numbers on this map (CSX: kills, deaths, headshots, hits and where,
   each weapon's accuracy, deaths in a row, the weapon that killed them most) and gets one tip back, in private, one a
   minute at most. `/coach <question>`: the answer to a question about these numbers, never shown in the chat.
-  After 5 deaths in a row, a tip comes on its own, once per map; 60 seconds before the map's end, each human who
-  played gets a summary: one strength, one thing to work on.
+  `/coach on`: a tip every 5 minutes, kept by SteamID in the relay until `/coach off`. 60 seconds before the map's
+  end, each human who played gets a summary: one strength, one thing to work on (and, without `/coach on`, a word
+  about it).
 - **The Game Master**: every 10 minutes, it reads the score and may start an event: a bounty on a player far ahead,
   a duel between two players, a challenge (kills, headshots or knife kills, in 2 minutes), a boss (a bot
   with 500 health and a red glow), 30 seconds of low gravity, money for everyone, 100 War3FT XP for every human

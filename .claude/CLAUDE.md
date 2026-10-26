@@ -33,7 +33,9 @@ anyone who wants to run their own server, and get players to come back and bring
   Each human's name is checked on arrival and on each change (`NAME_CHECK`; the answer kept 30 days in the relay's
   `names` table; not held back by the hourly share): an offensive one makes the plugin rename the player "Player", so
   the chat, the announcements and the stats site never show it. A player whose messages get 3 lines held back within
-  an hour is ignored for an hour (`REFUSALS`, `MUTE`).
+  an hour is ignored for an hour (`REFUSALS`, `MUTE`). `/coach on` is kept by SteamID in the relay (`coach_on`).
+- The chat's tags: `[HELP]` a command and `[INFO]` the server (messages.sma), `[STATS]` numbers (top 5, MVP,
+  achievements, goal reached); the AI's lines keep "AI" in their tag.
 - The goal of the week (`server/plugins/weekly.sma`): a week is known by its Monday's date; the goal, by the weeks
   since a fixed day; written to the database for the stats page by the week's first map; no prize.
 - Kills: War3FT kills with its spells through a death notice other plugins never see, and reports them through its

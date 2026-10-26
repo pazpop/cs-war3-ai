@@ -24,6 +24,6 @@ public client_putinserver(id)
 
 public restart()
 {
-	client_print_color(0, print_team_default, "^4[Info]^1 A human joined: everyone starts again from zero. Good luck!")
+	client_print_color(0, print_team_default, "^4[INFO]^1 A human joined: everyone starts again from zero. Good luck!")
 	server_cmd("sv_restart 1")
 }

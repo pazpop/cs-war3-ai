@@ -36,7 +36,7 @@ Toutes les commandes marchent avec un `/` devant.
 | `/rank`, `/top15` | Ton rang au combat, le top 15 (le top 10 affiche sa place dans le chat) |
 | `/ach` | Tes succès : 14 objectifs, de ton premier kill jusqu'à 10 000 |
 | `/mystats` | Le lien vers ta page sur le site de stats |
-| `/coach` | Un conseil du coach IA, tiré de tes chiffres sur cette carte, en privé ; ou pose-lui une question : `/coach what is my best weapon?` |
+| `/coach` | Un conseil du coach IA, tiré de tes chiffres sur cette carte, en privé ; ou pose-lui une question : `/coach what is my best weapon?` `/coach on` : un conseil toutes les 5 minutes (`/coach off` pour arrêter). |
 | `/goal` | L'objectif de la semaine, le même pour tous, et ton compte |
 | `/statsme`, `/rankstats` | Tes stats sur cette carte, tes stats au total |
 | `/nextmap`, `/timeleft` | La carte suivante, le temps restant |
@@ -92,9 +92,10 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2` en jeu.
   chaque carte.
 - **L'IA** : les bots (`[AI] Zed`…) répondent quand tu écris leur nom dans le chat, répondent en général à une
   question avec un `?`, chacun avec son caractère, et se souviennent de toi et de la dernière carte jouée ensemble :
-  tue-en un souvent, et il te garde rancune. Un maître du jeu lance des primes, des duels et d'autres surprises,
-  nomme le MVP de chaque carte à sa fin (le site de stats les compte quand au moins deux humains ont joué), et écrit
-  chaque nuit le journal du serveur sur [cs.pazpop.net](https://cs.pazpop.net).
+  tue-en un souvent, et il te garde rancune. Un maître du jeu lance des primes, des duels et d'autres surprises, et
+  écrit chaque nuit le journal du serveur sur [cs.pazpop.net](https://cs.pazpop.net).
+- **Dans le chat** : `[HELP]` une commande, `[INFO]` le serveur, `[STATS]` le top 5 du mois à chaque début de carte
+  et le MVP de la carte à sa fin (le site de stats compte les MVP quand au moins deux humains ont joué).
 - **L'objectif de la semaine** : le même pour tous, un nouveau chaque lundi (`/goal`), avec son tableau sur le site
   de stats.
 - Le premier humain qui arrive sur un serveur de bots seuls relance la partie : les scores de la carte repartent de

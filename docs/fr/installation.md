@@ -90,13 +90,13 @@ Dans [server/plugins/](../../server/plugins/), compilés au build (`common.inc`,
 code que plusieurs partagent ; `kills.inc` reçoit aussi les kills des sorts de War3FT, que le message de mort du jeu
 rate) :
 
-- `achievements.sma` : 14 succès (`/ach`), gardés dans la base de War3FT ; les pages des joueurs les affichent. À
-  chaque carte, le plus proche ; un mot au joueur quand il en reste 10 %.
+- `achievements.sma` : 14 succès (`/ach`), gardés dans la base de War3FT ; les pages des joueurs les affichent. Un
+  succès débloqué s'affiche pour tous (`[STATS]`).
 - `afk.sma` : 60 secondes sans toucher une touche ni bouger la souris, et un joueur passe en spectateur.
 - `ai.sma` : envoie le chat, les kills entre bots et humains, toutes les 10 minutes l'état de la partie, les
-  arrivées, changements de pseudo et chiffres d'un joueur pour le coach, et les annonces du maître du jeu au relais de l'IA, et fait ce qu'il répond
-  (voir [L'IA](#lia-optionnel)). À la fin de chaque carte, le maître du jeu nomme le MVP : le premier du tableau des
-  scores.
+  arrivées, changements de pseudo et chiffres d'un joueur pour le coach, et les annonces du maître du jeu au relais
+  de l'IA, et fait ce qu'il répond (voir [L'IA](#lia-optionnel)). À la fin de chaque carte, une ligne `[STATS]` nomme
+  le MVP : le premier du tableau des scores.
 - `announcer.sma` : les voix et les messages du premier kill, des multi-kills et des séries. Les joueurs téléchargent
   les voix en HTTP (FastDL).
 - `block_test.sma` : bloque les commandes de débogage `test` et `test2` de War3FT, ouvertes à tous les joueurs
@@ -113,11 +113,12 @@ rate) :
   (`sv_restart`) : tous les scores à zéro, un départ équitable. L'XP, le classement du mois et les succès restent.
 - `help.sma` : `/help` dans le chat, ou `help` dans la console, rouvre le guide.
 - `high_ping.sma` : un ping au-dessus de 300 ms pendant 50 secondes, et un joueur est expulsé.
-- `messages.sma` : un message dans le chat toutes les 2 minutes, à tour de rôle, tiré de
-  [server/messages.txt](../../server/messages.txt) : ajouter le serveur aux favoris, la page de stats, les commandes.
+- `messages.sma` : un message dans le chat toutes les 5 minutes, à tour de rôle, tiré de
+  [server/messages.txt](../../server/messages.txt) : `[HELP]` pour une commande, `[INFO]` pour le reste (ajouter le
+  serveur aux favoris). Une minute avant la fin de la carte : la carte suivante.
 - `monthly.sma` : le classement du mois (kills - morts, repart de zéro le 1er), sur la page de stats. À chaque
-  carte, la place du joueur ce mois-ci. Compte aussi les MVP du mois de chaque humain (premier du tableau des scores
-  en fin de carte, bots compris, quand au moins deux humains ont marqué).
+  carte, le top 5 et la place du joueur, sur une ligne. Compte aussi les MVP du mois de chaque humain (premier du
+  tableau des scores en fin de carte, bots compris, quand au moins deux humains ont marqué).
 - `name_spam.sma` : un humain qui change de pseudo 10 fois en 10 minutes est expulsé pour une heure.
 - `no_spray.sma` : pas de sprays (la touche T) ; `sv_allowupload 0` cache déjà les images perso ; les bots :
   `yb_spraypaints 0`.
@@ -250,8 +251,9 @@ des actions :
 - **Le coach** : `/coach` envoie les chiffres du joueur sur cette carte (CSX : kills, morts, headshots, touches et
   où, précision de chaque arme, morts d'affilée, l'arme qui l'a le plus tué) et reçoit un conseil, en privé, un par
   minute au plus. `/coach <question>` : la réponse à une question sur ces chiffres, jamais affichée dans le chat.
-  Après 5 morts d'affilée, un conseil arrive tout seul, une fois par carte ; 60 secondes avant la fin de la carte,
-  chaque humain qui a joué reçoit un bilan : un point fort, une chose à travailler.
+  `/coach on` : un conseil toutes les 5 minutes, gardé par SteamID dans le relais jusqu'à `/coach off`. 60 secondes
+  avant la fin de la carte, chaque humain qui a joué reçoit un bilan : un point fort, une chose à travailler (et,
+  sans `/coach on`, un mot pour le dire).
 - **Le maître du jeu** : toutes les 10 minutes, il lit le score et peut lancer un événement : une prime sur un
   joueur très en avance, un duel entre deux joueurs, un défi (kills, headshots ou kills au couteau,
   en 2 minutes), un boss (un bot à 500 points de vie, entouré d'un halo rouge), 30 secondes de gravité basse, de

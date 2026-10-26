@@ -176,6 +176,7 @@ CREATE TABLE IF NOT EXISTS quotes (time INTEGER, bot TEXT, line TEXT);
 CREATE TABLE IF NOT EXISTS story (day TEXT, time INTEGER, line TEXT);
 CREATE TABLE IF NOT EXISTS journal (day TEXT PRIMARY KEY, text TEXT);
 CREATE TABLE IF NOT EXISTS names (name TEXT PRIMARY KEY, allowed INTEGER, checked TEXT);
+CREATE TABLE IF NOT EXISTS coach_on (steamid TEXT PRIMARY KEY);
 """)
 # A database made without these columns: add them.
 for table, column in (("players", "last_map"), ("names", "checked")):
@@ -191,6 +192,7 @@ def forget():
     with lock:
         db.execute("DELETE FROM players WHERE last_seen < date('now', ?)", (f"-{FORGET_DAYS} days",))
         db.execute("DELETE FROM rivals WHERE steamid NOT IN (SELECT steamid FROM players)")
+        db.execute("DELETE FROM coach_on WHERE steamid NOT IN (SELECT steamid FROM players)")
         db.execute("DELETE FROM story WHERE day < ?", (yesterday(),))
         # A name's check: a mistake does not last, and an offensive name is checked again.
         oldest = (datetime.date.today() - datetime.timedelta(days=NAMES_DAYS)).isoformat()
@@ -603,12 +605,34 @@ def coach_numbers(event):
             f"Deaths in a row now: {event.get('streak', 0)}. Killed most often by: {event.get('killed_by') or '-'}.")
 
 
+def coaching(steamid):
+    """True when this human typed /coach on (and not /coach off since)."""
+    with lock:
+        return bool(steamid) and db.execute("SELECT 1 FROM coach_on WHERE steamid = ?", (steamid,)).fetchone() is not None
+
+
+def on_coach_mode(event):
+    """/coach on or /coach off: a tip every 5 minutes, or not. Kept by SteamID (the plugin sends only real ones)."""
+    steamid = event.get("steamid")
+    if steamid:
+        remember(steamid)
+        with lock:
+            if event.get("on") is True:
+                db.execute("INSERT OR IGNORE INTO coach_on VALUES (?)", (steamid,))
+            else:
+                db.execute("DELETE FROM coach_on WHERE steamid = ?", (steamid,))
+            db.commit()
+    return {}
+
+
 def on_coach(event):
     """A tip for this player, from their numbers, in private: asked (/coach, or /coach with a question about their
-    game: the answer), after a run of deaths (auto), or the map's summary near its end (summary: one strength, one
-    thing to work on)."""
+    game: the answer), every 5 minutes for those who typed /coach on (every), or the map's summary near its end
+    (summary: one strength, one thing to work on; for the others, with a word on /coach on)."""
     player = player_key(event)
-    asked = not event.get("auto") and not event.get("summary")
+    if event.get("every") and not coaching(event.get("steamid")):
+        return {}
+    asked = not event.get("every") and not event.get("summary")
     if asked and muted(player):
         return {}
     if asked and not gaps_passed(("coach:" + player, COACH_GAP)):
@@ -627,6 +651,8 @@ def on_coach(event):
     text = clean(claude(COACH + GUIDE, prompt, max_tokens=200) or "", 150)
     if not text or not safe(text, question or said, player if question else None):
         return {}
+    if event.get("summary") and not coaching(event.get("steamid")):
+        text += " /coach on: more tips."
     return {"coach": {"id": event["id"], "text": text}}
 
 
@@ -695,7 +721,7 @@ def write_journal():
 
 
 HANDLERS = {"chat": on_chat, "kill": on_kill, "state": on_state, "join": on_join, "coach": on_coach, "news": on_news,
-            "name": on_name}
+            "name": on_name, "coach_mode": on_coach_mode}
 
 
 def handle(line):

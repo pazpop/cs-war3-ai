@@ -36,7 +36,7 @@ Every command works with a `/` in front.
 | `/rank`, `/top15` | Your combat rank, the top 15 (the top 10 show their place in the chat) |
 | `/ach` | Your achievements: 14 goals, from your first kill to 10,000 |
 | `/mystats` | The link to your page on the stats site |
-| `/coach` | A tip from the AI coach, from your numbers on this map, in private; or ask it a question: `/coach what is my best weapon?` |
+| `/coach` | A tip from the AI coach, from your numbers on this map, in private; or ask it a question: `/coach what is my best weapon?` `/coach on`: a tip every 5 minutes (`/coach off` to stop). |
 | `/goal` | The goal of the week, the same for everyone, and your count |
 | `/statsme`, `/rankstats` | Your stats on this map, your overall stats |
 | `/nextmap`, `/timeleft` | The next map, time left on this one |
@@ -91,9 +91,10 @@ What each one does: `/itemsinfo` and `/itemsinfo2` in game.
   average to normal. Each bot has its own War3FT race, and is War3FT level 1 to 5, new at each map.
 - **The AI**: the bots (`[AI] Zed`...) talk back when you write their name in the chat, usually answer a question
   with a `?`, each with its own character, and remember you, and the last map you played together: kill one often,
-  and it holds a grudge. A Game Master starts bounties, duels and other surprises, names each map's MVP at its end
-  (the stats site counts them when two humans or more played), and writes the server's journal each night on
-  [cs.pazpop.net](https://cs.pazpop.net).
+  and it holds a grudge. A Game Master starts bounties, duels and other surprises, and writes the server's journal
+  each night on [cs.pazpop.net](https://cs.pazpop.net).
+- **In the chat**: `[HELP]` a command, `[INFO]` the server, `[STATS]` the month's top 5 at each map start and the
+  map's MVP at its end (the stats site counts MVPs when two humans or more played).
 - **Goal of the week**: the same for everyone, a new one every Monday (`/goal`), with its board on the stats site.
 - The first human to join a server of bots only restarts the game: every score of the map starts from zero (XP and
   rankings stay).

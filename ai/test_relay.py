@@ -182,6 +182,22 @@ class Relay(unittest.TestCase):
         self.assertIn('Their question: "my best weapon?"', claude.call_args[0][1])
         self.assertEqual(safe.call_args[0], ("The AK-47: 7 kills.", "my best weapon?", "STEAM_0:1:6"))
 
+    def test_coach_on(self):
+        # The tip every 5 minutes only after /coach on; the map's summary tells the others about it.
+        every = {"type": "coach", "id": 3, "name": "Ann", "steamid": "STEAM_0:1:7", "kills": 1, "deaths": 1,
+                 "every": True}
+        summary = {**every, "every": False, "summary": True}
+        with mock.patch.object(relay, "claude", return_value="Aim for the head.") as claude, \
+                mock.patch.object(relay, "safe", return_value=True):
+            self.assertEqual(relay.on_coach(every), {})
+            self.assertEqual(claude.call_count, 0)
+            self.assertTrue(relay.on_coach(summary)["coach"]["text"].endswith("/coach on: more tips."))
+            relay.handle(b'{"type": "coach_mode", "id": 3, "steamid": "STEAM_0:1:7", "on": true}')
+            self.assertEqual(relay.on_coach(every)["coach"]["text"], "Aim for the head.")
+            self.assertEqual(relay.on_coach(summary)["coach"]["text"], "Aim for the head.")
+            relay.handle(b'{"type": "coach_mode", "id": 3, "steamid": "STEAM_0:1:7", "on": false}')
+            self.assertEqual(relay.on_coach(every), {})
+
     def test_name_check(self):
         # A refused name is asked once, then known; no answer (no key, an error): allowed, and asked again later.
         refused = '{"allowed": false}'

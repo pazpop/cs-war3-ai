@@ -90,7 +90,7 @@ public on_kill(killer, victim, bool:headshot, const weapon[])
 	{
 		new name[32]
 		get_user_name(killer, name, charsmax(name))
-		client_print_color(0, print_team_default, "^4[Goal]^1 %s reached this week's goal: %s!", name, GOALS[g_goal][TEXT])
+		client_print_color(0, print_team_default, "^4[STATS]^1 %s reached this week's goal: %s!", name, GOALS[g_goal][TEXT])
 	}
 }
 

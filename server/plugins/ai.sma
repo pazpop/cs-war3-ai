@@ -2,7 +2,7 @@
 // humans, every few minutes the state of the game, a human's new name, a player's numbers for the coach, and the
 // Game Master's announcements (for the nightly journal) to the AI relay (ai/relay.py), which asks Claude. The relay
 // answers with actions; this plugin checks each one (the players must still be here) and does only what it knows.
-// Relay down, or no API key: no answer, and the game is unchanged. At each map's end, the Game Master names the map's
+// Relay down, or no API key: no answer, and the game is unchanged. At each map's end, a [STATS] line names the map's
 // MVP.
 #include <amxmodx>
 #include <cstrike>
@@ -29,7 +29,7 @@
 #define GOLD 1500             // gold_rain: for everyone
 #define LOW_GRAVITY 300       // sv_gravity during low_gravity (the game's own is 800)
 #define GREET_AFTER 10.0      // seconds after a human enters, before a bot says hello
-#define COACH_AFTER 5         // deaths in a row before the coach gives a tip on its own, once per map
+#define COACH_EVERY 300.0     // seconds between two tips for the players who typed /coach on
 #define SUMMARY_AT 60         // seconds left in the map when the coach sends each human their summary
 #define TASK_GRAVITY 1        // the task that ends low_gravity
 #define TASK_EVENT 2          // the task that ends a bounty, a duel, a challenge or a boss
@@ -53,9 +53,8 @@ new g_bounty, g_duel[2], g_boss
 new g_challenge[16], g_goal, g_progress[33]
 new g_gravity
 
-// For the coach: deaths in a row, whether the tip after them was given on this map, and how often each weapon killed
-// the player; whether the map's summary was sent.
-new g_streak[33], bool:g_coached[33], g_killed_by[33][CSW_P90 + 1]
+// For the coach: deaths in a row, and how often each weapon killed the player; whether the map's summary was sent.
+new g_streak[33], g_killed_by[33][CSW_P90 + 1]
 new bool:g_summary_sent
 
 public plugin_init()
@@ -73,6 +72,7 @@ public plugin_init()
 	set_task(0.1, "poll", _, _, _, "b")
 	set_task(STATE_EVERY, "send_state", _, _, _, "b")
 	set_task(10.0, "check_summary", _, _, _, "b")
+	set_task(COACH_EVERY, "coach_every", _, _, _, "b")
 }
 
 // A human arrives (or comes back with the next map: the relay greets only real arrivals). A few seconds later, when
@@ -81,7 +81,6 @@ public client_putinserver(id)
 {
 	g_progress[id] = 0
 	g_streak[id] = 0
-	g_coached[id] = false
 	arrayset(g_killed_by[id], 0, sizeof g_killed_by[])
 	if (!is_user_bot(id) && !is_user_hltv(id))
 		set_task(GREET_AFTER, "send_join", TASK_JOIN + id)
@@ -248,6 +247,12 @@ public on_say(id)
 	read_args(message, charsmax(message))
 	remove_quotes(message)
 	trim(message)
+	// "/coach on" or "/coach off": a tip every 5 minutes, or not.
+	if (equali(message, "/coach on") || equali(message, "/coach off"))
+	{
+		coach_mode(id, bool:equali(message, "/coach on"))
+		return PLUGIN_HANDLED
+	}
 	// "/coach <question>": the coach answers it in private, from the player's numbers; not shown in the chat.
 	if (equali(message, "/coach ", 7))
 	{
@@ -365,7 +370,7 @@ do_actions(const answer[])
 	new JSON:coach = json_object_get_value(root, "coach")
 	if (json_is_object(coach) && json_object_has_value(coach, "text", JSONString))
 	{
-		new text[160]
+		new text[192]
 		json_object_get_string(coach, "text", text, charsmax(text))
 		new id = find_player("k", json_object_get_number(coach, "id"))
 		// In private: only the player sees it (and the game's log, for the daily chat report).
@@ -614,7 +619,7 @@ ask_coach(id, const question[])
 	send_coach(id, "", question)
 }
 
-// Deaths in a row, and what killed the player; after COACH_AFTER deaths in a row, a tip on its own, once per map.
+// Deaths in a row, and what killed the player.
 count_for_coach(killer, victim, const weapon[])
 {
 	if (killer && killer != victim && !is_user_bot(killer))
@@ -628,11 +633,34 @@ count_for_coach(killer, victim, const weapon[])
 	new weapon_id = get_weaponid(full)
 	if (weapon_id > 0 && weapon_id <= CSW_P90)
 		g_killed_by[victim][weapon_id]++
-	if (g_streak[victim] >= COACH_AFTER && !g_coached[victim])
+}
+
+// The relay keeps the choice by SteamID, from one map and one visit to the next, until /coach off.
+coach_mode(id, bool:on)
+{
+	new authid[35]
+	get_user_authid(id, authid, charsmax(authid))
+	if (!is_real_steamid(authid))
 	{
-		g_coached[victim] = true
-		send_coach(victim, "auto")
+		client_print_color(id, print_team_default, "^4[AI Coach]^1 Needs a Steam account.")
+		return
 	}
+	new JSON:event = player(id)
+	json_object_set_string(event, "type", "coach_mode")
+	json_object_set_bool(event, "on", on)
+	send(event)
+	client_print_color(id, print_team_default, on ? "^4[AI Coach]^1 On: a tip every 5 minutes. /coach off to stop."
+		: "^4[AI Coach]^1 Off: only the summary at the map's end. /coach on for more.")
+}
+
+// Every 5 minutes, each human who played: the relay answers only those who typed /coach on.
+public coach_every()
+{
+	new players[32], count, stats[STATSX_MAX_STATS], body[MAX_BODYHITS]
+	get_players(players, count, "ch")
+	for (new i = 0; i < count; i++)
+		if (get_user_wstats(players[i], 0, stats, body) && stats[0] + stats[1] > 0)
+			send_coach(players[i], "every")
 }
 
 // Near the map's end, each human who played gets their summary: one strength, one thing to work on.
@@ -650,7 +678,7 @@ public check_summary()
 }
 
 // The player's numbers on this map: kills, deaths, headshots, shots and hits, where the hits landed, each weapon used,
-// deaths in a row, and the weapon that killed them most. kind: "" (asked), "auto" or "summary"; question: the
+// deaths in a row, and the weapon that killed them most. kind: "" (asked), "every" or "summary"; question: the
 // player's, if any.
 send_coach(id, const kind[], const question[] = "")
 {
@@ -744,7 +772,9 @@ public announce_mvp()
 		get_user_name(best_human, name, charsmax(name))
 		format(text, charsmax(text), "%s Best human: %s, %d kills.", text, name, get_user_frags(best_human))
 	}
-	announce(text)
+	// Numbers, not the AI's words: a [STATS] line. The journal tells it too.
+	client_print_color(0, print_team_default, "^4[STATS]^1 %s", text)
+	journal(text)
 }
 
 announce(const text[])
@@ -753,7 +783,12 @@ announce(const text[])
 	set_hudmessage(255, 80, 0, -1.0, 0.18, 0, 0.0, 5.0, 0.1, 0.5, -1)
 	show_hudmessage(0, "%s", text)
 	log_message("^"Game Master^" say ^"%s^"", text)
-	// For the server's journal, written each night by the relay.
+	journal(text)
+}
+
+// For the server's journal, written each night by the relay.
+journal(const text[])
+{
 	new JSON:event = json_init_object()
 	json_object_set_string(event, "type", "news")
 	json_object_set_string(event, "text", text)

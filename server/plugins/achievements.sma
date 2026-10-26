@@ -70,7 +70,6 @@ public plugin_init()
 // Arrival, also at each map change: a clean slate until Steam confirms who the player is.
 public client_connect(id)
 {
-	remove_task(id)
 	g_steamid[id][0] = 0
 	g_streak[id] = 0
 	arrayset(g_saved[id], 0, COUNTERS)
@@ -109,46 +108,10 @@ public client_authorized(id, const authid[])
 	SQL_FreeHandle(query)
 }
 
-// At arrival and at each map start: the closest goal, just after the place of the month (monthly.sma).
-public client_putinserver(id)
-{
-	set_task(12.0, "show_closest", id)
-}
-
-public show_closest(id)
-{
-	if (!g_steamid[id][0])
-		return
-	// The locked achievement with the biggest share done.
-	new best = -1, Float:best_share = -1.0
-	for (new i = 0; i < ACHIEVEMENTS; i++)
-	{
-		new Float:share = float(value(id, ACH_COUNTER[i])) / float(ACH_GOAL[i])
-		if (!g_unlocked[id][i] && share > best_share)
-		{
-			best = i
-			best_share = share
-		}
-	}
-	if (best == -1)
-		client_print(id, print_chat, "[Achievement] You have them all. Respect!")
-	else
-		client_print(id, print_chat, "[Achievement] Closest: %s (%s), %d to go. /ach for the list.",
-			ACH_NAME[best], ACH_DESCRIPTION[best], to_go(id, best))
-}
-
-// What is left to reach an achievement; the time in hours, rounded up.
-to_go(id, achievement)
-{
-	new left = ACH_GOAL[achievement] - value(id, ACH_COUNTER[achievement])
-	return ACH_COUNTER[achievement] == SECONDS ? (left + 3599) / 3600 : left
-}
-
 // When a player leaves, and for every player at each map's end (every 20 minutes) and when the server stops:
 // AMX Mod X calls it then too.
 public client_disconnected(id)
 {
-	remove_task(id)
 	save(id)
 	g_steamid[id][0] = 0
 }
@@ -185,9 +148,6 @@ public on_kill(killer, victim, bool:headshot, const weapon[])
 	if (!killer || killer == victim || !g_steamid[killer][0])
 		return
 
-	// The counters before this kill: only those it raises can come close to a goal.
-	new before[COUNTERS]
-	before = g_new[killer]
 	g_new[killer][KILLS]++
 	if (headshot)
 		g_new[killer][HEADSHOTS]++
@@ -204,16 +164,6 @@ public on_kill(killer, victim, bool:headshot, const weapon[])
 	g_new[killer][BEST_STREAK] = max(g_new[killer][BEST_STREAK], ++g_streak[killer])
 
 	check_unlocks(killer)
-	// Close to a goal: a word when 10 % is left, once: only when this kill raised that counter. Not the streak
-	// (it starts again, and its best on this map may still be below the saved one).
-	for (new i = 0; i < ACHIEVEMENTS; i++)
-	{
-		new counter = ACH_COUNTER[i]
-		if (!g_unlocked[killer][i] && counter != BEST_STREAK && g_new[killer][counter] != before[counter]
-			&& to_go(killer, i) == max(1, ACH_GOAL[i] / 10))
-			client_print(killer, print_chat, "[Achievement] %d more for %s: %s!", to_go(killer, i), ACH_NAME[i],
-				ACH_DESCRIPTION[i])
-	}
 }
 
 check_unlocks(id)
@@ -226,7 +176,7 @@ check_unlocks(id)
 		g_unlocked[id][i] = true
 		run("INSERT OR IGNORE INTO ach_unlocked VALUES ('%s', '%s', strftime('%%s', 'now'))", g_steamid[id], ACH_ID[i])
 		get_user_name(id, name, charsmax(name))
-		client_print(0, print_chat, "[Achievement] %s unlocked %s: %s!", name, ACH_NAME[i], ACH_DESCRIPTION[i])
+		client_print_color(0, print_team_default, "^4[STATS]^1 %s unlocked %s: %s!", name, ACH_NAME[i], ACH_DESCRIPTION[i])
 	}
 }
 

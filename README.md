@@ -15,8 +15,9 @@ Game Master. And the code to run your own.
   by race, and levels come twice as fast.
 - Bots fill the server when few people play, and talk back: name one in the chat, or ask a question with a `?`.
   They remember you, and hold grudges.
-- An AI Game Master: bounties, duels, a boss, challenges; each map's MVP; a journal each night on the site.
-- `/coach`: a tip from an AI coach, or the answer to your question, from your numbers on the map, in private.
+- An AI Game Master: bounties, duels, a boss, challenges; a journal each night on the site.
+- `/coach`: a tip from an AI coach, or the answer to your question, from your numbers on the map, in private;
+  `/coach on`: one every 5 minutes.
 - A goal of the week, achievements, and rankings with a hall of fame on [cs.pazpop.net](https://cs.pazpop.net).
 - 1000 FPS server, North America (east).
 
