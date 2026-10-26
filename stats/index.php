@@ -24,13 +24,13 @@ try {
          FROM wc3_player WHERE player_steamid GLOB 'STEAM_[0-5]:[01]:[0-9]*'"
     )->fetch();
 
-    // The current month (UTC): kills minus deaths.
+    // The current month (the VPS's time): kills minus deaths.
     $monthly = $db->query(
         "SELECT m.kills, m.deaths, m.headshots, p.player_id, COALESCE(n.name, '?') AS name
          FROM cs_war3_ai_monthly m
          LEFT JOIN wc3_player p ON p.player_steamid = m.steamid
          LEFT JOIN cs_war3_ai_names n ON n.steamid = m.steamid
-         WHERE m.month = strftime('%Y-%m', 'now') ORDER BY m.kills - m.deaths DESC, m.kills DESC LIMIT 15"
+         WHERE m.month = strftime('%Y-%m', 'now', 'localtime') ORDER BY m.kills - m.deaths DESC, m.kills DESC LIMIT 15"
     )->fetchAll();
 
     // The top 3 of each past month, the same order as the [Champion] tag (server/plugins/rank_tag.sma).
@@ -41,7 +41,7 @@ try {
              FROM cs_war3_ai_monthly m
              LEFT JOIN wc3_player p ON p.player_steamid = m.steamid
              LEFT JOIN cs_war3_ai_names n ON n.steamid = m.steamid
-             WHERE m.month < strftime('%Y-%m', 'now'))
+             WHERE m.month < strftime('%Y-%m', 'now', 'localtime'))
          WHERE place <= 3 ORDER BY month DESC, place"
     )->fetchAll();
 
@@ -101,8 +101,8 @@ page_start('War3FT: rankings');
 <p><?= (int) $players['total'] ?> players have joined since launch: <?= (int) $players['month'] ?> in the last 30 days,
 <?= (int) $players['quarter'] ?> in the last 90 days.</p>
 
-<h2>This month: <?= gmdate('F Y') ?></h2>
-<p>Everyone starts from zero on the 1st (UTC).
+<h2>This month: <?= date('F Y') ?></h2>
+<p>Everyone starts from zero on the 1st (server time).
 Kills minus deaths, updated when a player leaves and at each map change.</p>
 <?php if (!$monthly): ?>
 <p>Nobody on the board yet this month: be the first.</p>
@@ -133,7 +133,7 @@ Kills minus deaths, updated when a player leaves and at each map change.</p>
 <tbody>
 <?php foreach ($hall as $month => $podium): ?>
 <tr>
-<td><?= e(gmdate('F Y', (int) strtotime($month . '-01 UTC'))) ?></td>
+<td><?= e(date('F Y', (int) strtotime($month . '-01'))) ?></td>
 <?php for ($i = 0; $i < 3; $i++): ?>
 <td><?= isset($podium[$i]) ? player_link($podium[$i]) : '' ?></td>
 <?php endfor; ?>
@@ -202,7 +202,7 @@ Kills minus deaths, updated when a player leaves and at each map change.</p>
 <tr>
 <td><?= player_link($row) ?></td>
 <td><?= e((string) $row['achievement']) ?>: <?= e((string) $row['description']) ?></td>
-<td><?= gmdate('Y-m-d', (int) $row['unlocked']) ?></td>
+<td><?= date('Y-m-d', (int) $row['unlocked']) ?></td>
 </tr>
 <?php endforeach; ?>
 </tbody>

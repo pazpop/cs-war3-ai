@@ -33,7 +33,7 @@ services:
     tty: true
     volumes:
       - hlds:/hlds
-      # The VPS's time zone (a container is in UTC otherwise): the game's logs and /thetime show the VPS's time.
+      # The VPS's time zone (a container is in UTC otherwise), like every container here: logs, /thetime, the month.
       - /etc/localtime:/etc/localtime:ro
 
   # The AI relay (ai/relay.py): the game's plugin (server/plugins/ai.sma) asks it, it asks Claude. Only the game
@@ -49,7 +49,7 @@ services:
     restart: unless-stopped
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      # The most it spends in a day, in dollars; then it is silent until midnight UTC. 0: the AI is off.
+      # The most it spends in a day, in dollars; then it is silent until midnight (the VPS's time). 0: the AI is off.
       AI_DAILY_USD: ${AI_DAILY_USD:-1}
     # game: its way out to the API.
     networks:
@@ -58,6 +58,7 @@ services:
         ipv4_address: 10.27.15.10
     volumes:
       - ai:/data
+      - /etc/localtime:/etc/localtime:ro
 
   # The stats page: PHP reads War3FT's SQLite database, and nothing else from the volume, read-only.
   stats:
@@ -68,10 +69,15 @@ services:
     restart: unless-stopped
     # As the game's user, from the start: without capabilities, PHP could not switch to its own user.
     user: "1000:1000"
+    environment:
+      # The VPS's time zone, by name: PHP does not read /etc/localtime. In .env, written by Ansible.
+      TIMEZONE: ${TIMEZONE:-UTC}
     # After hlds: its container fills the new volume first (see the Dockerfile).
     depends_on: [hlds]
     volumes:
       - ./stats:/srv/stats:ro
+      # For SQLite's 'localtime' (the month of the ranking).
+      - /etc/localtime:/etc/localtime:ro
       # The bots' list, for stats/bots.php. The folder, not the file: Ansible replaces the file, and a file mounted
       # alone would keep the old one.
       - ./server:/srv/server:ro

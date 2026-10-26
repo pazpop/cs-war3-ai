@@ -127,7 +127,7 @@ page_start($player ? 'War3FT: ' . $player['name'] : 'War3FT: player');
 <td><?= e((string) $row['name']) ?></td>
 <td><?= e((string) $row['description']) ?></td>
 <td><?= $row['unlocked'] !== null
-    ? gmdate('Y-m-d', (int) $row['unlocked'])
+    ? date('Y-m-d', (int) $row['unlocked'])
     : progress_text((int) ($progress[$row['counter']] ?? 0), (int) $row['goal'], $row['counter']) ?></td>
 </tr>
 <?php endforeach; ?>

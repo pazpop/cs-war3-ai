@@ -34,7 +34,7 @@ hold a grudge.</p>
 <tr>
 <td><img class="icon" src="/img/bots/<?= e(strtolower((string) $quote['bot'])) ?>.png" alt="" width="24" height="24"><b><?= e((string) $quote['bot']) ?></b></td>
 <td><?= e((string) $quote['line']) ?></td>
-<td><?= gmdate('M j, H:i', (int) $quote['time']) ?> UTC</td>
+<td><?= date('M j, H:i T', (int) $quote['time']) ?></td>
 </tr>
 <?php endforeach; ?>
 </table>

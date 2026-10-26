@@ -3,6 +3,8 @@
 // Everything that comes from the database goes through e(): players choose their own name.
 declare(strict_types=1);
 ini_set('display_errors', '0');
+// The VPS's time zone (.env, written by Ansible), like the rest of the server.
+date_default_timezone_set(getenv('TIMEZONE') ?: 'UTC');
 
 // The 8 War3FT races (the 9th, Chameleon, is off: wc3_races 8).
 const RACES = [

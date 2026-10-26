@@ -191,7 +191,7 @@ sudo docker compose start hlds ai
 ## Le nombre de joueurs
 
 Toutes les 5 minutes, [ansible/files/collect.py](../../ansible/files/collect.py) ajoute une ligne par serveur dans
-`/srv/collect/players.csv` : heure (UTC), serveur, en ligne, humains, bots, places, carte. Seulement des nombres, rien
+`/srv/collect/players.csv` : heure (celle du VPS, avec son décalage sur UTC), serveur, en ligne, humains, bots, places, carte. Seulement des nombres, rien
 sur les joueurs (environ 15 Ko par jour et par serveur). Les serveurs : `collect_domains` dans
 [ansible/inventory.yml](../../ansible/inventory.yml). Pour le télécharger :
 
@@ -243,7 +243,7 @@ se parlent jamais entre eux.
 Mise en place : une clé API de [console.anthropic.com](https://console.anthropic.com) dans le vault
 (`vault_anthropic_key: sk-ant-...`), puis `deploy.yml`. Sans clé, le relais se tait et le jeu ne change pas. Il
 dépense au plus `AI_DAILY_USD` par jour (1 $ par défaut, dans `compose.yml` ; `0` coupe l'IA), puis se tait jusqu'à
-minuit UTC ;
+minuit (heure du VPS) ;
 mets aussi une limite mensuelle dans la console d'Anthropic.
 
 Ce qui sort du VPS : les messages du chat public (jamais le chat d'équipe), les noms, le score, l'historique de

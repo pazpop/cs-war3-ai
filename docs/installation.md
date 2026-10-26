@@ -179,7 +179,7 @@ sudo docker compose start hlds ai
 ## Player counts
 
 Every 5 minutes, [ansible/files/collect.py](../ansible/files/collect.py) adds one line per server to
-`/srv/collect/players.csv`: time (UTC), server, online, humans, bots, slots, map. Only numbers, nothing about the
+`/srv/collect/players.csv`: time (the VPS's, with its offset from UTC), server, online, humans, bots, slots, map. Only numbers, nothing about the
 players (about 15 KB a day per server). The servers: `collect_domains` in [ansible/inventory.yml](../ansible/inventory.yml).
 To download it:
 
@@ -226,7 +226,7 @@ player at most every 10 seconds, and the bots never talk to each other.
 Setup: an API key from [console.anthropic.com](https://console.anthropic.com) in the vault
 (`vault_anthropic_key: sk-ant-...`), then `deploy.yml`. Without a key, the relay stays silent and the game is
 unchanged. It spends at most `AI_DAILY_USD` a day (1 $ by default, in `compose.yml`; `0` turns the AI off), then
-stays silent until midnight UTC; set a monthly limit in the Anthropic console too.
+stays silent until midnight (the VPS's time); set a monthly limit in the Anthropic console too.
 
 What leaves the VPS: the public chat messages (never the team chat), the names, the score, each human's history
 against the bots (since when they play, kills and deaths against them), each player's numbers for the coach. Never

@@ -55,7 +55,7 @@ public show_place(id)
 		"SELECT (SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month AND (o.kills - o.deaths > m.kills - m.deaths \
 		OR (o.kills - o.deaths = m.kills - m.deaths AND o.kills > m.kills))) + 1, \
 		(SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month) FROM cs_war3_ai_monthly m \
-		WHERE m.month = strftime('%%Y-%%m', 'now') AND m.steamid = '%s'", g_steamid[id])
+		WHERE m.month = strftime('%%Y-%%m', 'now', 'localtime') AND m.steamid = '%s'", g_steamid[id])
 	if (SQL_Execute(query) && SQL_MoreResults(query))
 		client_print(id, print_chat, "[Month] You are #%d of %d this month (kills - deaths). Your page: /mystats",
 			SQL_ReadResult(query, 0), SQL_ReadResult(query, 1))
@@ -73,12 +73,12 @@ public client_disconnected(id)
 	g_steamid[id][0] = 0
 }
 
-// Adds what the player did since the last save to the current month (UTC).
+// Adds what the player did since the last save to the current month (the VPS's time).
 save(id)
 {
 	if (!g_steamid[id][0] || g_kills[id] + g_deaths[id] == 0)
 		return
-	run("INSERT INTO cs_war3_ai_monthly VALUES (strftime('%%Y-%%m', 'now'), '%s', %d, %d, %d) ON CONFLICT (month, steamid) \
+	run("INSERT INTO cs_war3_ai_monthly VALUES (strftime('%%Y-%%m', 'now', 'localtime'), '%s', %d, %d, %d) ON CONFLICT (month, steamid) \
 		DO UPDATE SET kills = kills + excluded.kills, deaths = deaths + excluded.deaths, \
 		headshots = headshots + excluded.headshots",
 		g_steamid[id], g_kills[id], g_deaths[id], g_headshots[id])

@@ -31,7 +31,7 @@ load_champions()
 {
 	// The same order as the web page's hall of fame.
 	new Handle:query = SQL_PrepareQuery(g_db, "SELECT steamid FROM cs_war3_ai_monthly \
-		WHERE month = strftime('%%Y-%%m', 'now', 'start of month', '-1 month') \
+		WHERE month = strftime('%%Y-%%m', 'now', 'localtime', 'start of month', '-1 month') \
 		ORDER BY kills - deaths DESC, kills DESC LIMIT 3")
 	if (SQL_Execute(query))
 	{

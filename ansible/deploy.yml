@@ -22,6 +22,7 @@
           - admin_steamids | select('match', '^STEAM_[0-5]:[01]:[0-9]+$') | list | length == admin_steamids | length
           - "'STEAM_0:1:123456' not in admin_steamids"
           - domain is match('^[a-z0-9.-]+$')
+          - timezone is match('^[A-Za-z0-9_+/-]+$')
           - collect_domains | select('match', '^[a-z0-9.-]+$') | list | length == collect_domains | length
           - vault_hc_backup | default('') is match('^(https://[A-Za-z0-9./_-]+)?$')
           - vault_hc_server | default('') is match('^(https://[A-Za-z0-9./_-]+)?$')
@@ -30,6 +31,7 @@
           vault_rcon (ansible/vault.yml, optional): 16 characters or more, letters, digits, _ and - only.
           admin_steamids (ansible/personal.yml): your own SteamIDs, like STEAM_0:1:123456 (not this example).
           domain and collect_domains (ansible/inventory.yml): lowercase letters, digits, dots and dashes.
+          timezone (ansible/inventory.yml): a zone name, like America/Toronto or UTC.
           vault_hc_backup, vault_hc_server (ansible/vault.yml, optional): ping URLs like https://hc-ping.com/<uuid>.
           vault_anthropic_key (ansible/vault.yml, optional): an Anthropic API key, sk-ant-...
         quiet: true
@@ -84,6 +86,7 @@
         dest: "{{ app_dir }}/.env"
         content: |
           DOMAIN={{ domain }}
+          TIMEZONE={{ timezone }}
           RCON={{ vault_rcon | default('') }}
           ADMINS={{ admin_steamids | join(' ') }}
           ANTHROPIC_API_KEY={{ vault_anthropic_key | default('') }}
