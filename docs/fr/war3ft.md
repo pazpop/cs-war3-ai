@@ -60,7 +60,7 @@ bind "F3" "war3menu"
 | Undead Scourge | Vol de vie, vitesse, saut plus haut | Explose à sa mort |
 | Human Alliance | Invisibilité, plus de vie, étourdit | Téléportation |
 | Orcish Horde | Coups critiques, grenades puissantes, garde son équipement | Éclair en chaîne |
-| Night Elf | Esquive, renvoie les dégâts, plus de dégâts | Immobilise un ennemi |
+| Night Elves | Esquive, renvoie les dégâts, plus de dégâts | Immobilise un ennemi |
 | Blood Mage | Ranime un coéquipier, bannit, vole de l'argent | Enflamme un ennemi |
 | Shadow Hunter | Soins de groupe, transforme en animal, totem qui tire | Invincible 2 secondes |
 | Warden | Peut apparaître en taupe chez l'ennemi, bloque les ultimes ennemis, dague empoisonnée | Revient une fois |
@@ -93,8 +93,8 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2` en jeu.
 - **L'IA** : les bots (`[AI] Zed`…) répondent quand tu écris leur nom dans le chat, répondent en général à une
   question avec un `?`, chacun avec son caractère, et se souviennent de toi et de la dernière carte jouée ensemble :
   tue-en un souvent, et il te garde rancune. Un maître du jeu lance des primes, des duels et d'autres surprises,
-  nomme le MVP de chaque carte à sa fin (le site de stats les compte), et écrit chaque nuit le journal du serveur sur
-  [cs.pazpop.net](https://cs.pazpop.net).
+  nomme le MVP de chaque carte à sa fin (le site de stats les compte quand au moins deux humains ont joué), et écrit
+  chaque nuit le journal du serveur sur [cs.pazpop.net](https://cs.pazpop.net).
 - **L'objectif de la semaine** : le même pour tous, un nouveau chaque lundi (`/goal`), avec son tableau sur le site
   de stats.
 - Le premier humain qui arrive sur un serveur de bots seuls relance la partie : les scores de la carte repartent de

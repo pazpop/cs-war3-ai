@@ -42,7 +42,8 @@ HOUR_SHARE = 8        # in one hour, at most 1/8 of the day's budget: chat spam 
 REFUSALS = 3          # lines the moderator held back because of one player's messages: then the AI ignores them
 MUTE = 3600           # seconds: the hour these refusals are counted in, and the hour the player is then ignored
 JOURNAL_LINES = 300   # the day's latest announcements and bot lines the journal is written from
-JOURNALS_KEPT = 30    # the journal's days kept for the stats page (stats/index.php)
+JOURNALS_KEPT = 30    # the journal's entries kept for the stats page (stats/index.php), one a day
+NAMES_DAYS = 30       # days a name's check is kept
 EVENTS = ["none", "bounty", "duel", "low_gravity", "gold_rain", "challenge", "boss", "xp_rain", "item_gift"]
 # The challenges, and how many of each a human must reach in 2 minutes (the Game Master picks within these bounds).
 CHALLENGES = {"kills": (3, 6), "headshots": (2, 4), "knife": (1, 2)}
@@ -174,11 +175,12 @@ CREATE TABLE IF NOT EXISTS rivals (bot TEXT, steamid TEXT, human_wins INTEGER DE
 CREATE TABLE IF NOT EXISTS quotes (time INTEGER, bot TEXT, line TEXT);
 CREATE TABLE IF NOT EXISTS story (day TEXT, time INTEGER, line TEXT);
 CREATE TABLE IF NOT EXISTS journal (day TEXT PRIMARY KEY, text TEXT);
-CREATE TABLE IF NOT EXISTS names (name TEXT PRIMARY KEY, allowed INTEGER);
+CREATE TABLE IF NOT EXISTS names (name TEXT PRIMARY KEY, allowed INTEGER, checked TEXT);
 """)
-# A database made without the players' last map: add its column.
-if "last_map" not in [column[1] for column in db.execute("PRAGMA table_info(players)")]:
-    db.execute("ALTER TABLE players ADD COLUMN last_map TEXT")
+# A database made without these columns: add them.
+for table, column in (("players", "last_map"), ("names", "checked")):
+    if column not in [row[1] for row in db.execute(f"PRAGMA table_info({table})")]:
+        db.execute(f"ALTER TABLE {table} ADD COLUMN {column} TEXT")
 
 
 def forget():
@@ -190,6 +192,9 @@ def forget():
         db.execute("DELETE FROM players WHERE last_seen < date('now', ?)", (f"-{FORGET_DAYS} days",))
         db.execute("DELETE FROM rivals WHERE steamid NOT IN (SELECT steamid FROM players)")
         db.execute("DELETE FROM story WHERE day < ?", (yesterday(),))
+        # A name's check: a mistake does not last, and an offensive name is checked again.
+        oldest = (datetime.date.today() - datetime.timedelta(days=NAMES_DAYS)).isoformat()
+        db.execute("DELETE FROM names WHERE checked IS NULL OR checked < ?", (oldest,))
         db.commit()
         for times in (last_line, last_active):
             for key in [key for key, when in times.items() if when < day_ago]:
@@ -353,8 +358,9 @@ def grudge_bot(bots, steamid):
     return best
 
 
-def claude(system, prompt, schema=None, max_tokens=300):
-    """One request to the Messages API; the text of the answer, or None (no key, budget spent, error, refusal)."""
+def claude(system, prompt, schema=None, max_tokens=300, hourly=True):
+    """One request to the Messages API: the text of the answer; "" when the model refuses; None without an answer (no
+    key, budget spent, an error). hourly=False: not held back by the hour's share (the name check, a tiny request)."""
     if not API_KEY:
         return None
     hour = time.strftime("%Y-%m-%d %H")
@@ -363,7 +369,7 @@ def claude(system, prompt, schema=None, max_tokens=300):
         if hour not in hour_spent:
             hour_spent.clear()
         this_hour = hour_spent.get(hour, 0.0)
-    if (row[0] if row else 0.0) >= DAILY_USD or this_hour >= DAILY_USD / HOUR_SHARE:
+    if (row[0] if row else 0.0) >= DAILY_USD or hourly and this_hour >= DAILY_USD / HOUR_SHARE:
         return None
     body = {
         "model": MODEL,
@@ -396,7 +402,7 @@ def claude(system, prompt, schema=None, max_tokens=300):
                    (today(), usd))
         db.commit()
     if answer.get("stop_reason") == "refusal":
-        return None
+        return ""
     return "".join(block["text"] for block in answer.get("content", []) if block.get("type") == "text")
 
 
@@ -428,8 +434,9 @@ def muted(player):
 
 
 def name_allowed(name):
-    """False when the moderator finds this human's name offensive. Checked once per name (kept in the database). No
-    answer (no key, budget spent, an error): allowed this time, and asked again the next."""
+    """False when the moderator finds this human's name offensive, or the model refuses to even read it. Checked once
+    per name, then kept NAMES_DAYS. No answer (no key, the day's budget spent, an error): allowed this time, and
+    asked again the next. Not held back by the hour's share: a few players chatting cannot get names past it."""
     name = clean(name, 64)
     if not name:
         return True
@@ -437,13 +444,15 @@ def name_allowed(name):
         row = db.execute("SELECT allowed FROM names WHERE name = ?", (name,)).fetchone()
     if row:
         return bool(row[0])
-    answer = claude(NAME_CHECK, f"Name: {quoted(name)}", schema=MODERATION_SCHEMA, max_tokens=50)
+    answer = claude(NAME_CHECK, f"Name: {quoted(name)}", schema=MODERATION_SCHEMA, max_tokens=50, hourly=False)
+    if answer is None:
+        return True
     try:
         allowed = json.loads(answer)["allowed"] is True
     except (TypeError, ValueError, KeyError):
-        return True
+        allowed = False
     with lock:
-        db.execute("INSERT OR REPLACE INTO names VALUES (?, ?)", (name, allowed))
+        db.execute("INSERT OR REPLACE INTO names VALUES (?, ?, ?)", (name, allowed, today()))
         db.commit()
     if not allowed:
         print("Name refused:", name, flush=True)
@@ -651,6 +660,11 @@ def on_state(event):
     return {**result, "gm": answer}
 
 
+def on_name(event):
+    """A human changed their name during the game: checked at once, not only at the next arrival or look."""
+    return {} if name_allowed(event["name"]) else {"rename": [event["id"]]}
+
+
 def on_news(event):
     """An announcement of the Game Master in the game (an event, a prize, the map's MVP): for the day's story."""
     text = clean(str(event.get("text", "")), 200)
@@ -680,7 +694,8 @@ def write_journal():
         db.commit()
 
 
-HANDLERS = {"chat": on_chat, "kill": on_kill, "state": on_state, "join": on_join, "coach": on_coach, "news": on_news}
+HANDLERS = {"chat": on_chat, "kill": on_kill, "state": on_state, "join": on_join, "coach": on_coach, "news": on_news,
+            "name": on_name}
 
 
 def handle(line):

@@ -31,9 +31,7 @@ Il faut Counter-Strike 1.6 sur Steam. Puis, au choix :
 - Sur [cs.pazpop.net](https://cs.pazpop.net), clique sur **Join the server**.
 - Dans la console du jeu (la touche sous Échap), tape `connect cs.pazpop.net:27015`.
 
-En jeu : `/help` affiche le guide, `rtv` demande une nouvelle carte, `votekick` lance un vote pour expulser un
-joueur. Le règlement (13 ans ou plus, le respect, pas de haine, pas de triche) :
-[war3ft.md](war3ft.md#le-règlement). Pour un jeu fluide : [client.md](client.md).
+Pour un jeu fluide : [client.md](client.md).
 
 ## Monter ton propre serveur
 

@@ -14,9 +14,10 @@
 // War3FT's races, in its order (race 1 to 8), as written in bots.txt.
 new const RACES[][] = { "Undead Scourge", "Human Alliance", "Orcish Horde", "Night Elves", "Blood Mage",
 	"Shadow Hunter", "Warden", "Crypt Lord" }
-// Taken out of a human's name: what only the AI wears (the relay's name check catches look-alikes), and < and >, which
-// War3FT's /playerskills page would read as HTML.
-new const NAME_BANNED[][] = { "[AI]", "Game Master", "<", ">" }
+// Taken out of a human's name: the tags only the AI and the rankings give ([AI] Zed, [AI Game Master], [AI Coach],
+// [Champion], [#3]; the relay's name check catches other look-alikes), and < and >, which War3FT's /playerskills page
+// would read as HTML.
+new const NAME_BANNED[][] = { "[AI]", "[AI ", "Game Master", "Coach]", "[Champion]", "[#", "<", ">" }
 new const T_SKINS[][] = { "terror", "leet", "arctic", "guerilla" }
 new const CT_SKINS[][] = { "urban", "gsg9", "sas", "gign" }
 
@@ -97,11 +98,16 @@ public client_infochanged(id)
 // report), and no name becomes HTML.
 clean_name(id)
 {
-	new name[32], bool:changed
+	new name[32], bool:changed, bool:again = true
 	get_user_info(id, "name", name, charsmax(name))
-	for (new i = 0; i < sizeof NAME_BANNED; i++)
-		if (replace_string(name, charsmax(name), NAME_BANNED[i], "", false))
-			changed = true
+	// Again until nothing is left: taking a word out can make another one ([A[AI]I] gives [AI]).
+	while (again)
+	{
+		again = false
+		for (new i = 0; i < sizeof NAME_BANNED; i++)
+			if (replace_string(name, charsmax(name), NAME_BANNED[i], "", false))
+				changed = again = true
+	}
 	if (!changed)
 		return
 	trim(name)

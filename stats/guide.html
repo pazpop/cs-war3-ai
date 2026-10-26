@@ -46,7 +46,7 @@ seconds gets you kicked.</li>
 <tr><td><code>/rank</code>, <code>/top15</code></td><td>your combat rank, the top 15</td></tr>
 <tr><td><code>/ach</code></td><td>your achievements: 14 goals, from your first kill to 10,000</td></tr>
 <tr><td><code>/mystats</code></td><td>the link to your page on the stats site</td></tr>
-<tr><td><code>/coach</code></td><td>a tip from the AI coach, from your numbers on this map, only for you; or ask it a question: <i>/coach what is my best weapon?</i></td></tr>
+<tr><td><code>/coach</code></td><td>a tip from the AI coach, from your numbers on this map, in private; or ask it a question: <i>/coach what is my best weapon?</i></td></tr>
 <tr><td><code>/goal</code></td><td>the goal of the week, the same for everyone, and your count</td></tr>
 <tr><td><code>/statsme</code>, <code>/rankstats</code></td><td>your stats on this map, your overall stats</td></tr>
 <tr><td><code>/nextmap</code>, <code>/timeleft</code></td><td>the next map, time left on this one</td></tr>
@@ -64,7 +64,7 @@ seconds gets you kicked.</li>
 <tr><td><img class="icon" src="/img/races/1.png" alt="" width="24" height="24"><b>Undead Scourge</b></td><td>life steal, speed, higher jumps; ultimate: explodes on death</td></tr>
 <tr><td><img class="icon" src="/img/races/2.png" alt="" width="24" height="24"><b>Human Alliance</b></td><td>invisibility, more health, stuns; ultimate: teleport</td></tr>
 <tr><td><img class="icon" src="/img/races/3.png" alt="" width="24" height="24"><b>Orcish Horde</b></td><td>critical hits, strong grenades, keeps equipment; ultimate: chain lightning</td></tr>
-<tr><td><img class="icon" src="/img/races/4.png" alt="" width="24" height="24"><b>Night Elf</b></td><td>evasion, reflects damage, more damage; ultimate: roots an enemy</td></tr>
+<tr><td><img class="icon" src="/img/races/4.png" alt="" width="24" height="24"><b>Night Elves</b></td><td>evasion, reflects damage, more damage; ultimate: roots an enemy</td></tr>
 <tr><td><img class="icon" src="/img/races/5.png" alt="" width="24" height="24"><b>Blood Mage</b></td><td>revives a teammate, banishes, steals money; ultimate: sets an enemy on fire</td></tr>
 <tr><td><img class="icon" src="/img/races/6.png" alt="" width="24" height="24"><b>Shadow Hunter</b></td><td>group healing, turns enemies into critters, shooting ward;
 ultimate: invincible for 2 seconds</td></tr>
@@ -134,17 +134,18 @@ The first to reach it wins the prize. Your count shows in the chat.</td></tr>
 <tr><td><b>Gift</b></td><td>A War3FT shop item for everyone: boots, claws, a cloak, a ring...</td></tr>
 </table>
 <p>The prize: <b>$3000 and 200 XP</b>, saved with your race like the rest of your XP. At each map's end, the Game
-Master names the map's <b>MVP</b> (counted on the stats site), and each night it writes the server's journal on the stats site.</p>
-<p class="note">Public on this site, for as long as the server runs: your name, XP, skills, stats, achievements,
-rankings and rivalries, kept under your SteamID (that is how your progress is saved); a bot's line or the journal may
-name you too. To have them removed: ask an admin in the game, or open an issue at github.com/pazpop/cs-war3-ai.
-The server's logs (with your IP) go after 14 days, its chat log (team chat included) after 3 months.
-The bots, the coach and the Game Master are an AI: Claude, by Anthropic. Sent to it: your public chat messages, your
-name, your score and how you fare against the bots (since when you play here, your last map, your kills and deaths
-against them), and for the coach your numbers on the map and your question. Never your SteamID or your IP. The bots'
-memory of you stays on this server and goes after 6 months without a visit (backups keep it a little longer). Before a
-line is shown, a second AI check holds back what it finds offensive; it checks names too, and an offensive one becomes
-"Player".</p>
+Master names the map's <b>MVP</b> (counted on the stats site when two humans or more played), and each night it writes the server's journal on the stats site.</p>
+<p class="note">Public on this site, for as long as the server runs: your name, XP, skills, stats, achievements
+(with their date) and rankings, kept under your SteamID (that is how your progress is saved); your rivalries with the
+bots, until their memory of you goes; a bot's line (with its time) or the journal may name you too. To have your name
+taken off: ask an admin in the game, or open an issue at github.com/pazpop/cs-war3-ai. The server's logs (with your
+IP) go after 14 days, its chat log (team chat and the coach's tips included) after 3 months.
+The bots, the coach and the Game Master are an AI: Claude, by Anthropic, which keeps what it gets under its own
+policy. Sent to it: your public chat messages, your name, your score and how you fare against the bots (since when and
+when last you played here, your last map, your kills and deaths against them), and for the coach your numbers on the
+map and your question. Never your SteamID or your IP. The bots' memory of you stays on this server and goes after 6
+months without a visit (backups keep it a little longer). Before a line is shown, a second AI check holds back what it
+finds offensive; it checks names too, and an offensive one becomes "Player".</p>
 
 <h2>More</h2>
 <p><a href="/index.php">Rankings and player stats</a> · <a href="/bots.php">The bots</a></p>

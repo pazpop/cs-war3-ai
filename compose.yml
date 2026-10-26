@@ -50,9 +50,10 @@ services:
       dockerfile: ai/Dockerfile
     image: cs-war3-ai-ai
     restart: unless-stopped
-    # A cap on memory, like the stats page and both Caddys: the VPS has no swap, and a leak must stop this container,
-    # not the game (the game has none).
+    # Caps on memory and CPU, like the stats page and both Caddys: the VPS has no swap, and a leak or a flood of
+    # requests must stop or slow this container, not the game (the game has none).
     mem_limit: 256m
+    cpus: 0.5
     # Nothing to write but its database (a volume) and SQLite's temporary files.
     read_only: true
     tmpfs: [/tmp]
@@ -74,6 +75,7 @@ services:
     <<: *hardening
     image: php:8.5-fpm-alpine
     mem_limit: 256m
+    cpus: 0.5
     # The game is on another network: status.php asks it through the port the host publishes.
     extra_hosts: ["host.docker.internal:host-gateway"]
     restart: unless-stopped
@@ -116,6 +118,7 @@ services:
     image: caddy:2.11-alpine
     restart: unless-stopped
     mem_limit: 128m
+    cpus: 0.5
     command: ["caddy", "run", "--config", "/etc/caddy/fastdl.Caddyfile"]
     volumes:
       - ./caddy:/etc/caddy:ro
@@ -129,6 +132,7 @@ services:
     image: caddy:2.11-alpine
     restart: unless-stopped
     mem_limit: 256m
+    cpus: 0.5
     ports:
       - "80:80"
       - "443:443"

@@ -64,7 +64,7 @@ if (is_int($id)) {
     }
 }
 
-page_start($player ? 'War3FT: ' . $player['name'] : 'War3FT: player');
+page_start($player ? 'War3FT: ' . plain_name((string) $player['name']) : 'War3FT: player');
 ?>
 <?php if ($failed): ?>
 <h1>War3FT</h1>
@@ -73,7 +73,7 @@ page_start($player ? 'War3FT: ' . $player['name'] : 'War3FT: player');
 <h1>War3FT</h1>
 <p>Unknown player.</p>
 <?php else: ?>
-<h1><?= e((string) $player['name']) ?></h1>
+<h1><?= e(plain_name((string) $player['name'])) ?></h1>
 
 <?php if ($combat): ?>
 <h2>Combat</h2>

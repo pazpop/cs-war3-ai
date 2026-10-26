@@ -60,7 +60,7 @@ bind "F3" "war3menu"
 | Undead Scourge | Life steal, speed, higher jumps | Explodes on death |
 | Human Alliance | Invisibility, more health, stuns | Teleport |
 | Orcish Horde | Critical hits, strong grenades, keeps equipment | Chain lightning |
-| Night Elf | Evasion, reflects damage, more damage | Roots an enemy |
+| Night Elves | Evasion, reflects damage, more damage | Roots an enemy |
 | Blood Mage | Revives a teammate, banishes, steals money | Sets an enemy on fire |
 | Shadow Hunter | Group healing, turns enemies into critters, shooting ward | Invincible for 2 seconds |
 | Warden | Can spawn as a mole in the enemy base, blocks enemy ultimates, poisoned dagger | Comes back once |
@@ -91,8 +91,9 @@ What each one does: `/itemsinfo` and `/itemsinfo2` in game.
   average to normal. Each bot has its own War3FT race, and is War3FT level 1 to 5, new at each map.
 - **The AI**: the bots (`[AI] Zed`...) talk back when you write their name in the chat, usually answer a question
   with a `?`, each with its own character, and remember you, and the last map you played together: kill one often,
-  and it holds a grudge. A Game Master starts bounties, duels and other surprises, names each map's MVP at its end (the stats site counts them),
-  and writes the server's journal each night on [cs.pazpop.net](https://cs.pazpop.net).
+  and it holds a grudge. A Game Master starts bounties, duels and other surprises, names each map's MVP at its end
+  (the stats site counts them when two humans or more played), and writes the server's journal each night on
+  [cs.pazpop.net](https://cs.pazpop.net).
 - **Goal of the week**: the same for everyone, a new one every Monday (`/goal`), with its board on the stats site.
 - The first human to join a server of bots only restarts the game: every score of the map starts from zero (XP and
   rankings stay).

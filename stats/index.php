@@ -96,8 +96,12 @@ try {
     $xp = $query->fetchAll();
 
     $combat = $db->query(
-        "SELECT c.*, p.player_id FROM cs_war3_ai_combat c
+        // The name the stats page knows (it follows a renaming), rather than the one CS's ranking kept.
+        "SELECT c.position, c.kills, c.deaths, c.headshots, c.shots, c.hits, p.player_id,
+                COALESCE(n.name, c.name) AS name
+         FROM cs_war3_ai_combat c
          LEFT JOIN wc3_player p ON p.player_steamid = c.steamid
+         LEFT JOIN cs_war3_ai_names n ON n.steamid = c.steamid
          ORDER BY c.position LIMIT 15"
     )->fetchAll();
 

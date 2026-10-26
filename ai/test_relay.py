@@ -215,9 +215,18 @@ class Relay(unittest.TestCase):
         rain = json.dumps({"event": "xp_rain", "target": 0, "target2": 0, "challenge": "", "count": 0,
                            "line": "XP for everyone!"})
         relay.last_events.clear()
-        with mock.patch.object(relay, "claude", return_value=rain), mock.patch.object(relay, "safe", return_value=True):
+        with mock.patch.object(relay, "claude", return_value=rain), \
+                mock.patch.object(relay, "safe", return_value=True), \
+                mock.patch.object(relay, "name_allowed", return_value=True):
             self.assertEqual(relay.on_state({"players": PLAYERS})["gm"]["event"], "xp_rain")
             self.assertEqual(relay.on_state({"players": PLAYERS}), {})
+
+    def test_name_refused_by_the_model(self):
+        # The model refuses to even read a name (""): refused, like the worst names; a name changed during the game
+        # is checked at once.
+        with mock.patch.object(relay, "claude", return_value=""):
+            self.assertFalse(relay.name_allowed("Unreadable"))
+        self.assertEqual(relay.handle(b'{"type": "name", "id": 4, "name": "Unreadable"}'), {"rename": [4]})
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 // public on_kill(killer, victim, bool:headshot, const weapon[]). killer is 0 for a death by the world (a fall...).
 // War3FT kills with its spells, wards and item bonuses through its own death notice, which other plugins never see
 // (message_begin, not emessage_begin): it reports these kills through its forward wc3_reportkill instead.
+#include <reapi>  // get_member(): where the last shot hit the victim
 
 new Float:g_war3ft_kill[33]  // when War3FT last reported killing this player
 
@@ -25,5 +26,7 @@ public kills_death_notice()
 public wc3_reportkill(killer, victim, weapon, const name[])
 {
 	g_war3ft_kill[victim] = get_gametime()
-	on_kill(killer, victim, false, name)
+	// A shot War3FT finished (a critical strike, claws...): a headshot if it hit the head. A spell: never.
+	new bool:headshot = weapon <= CSW_P90 && get_member(victim, m_LastHitGroup) == HIT_HEAD
+	on_kill(killer, victim, headshot, name)
 }

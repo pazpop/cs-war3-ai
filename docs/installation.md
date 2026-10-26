@@ -13,6 +13,7 @@ A Debian 13 VPS, set up with Ansible from Ubuntu (WSL on Windows works). The ser
 | [Metamod-R](https://github.com/rehlds/Metamod-R) | Loads the plugins (AMX Mod X, YaPB) | GPL-3.0 |
 | [ReAPI](https://github.com/rehlds/ReAPI) | Gives AMX Mod X plugins access to ReHLDS and ReGameDLL | GPL-3.0 |
 | [War3FT](https://github.com/wc3mods/war3ft) | The mod, in an all-in-one package with AMX Mod X 1.10 | none stated (AMX Mod X: GPL-3.0) |
+| [AMX Mod X](https://www.amxmodx.org) | The plugins' platform: a later 1.10 build's core and modules, over War3FT's | GPL-3.0 |
 | [ReDeathmatch](https://github.com/ReDeathmatch/ReDeathmatch_AMXX) | Respawn: instant respawn, weapon menu, spawn protection | MIT |
 | [YaPB](https://github.com/yapb/yapb) | The bots | Unlicense |
 | Announcer voices (Antti Saari, TripleSnail) | First blood, multi-kills, streaks: in `server/sound/announcer/` | CC-BY 3.0 |
@@ -21,7 +22,7 @@ A Debian 13 VPS, set up with Ansible from Ubuntu (WSL on Windows works). The ser
 | [Python](https://www.python.org) | The AI relay (`ai/relay.py`), standard library only | PSF |
 | [Claude](https://www.anthropic.com/api) (Anthropic's API, optional) | The bots' chat lines and the Game Master | paid service |
 
-The game image downloads the first seven at build time; versions and SHA-256 checksums are in
+The game image downloads the first eight at build time; versions and SHA-256 checksums are in
 [server/Dockerfile](../server/Dockerfile). Caddy, PHP and Python are their own official Docker images.
 CS 1.6 itself (the `steam_legacy` branch, the only one ReHLDS replaces) is downloaded on first start, into the
 `hlds` volume. No game file from Valve is in the repository or the image (only SteamCMD); nothing from War3FT is in the
@@ -31,7 +32,7 @@ The announcer's voices are the only third-party files in it ([CREDITS.txt](../se
 ## Your settings
 
 1. A DNS name pointing to the VPS: set it as `domain` in [ansible/inventory.yml](../ansible/inventory.yml), with
-   your own servers in `collect_domains`, and your `timezone` (the logs, the rankings and the journal follow it).
+   your own servers in `collect_domains`, and the server's `timezone` (the logs, the rankings and the journal follow it).
    The chat messages: [server/messages.txt](../server/messages.txt).
 2. An SSH key for Ansible (`ansible_ssh_private_key_file` in the inventory), copied to the provider's account:
    `ssh-copy-id -i ~/.ssh/<your key>.pub debian@<domain>`
@@ -89,14 +90,14 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
   closest one; a word to the player when 10 % is left.
 - `afk.sma`: 60 seconds without a key or a mouse move, and a player goes to spectator.
 - `ai.sma`: sends the chat, the kills between bots and humans, every 10 minutes the state of the game, a player's
-  numbers for the coach, and the Game Master's announcements to the AI relay, and does what it answers (see
+  arrivals, name changes and numbers for the coach, and the Game Master's announcements to the AI relay, and does what it answers (see
   [The AI](#the-ai-optional)). At each map's end, the Game Master names the MVP: the top of the scoreboard.
 - `announcer.sma`: the voices and messages for first blood, multi-kills and kill streaks. Players download the voices
   over HTTP (FastDL).
 - `block_test.sma`: blocks War3FT's debug commands `test` and `test2`, open to every player (they fill the logs).
 - `bots.sma`: each bot of [server/bots.txt](../server/bots.txt) most often plays its own War3FT race, wears its own
   skin on each team, and has a level of 1 to 5 at each map (its XP never adds up: no stronger than the humans).
-  A human's name loses `[AI]` and `Game Master`: only the AI wears them.
+  A human's name loses `[AI]` and `Game Master` (only the AI wears them), and `<` and `>`.
 - `csdm_active.sma`: turns on War3FT's deathmatch mode (a new session at every respawn); ReDeathmatch does the
   respawns. Saves everyone's XP every 5 minutes too: War3FT saves at a round's end, which never comes here.
 - `damage.sma`: the damage the player deals, under the crosshair, at each hit.
@@ -108,7 +109,7 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
   add the server to your favorites, the stats page, the commands.
 - `monthly.sma`: the ranking of the month (kills - deaths, from zero on the 1st), on the stats page. At each map, the
   player's place this month. Also each human's map MVPs of the month (on top of the scoreboard at a map's end, bots
-  included).
+  included, when two humans or more scored).
 - `no_spray.sma`: no sprays (the T key): `sv_allowupload 0` already hides custom images; the bots: `yb_spraypaints 0`.
 - `rank_tag.sma`: the top 10 show their place in the chat, `[#3] name: message`; last month's top 3, `[Champion]`.
 - `rtv.sma`: `rtv` in chat; at 60 % of all the humans on the server, adminvote's vote on 4 random maps (not in the
@@ -167,7 +168,7 @@ sudo docker compose start hlds ai
 - `https://<domain>/status.php`: the server's state right now in JSON (humans, bots, map, slots), for other sites:
   [pazpop.net](https://pazpop.net) shows it. Asked to the game at most every 15 seconds.
 - `https://<domain>/bots.php`: the bots, their race, character and portrait (from [server/bots.txt](../server/bots.txt)).
-  The images (`stats/img/`) were made with [PixelLab](https://pixellab.ai): see its `CREDITS.txt`. Also the bots'
+  Also the bots'
   latest lines and the great rivalries (each bot's score against each human), from the AI relay's database (its
   volume, read-only), with the names from the game's.
 - `http://<domain>/guide.html`: the guide, shown on connect. The in-game browser (MOTD) is too old for today's
@@ -243,10 +244,11 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
 
 What the AI may say: a strict system prompt, then a moderator (a second request) checks every line before it is
 shown: no slurs, hate, sexual content, threats, illegal activity, politics or personal information, in any
-language, nor an offensive player name repeated. Each human's name is checked too, once: an offensive one is
-renamed "Player". On any doubt or error, nothing is shown. A bot answers the same player at most every 10 seconds;
-a player whose messages get 3 lines held back within an hour is ignored for an hour. In the game, the AI shows as
-`[AI] Zed`, `[AI Game Master]` and `[AI Coach]`: players know they talk to an AI (Anthropic requires it).
+language, nor an offensive player name repeated. Each human's name is checked too, on arrival and on each change:
+an offensive one is renamed "Player". On any doubt or error, nothing is shown. A bot answers the same player at most
+every 10 seconds; a player whose messages get 3 lines held back within an hour is ignored for an hour. In the game,
+the AI shows as `[AI] Zed`, `[AI Game Master]` and `[AI Coach]`: players know they talk to an AI (Anthropic requires
+it).
 
 Setup: an API key from [console.anthropic.com](https://console.anthropic.com) in the vault
 (`vault_anthropic_key: sk-ant-...`), then `deploy.yml`. Without a key, the relay stays silent and the game is
@@ -254,10 +256,11 @@ unchanged. It spends at most `AI_DAILY_USD` a day (1 $ by default, in `compose.y
 most 1/8 of it in an hour, then stays silent; set a monthly limit in the Anthropic console too.
 
 What leaves the VPS: the public chat messages (never the team chat), the names, the score, each human's history
-against the bots (since when they play, the last map, kills and deaths against them), each player's numbers and
-questions for the coach, and for the journal the day's announcements and bot lines. Never the SteamIDs or the IPs.
-The bots' memory forgets a player not seen for 180 days; the day's story goes 2 days later, the journal keeps 30
-days. The guide tells the players.
+against the bots (since when and when last they played, the last map, kills and deaths against them), each player's
+numbers and questions for the coach, and for the journal the day's announcements and bot lines. Never the SteamIDs or
+the IPs. The bots' memory forgets a player not seen for 180 days; the day's story goes 2 days later; the journal keeps
+its last 30 entries, the stats page the bots' last 200 lines, the name check its answers 30 days. The guide tells the
+players.
 
 Its logs, on the VPS: `cd /srv/cs-war3-ai && sudo docker compose logs ai`.
 
@@ -303,6 +306,14 @@ it only filters what comes from outside OVHcloud, and only IPv4.
 
 SteamIDs in `ansible/personal.yml`. In the game console: `amxmodmenu` (the admin menu), `amx_who`.
 Rcon (if `vault_rcon` is set): `rcon_password <vault_rcon>`, then `rcon status`.
+
+To take a player's name off the stats site (on request, with their SteamID), on the VPS:
+
+```bash
+sudo docker run --rm -v cs-war3-ai_hlds:/h python:3.13-alpine python -c "import sqlite3, sys; db = sqlite3.connect('/h/cstrike/addons/amxmodx/data/sqlite3/war3ft.sq3'); db.execute(\"UPDATE cs_war3_ai_names SET name = 'Player' WHERE steamid = ?\", (sys.argv[1],)); db.commit()" STEAM_0:1:123456
+```
+
+Their stats stay, under "Player"; if they come back, their new name shows.
 
 ## On the PC
 

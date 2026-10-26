@@ -91,8 +91,10 @@ public client_infochanged(id)
 	new old[32], name[32]
 	get_user_name(id, old, charsmax(old))
 	get_user_info(id, "name", name, charsmax(name))
-	if (is_user_connected(id) && !equal(old, name))
-		set_task(0.5, "save_name", id)
+	if (!is_user_connected(id) || equal(old, name))
+		return
+	remove_task(id)
+	set_task(0.5, "save_name", id)
 }
 
 public save_name(id)

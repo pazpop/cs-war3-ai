@@ -30,9 +30,10 @@ anyone who wants to run their own server, and get players to come back and bring
   also holds docs/war3ft.md (the bots answer questions from it); the stats page reads its database read-only (the
   bots' latest lines, the journal it writes each night from the Game Master's announcements and the bots' lines).
   In the game the AI shows as `[AI] <bot>`, `[AI Game Master]`, `[AI Coach]` (Anthropic requires the disclosure).
-  Each human's name is checked once (`NAME_CHECK`, kept in the relay's `names` table): an offensive one makes the
-  plugin rename the player "Player", so the chat, the announcements and the stats site never show it. A player whose
-  messages get 3 lines held back within an hour is ignored for an hour (`REFUSALS`, `MUTE`).
+  Each human's name is checked on arrival and on each change (`NAME_CHECK`; the answer kept 30 days in the relay's
+  `names` table; not held back by the hourly share): an offensive one makes the plugin rename the player "Player", so
+  the chat, the announcements and the stats site never show it. A player whose messages get 3 lines held back within
+  an hour is ignored for an hour (`REFUSALS`, `MUTE`).
 - The goal of the week (`server/plugins/weekly.sma`): a week is known by its Monday's date; the goal, by the weeks
   since a fixed day; written to the database for the stats page by the week's first map; no prize.
 - Kills: War3FT kills with its spells through a death notice other plugins never see, and reports them through its

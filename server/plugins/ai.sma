@@ -1,8 +1,9 @@
 // The AI: bots that talk back, a Game Master, and a coach. This plugin sends the chat, the kills between bots and
-// humans, every few minutes the state of the game, a player's numbers for the coach, and the Game Master's
-// announcements (for the nightly journal) to the AI relay (ai/relay.py), which asks Claude. The relay answers with
-// actions; this plugin checks each one (the players must still be here) and does only what it knows. Relay down, or no
-// API key: no answer, and the game is unchanged. At each map's end, the Game Master names the map's MVP.
+// humans, every few minutes the state of the game, a human's new name, a player's numbers for the coach, and the
+// Game Master's announcements (for the nightly journal) to the AI relay (ai/relay.py), which asks Claude. The relay
+// answers with actions; this plugin checks each one (the players must still be here) and does only what it knows.
+// Relay down, or no API key: no answer, and the game is unchanged. At each map's end, the Game Master names the map's
+// MVP.
 #include <amxmodx>
 #include <cstrike>
 #include <csx>  // get_user_wstats(): each player's numbers on this map, for the coach
@@ -34,6 +35,7 @@
 #define TASK_EVENT 2          // the task that ends a bounty, a duel, a challenge or a boss
 #define TASK_RED 3            // the task that keeps the boss red
 #define TASK_JOIN 100         // + the player's slot: the task that greets them
+#define TASK_NAME 200         // + the player's slot: the task that sends their new name to be checked
 
 // item_gift: War3FT's shop items that help at once (its numbers, items.h): boots, claws, cloak, mask, frost, periapt,
 // amulet, sock, gloves, ring. Not the ankh, tome, scroll, mole and protectant, chameleon; not the necklace (no
@@ -85,10 +87,34 @@ public client_putinserver(id)
 		set_task(GREET_AFTER, "send_join", TASK_JOIN + id)
 }
 
+// A human changes their name during the game: the relay checks the new one at once (an offensive one: renamed), not
+// only at the next map or look. A second later: the game applies the name after this.
+public client_infochanged(id)
+{
+	new old[32], name[32]
+	get_user_name(id, old, charsmax(old))
+	get_user_info(id, "name", name, charsmax(name))
+	if (!is_user_connected(id) || is_user_bot(id) || equal(old, name))
+		return
+	remove_task(TASK_NAME + id)
+	set_task(1.0, "send_name", TASK_NAME + id)
+}
+
+public send_name(task)
+{
+	new id = task - TASK_NAME
+	if (!is_user_connected(id))
+		return
+	new JSON:event = player(id)
+	json_object_set_string(event, "type", "name")
+	send(event)
+}
+
 // drop: the player left or was kicked (YaPB kicks a bot to make room for a human); not a map's end.
 public client_disconnected(id, bool:drop)
 {
 	remove_task(TASK_JOIN + id)
+	remove_task(TASK_NAME + id)
 	// A player in the event running leaves: it ends with them (and the boss's glow must not stay on its slot).
 	new userid = get_user_userid(id)
 	if (userid && (userid == g_boss || userid == g_bounty || userid == g_duel[0] || userid == g_duel[1]))

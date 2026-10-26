@@ -55,12 +55,14 @@ for id in ${ADMINS:-}; do
   printf '"%s" "" "abcdefghijklmnopqrstuv" "ce"\n' "$id" >> addons/amxmodx/configs/users.ini
 done
 
-# Now and every day while the server runs: HLDS, AMX Mod X and YaPB write log files, kept two weeks; War3FT's log
-# of admin commands (bots.sma sets each bot's level through one at every spawn) is never trimmed by War3FT: emptied.
+# Now and every day while the server runs: HLDS, AMX Mod X and YaPB write log files, kept two weeks. War3FT never
+# trims its own two: the log of admin commands (bots.sma sets each bot's level through one at every spawn) is
+# emptied, its error log too once over 1 MB.
 (
   while :; do
     find logs addons/amxmodx/logs addons/yapb -name '*.log' -mtime +14 -delete 2>/dev/null || true
     rm -f addons/amxmodx/configs/war3ft/wc3_admin.log
+    find addons/amxmodx/configs/war3ft -name wc3_error.log -size +1M -delete 2>/dev/null || true
     sleep 86400
   done
 ) &

@@ -131,11 +131,16 @@ function race_icon(int $race): string
     return '<img class="icon" src="/img/races/' . $race . '.png" alt="" width="24" height="24">';
 }
 
+// A player's name without format characters (reversed text, zero width...): they can disguise a name.
+function plain_name(string $name): string
+{
+    return preg_replace('/\p{Cf}/u', '', $name) ?? '?';
+}
+
 // The name, with a link to the player's page when War3FT knows the player.
 function player_link(array $row): string
 {
-    // Without format characters (reversed text, zero width...): they can disguise a name.
-    $name = e(preg_replace('/\p{Cf}/u', '', (string) $row['name']) ?? '?');
+    $name = e(plain_name((string) $row['name']));
     return $row['player_id'] ? '<a href="/player.php?id=' . (int) $row['player_id'] . '">' . $name . '</a>' : $name;
 }
 
