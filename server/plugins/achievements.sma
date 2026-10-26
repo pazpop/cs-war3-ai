@@ -151,7 +151,7 @@ to_go(id, achievement)
 	return ACH_COUNTER[achievement] == SECONDS ? (left + 3599) / 3600 : left
 }
 
-// When a player leaves, and for every player at each map's end (every 30 minutes) and when the server stops:
+// When a player leaves, and for every player at each map's end (every 20 minutes) and when the server stops:
 // AMX Mod X calls it then too.
 public client_disconnected(id)
 {

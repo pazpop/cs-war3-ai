@@ -1,6 +1,8 @@
 // The ranking of the month, for the web page: each human's kills, deaths and headshots, per month (in
 // data/sqlite3/war3ft.sq3, table "cs_war3_ai_monthly"). A new month starts from zero: newcomers have a chance too.
-// Saved when a player leaves and at each map's end (every 30 minutes). Humans only (by SteamID): not the bots.
+// Saved when a player leaves and at each map's end (every 20 minutes). Humans only (by SteamID): not the bots.
+// Also each human's map MVPs per month (table "cs_war3_ai_mvp"): on top of the scoreboard, bots included, at a
+// map's end.
 #include <amxmodx>
 #include <sqlx>
 #include "common.inc"
@@ -15,9 +17,23 @@ public plugin_init()
 {
 	register_plugin("Ranking of the month", "1.0", "cs-war3-ai")
 	register_event("DeathMsg", "on_death", "a")
+	// The map's end (the intermission).
+	register_event("30", "count_mvp", "a")
 	connect_db()
 	run("CREATE TABLE IF NOT EXISTS cs_war3_ai_monthly (month TEXT, steamid TEXT, kills INTEGER, deaths INTEGER, \
 		headshots INTEGER, PRIMARY KEY (month, steamid))")
+	run("CREATE TABLE IF NOT EXISTS cs_war3_ai_mvp (month TEXT, steamid TEXT, count INTEGER, \
+		PRIMARY KEY (month, steamid))")
+}
+
+// The map's MVP (common.inc), if it is a human with a SteamID: one more this month. Not the best human when a bot is
+// on top: alone with the bots, a player would be it every map.
+public count_mvp()
+{
+	new best = map_mvp()
+	if (best && g_steamid[best][0])
+		run("INSERT INTO cs_war3_ai_mvp VALUES (strftime('%%Y-%%m', 'now', 'localtime'), '%s', 1) \
+			ON CONFLICT (month, steamid) DO UPDATE SET count = count + 1", g_steamid[best])
 }
 
 public plugin_end()
@@ -40,7 +56,7 @@ public client_authorized(id, const authid[])
 		SQL_QuoteString(Empty_Handle, g_steamid[id], charsmax(g_steamid[]), authid)
 }
 
-// At arrival and at each map start (every 30 minutes): the player's place this month, once the chat is in view.
+// At arrival and at each map start (every 20 minutes): the player's place this month, once the chat is in view.
 public client_putinserver(id)
 {
 	set_task(10.0, "show_place", id)

@@ -1,7 +1,7 @@
 <?php
-// The home page: the Game Master's journal (ai/relay.py), the rankings: the month's (server/plugins/monthly.sma), the
-// goal of the week's (server/plugins/weekly.sma), War3FT's XP (per race), CS's combat (/rank, /top15), and the latest
-// achievements (server/plugins/achievements.sma).
+// The home page: the Game Master's journal (ai/relay.py), the rankings: the month's and its MVPs
+// (server/plugins/monthly.sma), the goal of the week's (server/plugins/weekly.sma), War3FT's XP (per race), CS's
+// combat (/rank, /top15), and the latest achievements (server/plugins/achievements.sma).
 require __DIR__ . '/common.php';
 
 // The AI relay's journal, the last 3 days. None yet: no section.
@@ -17,6 +17,7 @@ $race = is_int($race) ? $race : null;
 
 $players = ['total' => 0, 'month' => 0, 'quarter' => 0];
 $monthly = [];
+$mvps = [];
 $goal = false;
 $weekly = [];
 $hall = [];
@@ -42,6 +43,15 @@ try {
          LEFT JOIN wc3_player p ON p.player_steamid = m.steamid
          LEFT JOIN cs_war3_ai_names n ON n.steamid = m.steamid
          WHERE m.month = strftime('%Y-%m', 'now', 'localtime') ORDER BY m.kills - m.deaths DESC, m.kills DESC LIMIT 15"
+    )->fetchAll();
+
+    // The month's map MVPs: who was most often on top of the scoreboard at a map's end (server/plugins/monthly.sma).
+    $mvps = $db->query(
+        "SELECT v.count, p.player_id, COALESCE(n.name, '?') AS name
+         FROM cs_war3_ai_mvp v
+         LEFT JOIN wc3_player p ON p.player_steamid = v.steamid
+         LEFT JOIN cs_war3_ai_names n ON n.steamid = v.steamid
+         WHERE v.month = strftime('%Y-%m', 'now', 'localtime') ORDER BY v.count DESC LIMIT 5"
     )->fetchAll();
 
     // The top 3 of each past month, the same order as the [Champion] tag (server/plugins/rank_tag.sma).
@@ -148,6 +158,23 @@ Kills minus deaths, updated when a player leaves and at each map change.</p>
 <td><?= (int) $row['kills'] ?></td>
 <td><?= (int) $row['deaths'] ?></td>
 <td><?= percent((int) $row['headshots'], (int) $row['kills']) ?></td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
+<?php endif; ?>
+
+<?php if ($mvps): ?>
+<h3>MVPs of the month</h3>
+<p>At each map's end, the Game Master names the top of the scoreboard, bots included.</p>
+<table class="ranking">
+<thead><tr><th>#</th><th>Player</th><th>Maps won</th></tr></thead>
+<tbody>
+<?php foreach ($mvps as $position => $row): ?>
+<tr>
+<td><?= $position + 1 ?></td>
+<td><?= player_link($row) ?></td>
+<td><?= (int) $row['count'] ?></td>
 </tr>
 <?php endforeach; ?>
 </tbody>

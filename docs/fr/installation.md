@@ -113,7 +113,8 @@ plusieurs partagent) :
 - `messages.sma` : un message dans le chat toutes les 2 minutes, à tour de rôle, tiré de
   [server/messages.txt](../../server/messages.txt) : ajouter le serveur aux favoris, la page de stats, les commandes.
 - `monthly.sma` : le classement du mois (kills - morts, repart de zéro le 1er), sur la page de stats. À chaque
-  carte, la place du joueur ce mois-ci.
+  carte, la place du joueur ce mois-ci. Compte aussi les MVP du mois de chaque humain (premier du tableau des scores
+  en fin de carte, bots compris).
 - `no_spray.sma` : pas de sprays (la touche T) ; `sv_allowupload 0` cache déjà les images perso ; les bots :
   `yb_spraypaints 0`.
 - `rank_tag.sma` : le top 10 affiche sa place dans le chat, `[#3] nom : message` ; le top 3 du mois passé,
@@ -134,7 +135,7 @@ ReDeathmatch : par équipes, réapparition immédiate dans sa base, pas de manch
 départ (les boutiques de War3 se paient). 3 secondes de protection à la réapparition, perdues au premier tir
 (`mp_respawn_immunity*` de ReGameDLL). Dans ce mode, War3FT coupe ce qui fait revenir un joueur ou garde son
 équipement : l'équipement gardé de l'Orcish Horde, la résurrection du Blood Mage, l'ultime du Warden, l'ankh et le
-scroll (les guides le disent). Mapchooser lance un vote en fin de carte (toutes les 30 minutes).
+scroll (les guides le disent). Mapchooser lance un vote en fin de carte (toutes les 20 minutes).
 Le plugin `antiflood` d'AMX Mod X bloque le flood dans le chat (un message toutes les 0,75 s au plus :
 `amx_flood_time`).
 

@@ -60,7 +60,7 @@ public on_mystats(fail_state, Handle:query, error[], errnum, data[], size)
 	client_print(id, print_console, "https://%s/player.php?id=%d", g_domain, SQL_ReadResult(query, 0))
 }
 
-// After plugin_init: queries run in order. CSX saves its ranking at the end of a map (every 30 minutes, see
+// After plugin_init: queries run in order. CSX saves its ranking at the end of a map (every 20 minutes, see
 // game.cfg in server/Dockerfile): copying it at the start of the next one is enough.
 public plugin_cfg()
 {

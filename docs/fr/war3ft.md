@@ -93,13 +93,13 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2` en jeu.
 - **L'IA** : les bots (`[AI] Zed`…) répondent quand tu écris leur nom dans le chat, répondent en général à une
   question avec un `?`, chacun avec son caractère, et se souviennent de toi et de la dernière carte jouée ensemble :
   tue-en un souvent, et il te garde rancune. Un maître du jeu lance des primes, des duels et d'autres surprises,
-  nomme le MVP de chaque carte à sa fin, et écrit chaque nuit le journal du serveur sur
+  nomme le MVP de chaque carte à sa fin (le site de stats les compte), et écrit chaque nuit le journal du serveur sur
   [cs.pazpop.net](https://cs.pazpop.net).
 - **L'objectif de la semaine** : le même pour tous, un nouveau chaque lundi (`/goal`), avec son tableau sur le site
   de stats.
 - Le premier humain qui arrive sur un serveur de bots seuls relance la partie : les scores de la carte repartent de
   zéro (l'XP et les classements restent).
-- Toutes les 30 minutes, un vote choisit la carte suivante.
+- Toutes les 20 minutes, un vote choisit la carte suivante.
 - Un annonceur pour le premier kill, les multi-kills et les séries, jusqu'à GODLIKE.
 - Les classements (du mois, XP et combat) et une page par joueur : [cs.pazpop.net](https://cs.pazpop.net).
 - Bien régler son jeu : [client.md](client.md).

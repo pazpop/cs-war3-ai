@@ -674,22 +674,10 @@ bool:in_team(id)
 	return team == CS_TEAM_T || team == CS_TEAM_CT
 }
 
-// The map's MVP: the top of the scoreboard (kills, then fewer deaths), bot or human; and the best human, if a bot is
-// on top. Only when a human played this map.
+// The map's MVP (common.inc), bot or human; and the best human, if a bot is on top. Only when a human played this map.
 public announce_mvp()
 {
-	new players[32], count, best, best_human
-	get_players(players, count, "h")
-	for (new i = 0; i < count; i++)
-	{
-		new id = players[i]
-		if (!in_team(id) || get_user_frags(id) <= 0)
-			continue
-		if (!best || ahead(id, best))
-			best = id
-		if (!is_user_bot(id) && (!best_human || ahead(id, best_human)))
-			best_human = id
-	}
+	new best = map_mvp(), best_human = map_mvp(true)
 	if (!best_human)
 		return
 	new map[32], name[32], text[192]
@@ -703,13 +691,6 @@ public announce_mvp()
 		format(text, charsmax(text), "%s Best human: %s, %d kills.", text, name, get_user_frags(best_human))
 	}
 	announce(text)
-}
-
-// Ahead on the scoreboard: more kills, or as many with fewer deaths.
-bool:ahead(id, other)
-{
-	new kills = get_user_frags(id), other_kills = get_user_frags(other)
-	return kills > other_kills || kills == other_kills && get_user_deaths(id) < get_user_deaths(other)
 }
 
 announce(const text[])

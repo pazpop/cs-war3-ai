@@ -82,8 +82,8 @@ RUN set -eu; cd /tmp; \
 # missing one over plain HTTP.
 # Metamod-R on Linux reads only the "linux" lines of its plugins.ini: the "win32" ones would be reported as malformed.
 # Spawn protection (ReGameDLL's game.cfg): 3 seconds without damage after a respawn, lost at the first shot (not when
-# moving: "2"). ReDeathmatch tints the protected players in their team's color. A map lasts 30 minutes: game.cfg is
-# read after server.cfg at each map, so its mp_timelimit (20) is the one that counts. game.cfg's lines end with \r.
+# moving: "2"). ReDeathmatch tints the protected players in their team's color. A map lasts 20 minutes: game.cfg's own
+# mp_timelimit (it is read after server.cfg at each map, so it is the one that counts). Its lines end with \r.
 # CS's ranking (/rank, /top15) counts the fights with bots, most of the fights here. All bots share one row in it
 # (SteamID "BOT"), which the stats page leaves out.
 RUN set -eu; cd /opt/mods/cstrike; \
@@ -93,7 +93,6 @@ RUN set -eu; cd /opt/mods/cstrike; \
     sed -i 's/^;sqlite/sqlite/' addons/amxmodx/configs/modules.ini; \
     sed -i 's/^csstats_rankbots 0$/csstats_rankbots 1/' addons/amxmodx/configs/amxx.cfg; \
     sed -i -e 's/^mp_respawn_immunitytime "0"\r$/mp_respawn_immunitytime "3"/' \
-      -e 's/^mp_timelimit "20"\r$/mp_timelimit "30"/' \
       -e 's/^mp_respawn_immunity_force_unset "1"\r$/mp_respawn_immunity_force_unset "2"/' \
       -e 's/^mp_vote_flags "km"\r$/mp_vote_flags ""/' game.cfg; \
     sed -i -e 's/^war3ft.amxx debug$/war3ft.amxx/' -e 's/^scrollmsg.amxx/;scrollmsg.amxx/' \
@@ -127,7 +126,7 @@ RUN set -eu; cd /opt/mods/cstrike; \
     grep -qx 'mp_respawn_immunitytime "3"' game.cfg; \
     grep -qx 'mp_vote_flags ""' game.cfg; \
     grep -qx 'mp_respawn_immunity_force_unset "2"' game.cfg; \
-    grep -qx 'mp_timelimit "30"' game.cfg; \
+    grep -q '^mp_timelimit "20"' game.cfg; \
     grep -qx 'war3ft.amxx' addons/amxmodx/configs/plugins.ini; \
     ! grep -qE '^(scrollmsg|imessage).amxx' addons/amxmodx/configs/plugins.ini || exit 1; \
     grep -q '^ReDeathmatch.amxx$' addons/amxmodx/configs/plugins-redm.ini; \

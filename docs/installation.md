@@ -107,7 +107,8 @@ share):
 - `messages.sma`: a message in the chat every 2 minutes, in turn, from [server/messages.txt](../server/messages.txt):
   add the server to your favorites, the stats page, the commands.
 - `monthly.sma`: the ranking of the month (kills - deaths, from zero on the 1st), on the stats page. At each map, the
-  player's place this month.
+  player's place this month. Also each human's map MVPs of the month (on top of the scoreboard at a map's end, bots
+  included).
 - `no_spray.sma`: no sprays (the T key): `sv_allowupload 0` already hides custom images; the bots: `yb_spraypaints 0`.
 - `rank_tag.sma`: the top 10 show their place in the chat, `[#3] name: message`; last month's top 3, `[Champion]`.
 - `rtv.sma`: `rtv` in chat; at 60 % of all the humans on the server, adminvote's vote on 4 random maps (not in the
@@ -126,7 +127,7 @@ ReDeathmatch: teams, instant respawn in the team's base, no rounds, weapons with
 shops cost money). 3 seconds of spawn protection, lost at the first shot (ReGameDLL's `mp_respawn_immunity*`).
 In this mode, War3FT turns off what brings a player back or keeps their gear: the Orcish Horde's equipment, the
 Blood Mage's revive, the Warden's ultimate, the ankh and the scroll (the guides say so).
-Mapchooser runs a map vote at the end of each map (every 30 minutes).
+Mapchooser runs a map vote at the end of each map (every 20 minutes).
 AMX Mod X's `antiflood` blocks chat floods (one message every 0.75 s at most: `amx_flood_time`).
 
 ## Data and backup
