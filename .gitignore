@@ -3,3 +3,4 @@ ansible/personal.yml
 ansible/vault.yml
 .env
 __pycache__/
+.ansible/

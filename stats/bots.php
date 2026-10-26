@@ -94,7 +94,8 @@ grudge: it teases you, and greets you first.</p>
 <div class="bot">
 <img src="/img/bots/<?= e(strtolower($name)) ?>.png" alt="" width="96" height="96">
 <h3><?= e($name) ?></h3>
-<p class="race"><?= race_icon((int) array_search($bot['race'], RACES, true)) ?><?= e($bot['race']) ?></p>
+<?php $race = array_search($bot['race'], RACES, true); ?>
+<p class="race"><?= $race ? race_icon($race) : '' ?><?= e($bot['race']) ?></p>
 <p><?= e(ucfirst($bot['character'])) ?>.</p>
 </div>
 <?php endforeach; ?>

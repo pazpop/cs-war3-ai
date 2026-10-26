@@ -30,9 +30,8 @@ load_maps()
 	new file = fopen(path, "rt")
 	if (!file)
 		return
-	while (!feof(file) && g_map_count < MAX_MAPS)
+	while (g_map_count < MAX_MAPS && fgets(file, line, charsmax(line)))
 	{
-		fgets(file, line, charsmax(line))
 		trim(line)
 		if (!line[0] || line[0] == ';')
 			continue
@@ -74,12 +73,12 @@ public cmd_rtv(id)
 		client_print(0, print_chat, "[RTV] %s wants a new map (%d/%d). Type rtv in chat to agree.", name, votes, needed)
 	}
 	if (votes >= needed)
-		start_map_vote()
+		start_map_vote(id)
 	return PLUGIN_CONTINUE
 }
 
-// 4 random maps (Fisher-Yates shuffle), then adminvote's vote.
-start_map_vote()
+// 4 random maps (Fisher-Yates shuffle), then adminvote's vote. id: the player whose rtv reached the share.
+start_map_vote(id)
 {
 	if (g_map_count == 0)
 		return
@@ -87,7 +86,7 @@ start_map_vote()
 	// 2 minutes and some (129 s) of the map. In both cases rtv stays available.
 	if (get_cvar_float("amx_last_voting") + get_cvar_float("amx_vote_delay") > get_gametime() || get_timeleft() < 130)
 	{
-		client_print(0, print_chat, "[RTV] Another vote is running or just ran: no rtv now.")
+		client_print(id, print_chat, "[RTV] Not now: a vote is running or just ran, or the map ends soon. Try again later.")
 		return
 	}
 	g_rtv_done = true

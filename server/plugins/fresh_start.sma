@@ -1,6 +1,6 @@
 // A fresh start: when the first human joins a server of bots only, the game starts again, so every score (kills,
-// deaths, money) is back to zero for everyone. War3FT's XP, the ranking of the month and the achievements are
-// counted apart: they stay.
+// deaths) is back to zero for everyone, and the money back to the start's. War3FT's XP, the ranking of the month and
+// the achievements are counted apart: they stay.
 #include <amxmodx>
 
 #define DELAY 5.0       // seconds after the human enters: they see it happen

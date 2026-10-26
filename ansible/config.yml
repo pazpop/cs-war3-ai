@@ -37,7 +37,7 @@
         mode: "0644"
 
     # Docker comes from its own repository: without the last line, automatic updates would never touch it.
-    # A reboot cuts the running game: 5 am, when nobody plays.
+    # A reboot cuts the running game: 5 am, when nobody plays (an update of Docker restarts it at 4 am too).
     - name: Reboot after an update that needs it, at 5 am; update Docker too
       ansible.builtin.copy:
         dest: /etc/apt/apt.conf.d/52pazpop.conf

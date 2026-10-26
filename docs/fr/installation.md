@@ -93,7 +93,7 @@ rate) :
 - `achievements.sma` : 14 succès (`/ach`), gardés dans la base de War3FT ; les pages des joueurs les affichent. Un
   succès débloqué s'affiche pour tous (`[STATS]`).
 - `afk.sma` : 60 secondes sans toucher une touche ni bouger la souris, et un joueur passe en spectateur.
-- `ai.sma` : envoie le chat, les kills entre bots et humains, toutes les 10 minutes l'état de la partie, les
+- `ai.sma` : envoie le chat, les kills entre bots et humains, l'état de la partie à la moitié de chaque carte, les
   arrivées, changements de pseudo et chiffres d'un joueur pour le coach, et les annonces du maître du jeu au relais
   de l'IA, et fait ce qu'il répond (voir [L'IA](#lia-optionnel)). À la fin de chaque carte, une ligne `[STATS]` nomme
   le MVP : le premier du tableau des scores.
@@ -206,7 +206,8 @@ sudo docker compose start hlds ai
   l'application gratuite Renovate sur le dépôt). Dans cette
   pull request, remplace l'empreinte SHA-256 de la version dans [server/Dockerfile](../../server/Dockerfile) :
   `curl -sL <adresse de l'archive> | sha256sum`. D'ici là, la vérification ci-dessous échoue, exprès.
-- **Depuis le PC** : `./deploy-all.sh` pousse ce dépôt et `../pazpop.net` quand ils ont de nouveaux commits, puis
+- **Depuis le PC** (le script du propriétaire : il attend ce dossier nommé `cs-war3-ai`, avec `pazpop.net` à
+  côté) : `./deploy-all.sh` pousse ce dépôt et `../pazpop.net` quand ils ont de nouveaux commits, puis
   lance `deploy.yml` (`--all` : tout, même sans nouveau commit).
 - **Les vérifications** : chaque push lance [.github/workflows/check.yml](../../.github/workflows/check.yml) :
   `ansible-lint`, `shellcheck`, la syntaxe Python et PHP, les tests Python, et le build des deux images (celle du jeu
@@ -254,7 +255,7 @@ des actions :
   `/coach on` : un conseil toutes les 5 minutes, gardé par SteamID dans le relais jusqu'à `/coach off`. 60 secondes
   avant la fin de la carte, chaque humain qui a joué reçoit un bilan : un point fort, une chose à travailler (et,
   sans `/coach on`, un mot pour le dire).
-- **Le maître du jeu** : toutes les 10 minutes, il lit le score et peut lancer un événement : une prime sur un
+- **Le maître du jeu** : à la moitié de chaque carte (10 minutes), il lit le score et peut lancer un événement : une prime sur un
   joueur très en avance, un duel entre deux joueurs, un défi (kills, headshots ou kills au couteau,
   en 2 minutes), un boss (un bot à 500 points de vie, entouré d'un halo rouge), 30 secondes de gravité basse, de
   l'argent pour tous, 100 XP de War3FT pour chaque humain (`changexp`), un objet des boutiques de War3FT pour tous
@@ -268,9 +269,10 @@ des actions :
 Ce que l'IA peut dire : un prompt système strict, puis un modérateur (une seconde requête) vérifie chaque ligne
 avant qu'elle s'affiche : pas d'injure, de haine, de contenu sexuel, de menace, d'activité illégale, de
 politique ni d'information personnelle, dans aucune langue, ni un pseudo injurieux répété. Le pseudo de chaque
-humain est vérifié aussi, à l'arrivée et à chaque changement : un pseudo injurieux est renommé « Player ». Au
-moindre doute ou à la moindre erreur, rien ne s'affiche. Un bot répond au même joueur au plus toutes les 10
-secondes ; un joueur dont les messages font refuser 3 répliques en une heure est ignoré pendant une heure. En jeu,
+humain est vérifié aussi, à l'arrivée et à chaque changement : un pseudo injurieux est renommé « Player » (sans
+réponse, faute de clé ou de budget, un pseudo passe et sera revérifié plus tard). Au moindre doute ou à la moindre
+erreur, aucune réplique ne s'affiche. Un bot répond au même joueur au plus toutes les 10
+secondes, et 30 fois par heure ; un joueur dont les messages font refuser 3 répliques en une heure est ignoré pendant une heure. En jeu,
 l'IA s'affiche `[AI] Zed`, `[AI Game Master]` et `[AI Coach]` : les joueurs savent qu'ils parlent à une IA
 (Anthropic l'exige).
 
@@ -339,7 +341,9 @@ Pour retirer le pseudo d'un joueur du site de stats (sur demande, avec son Steam
 sudo docker run --rm -v cs-war3-ai_hlds:/h python:3.13-alpine python -c "import sqlite3, sys; db = sqlite3.connect('/h/cstrike/addons/amxmodx/data/sqlite3/war3ft.sq3'); db.execute(\"UPDATE cs_war3_ai_names SET name = 'Player' WHERE steamid = ?\", (sys.argv[1],)); db.commit()" STEAM_0:1:123456
 ```
 
-Ses stats restent, sous « Player » ; s'il revient, son nouveau pseudo s'affiche.
+Ses stats restent, sous « Player » ; s'il revient, son nouveau pseudo s'affiche. Les répliques des bots et les
+entrées du journal qui le nomment restent jusqu'à ce que de plus récentes les poussent dehors (les 200 dernières
+répliques, les 30 dernières entrées).
 
 ## Sur le PC
 

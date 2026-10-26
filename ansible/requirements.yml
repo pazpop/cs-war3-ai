@@ -1,6 +1,10 @@
 # The Ansible collections the playbooks use:
 #   ansible-galaxy collection install -r ansible/requirements.yml
+# Within the major versions tested: a new major version can change a module and break a fresh install.
 collections:
   - name: ansible.posix
+    version: ">=2.0.0,<3.0.0"
   - name: community.docker
+    version: ">=5.0.0,<6.0.0"
   - name: community.general
+    version: ">=12.0.0,<14.0.0"

@@ -2,7 +2,7 @@
 ; [HELP] for a command, [INFO] for the rest. ; starts a comment. {domain} becomes the server's domain (the
 ; entrypoint replaces it).
 [INFO] Like this server? Add it to your favorites, address {domain}:27015
-[HELP] /help opens the guide: races, items, commands, rules.
+[HELP] /help opens the guide: races, commands, rules.
 [HELP] /coach: a tip from the AI coach. /coach on: one every 5 minutes.
 [HELP] /goal: the goal of the week, the same for everyone.
 [HELP] /mystats: your page on {domain}, with your XP race by race.

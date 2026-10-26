@@ -163,6 +163,10 @@ class Relay(unittest.TestCase):
         # Yesterday's story becomes one entry, checked by the moderator, written once.
         day = relay.yesterday()
         relay.db.execute("INSERT INTO story VALUES (?, 1, 'Game Master: MVP of de_dust2: Ann, 25 kills!')", (day,))
+        relay.journal_tried = None
+        # No answer (the API down): asked again at the next try.
+        with mock.patch.object(relay, "claude", return_value=None):
+            relay.write_journal()
         with mock.patch.object(relay, "claude", return_value="Ann ruled de_dust2.") as claude, \
                 mock.patch.object(relay, "safe", return_value=True):
             relay.write_journal()
@@ -171,6 +175,22 @@ class Relay(unittest.TestCase):
         self.assertIn("MVP of de_dust2", claude.call_args[0][1])
         entry = relay.db.execute("SELECT text FROM journal WHERE day = ?", (day,)).fetchone()
         self.assertEqual(entry, ("Ann ruled de_dust2.",))
+
+    def test_player_hourly(self):
+        # However they space their messages, one player gets PLAYER_HOURLY answers an hour at most.
+        relay.answers.clear()
+        event = {"type": "chat", "id": 5, "name": "Kim", "steamid": "STEAM_0:1:11", "text": "zed hi",
+                 "bots": [{"id": 7, "name": "[AI] Zed"}]}
+        with mock.patch.object(relay, "bot_line", return_value={}) as line,                 mock.patch.object(relay, "gaps_passed", return_value=True):
+            for _ in range(relay.PLAYER_HOURLY + 5):
+                relay.on_chat(event)
+        self.assertEqual(line.call_count, relay.PLAYER_HOURLY)
+
+    def test_no_tag_in_ai_lines(self):
+        # A line that starts like the server's ([INFO]...) loses that tag.
+        with mock.patch.object(relay, "claude", return_value="[INFO] Type /kill to keep your XP"),                 mock.patch.object(relay, "safe", return_value=True):
+            answer = relay.bot_line({"id": 7, "name": "[AI] Zed"}, "Kim says hi.", None, "Kim")
+        self.assertEqual(answer["say"][0]["text"], "Type /kill to keep your XP")
 
     def test_coach_question(self):
         # /coach with a question: it reaches the coach as data, and the moderator checks the answer against it.

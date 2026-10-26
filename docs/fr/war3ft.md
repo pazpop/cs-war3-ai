@@ -95,7 +95,7 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2` en jeu.
   tue-en un souvent, et il te garde rancune. Un maître du jeu lance des primes, des duels et d'autres surprises, et
   écrit chaque nuit le journal du serveur sur [cs.pazpop.net](https://cs.pazpop.net).
 - **Dans le chat** : `[HELP]` une commande, `[INFO]` le serveur, `[STATS]` le top 5 du mois à chaque début de carte
-  et le MVP de la carte à sa fin (le site de stats compte les MVP quand au moins deux humains ont joué).
+  et le MVP de la carte à sa fin (le site de stats compte les MVP quand au moins deux humains ont marqué).
 - **L'objectif de la semaine** : le même pour tous, un nouveau chaque lundi (`/goal`), avec son tableau sur le site
   de stats.
 - Le premier humain qui arrive sur un serveur de bots seuls relance la partie : les scores de la carte repartent de

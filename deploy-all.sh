@@ -49,7 +49,8 @@ read -rp "Push and deploy ${todo[*]}? [y/N] " answer
 if [[ " ${todo[*]} " == *" cs-war3-ai "* ]] &&
    { [ -z "${VAULT_PASSWORD:-}" ] || [ "$(date +%s)" -ge "${VAULT_PASSWORD_EXPIRY:-0}" ]; }; then
   # shellcheck source=vault.sh
-  source cs-war3-ai/vault.sh
+  # The duration, always: without it, vault.sh would read this script's own argument (--all).
+  source cs-war3-ai/vault.sh 120
 fi
 
 failed=()

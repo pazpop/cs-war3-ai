@@ -94,7 +94,7 @@ What each one does: `/itemsinfo` and `/itemsinfo2` in game.
   and it holds a grudge. A Game Master starts bounties, duels and other surprises, and writes the server's journal
   each night on [cs.pazpop.net](https://cs.pazpop.net).
 - **In the chat**: `[HELP]` a command, `[INFO]` the server, `[STATS]` the month's top 5 at each map start and the
-  map's MVP at its end (the stats site counts MVPs when two humans or more played).
+  map's MVP at its end (the stats site counts MVPs when two humans or more scored).
 - **Goal of the week**: the same for everyone, a new one every Monday (`/goal`), with its board on the stats site.
 - The first human to join a server of bots only restarts the game: every score of the map starts from zero (XP and
   rankings stay).

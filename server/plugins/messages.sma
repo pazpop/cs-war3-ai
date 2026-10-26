@@ -22,17 +22,19 @@ public plugin_init()
 	new file = fopen(path, "rt")
 	if (!file)
 		return
-	while (!feof(file) && g_count < MAX_MESSAGES)
+	while (g_count < MAX_MESSAGES && fgets(file, line, charsmax(line)))
 	{
-		fgets(file, line, charsmax(line))
 		trim(line)
 		if (line[0] && line[0] != ';')
 			copy(g_messages[g_count++], charsmax(g_messages[]), line)
 	}
 	fclose(file)
 
-	if (g_count)
-		set_task(INTERVAL, "show_next", .flags = "b")
+	if (!g_count)
+		return
+	// A map shows about 4: each map starts somewhere else in the list, so that every message shows.
+	g_next = random(g_count)
+	set_task(INTERVAL, "show_next", .flags = "b")
 }
 
 public show_next()

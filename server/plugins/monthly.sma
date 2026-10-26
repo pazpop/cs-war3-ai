@@ -77,7 +77,10 @@ public show_top(id)
 		return
 	// The same order as the web page: kills - deaths, then kills. The names the stats page knows (web_stats.sma).
 	new line[192], name[32], length = formatex(line, charsmax(line), "Top 5 this month:")
-	new Handle:query = SQL_PrepareQuery(g_db, "SELECT COALESCE(n.name, '?'), m.kills - m.deaths 		FROM cs_war3_ai_monthly m LEFT JOIN cs_war3_ai_names n ON n.steamid = m.steamid 		WHERE m.month = strftime('%%Y-%%m', 'now', 'localtime') ORDER BY m.kills - m.deaths DESC, m.kills DESC LIMIT 5")
+	new Handle:query = SQL_PrepareQuery(g_db, "SELECT COALESCE(n.name, '?'), m.kills - m.deaths \
+		FROM cs_war3_ai_monthly m LEFT JOIN cs_war3_ai_names n ON n.steamid = m.steamid \
+		WHERE m.month = strftime('%%Y-%%m', 'now', 'localtime') \
+		ORDER BY m.kills - m.deaths DESC, m.kills DESC LIMIT 5")
 	new place = 0
 	if (SQL_Execute(query))
 	{
@@ -107,7 +110,11 @@ public show_top(id)
 	if (g_steamid[id][0])
 	{
 		query = SQL_PrepareQuery(g_db,
-			"SELECT (SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month AND (o.kills - o.deaths > m.kills - m.deaths 			OR (o.kills - o.deaths = m.kills - m.deaths AND o.kills > m.kills))) + 1, 			(SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month) FROM cs_war3_ai_monthly m 			WHERE m.month = strftime('%%Y-%%m', 'now', 'localtime') AND m.steamid = '%s'", g_steamid[id])
+			"SELECT (SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month \
+			AND (o.kills - o.deaths > m.kills - m.deaths \
+			OR (o.kills - o.deaths = m.kills - m.deaths AND o.kills > m.kills))) + 1, \
+			(SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month) FROM cs_war3_ai_monthly m \
+			WHERE m.month = strftime('%%Y-%%m', 'now', 'localtime') AND m.steamid = '%s'", g_steamid[id])
 		if (SQL_Execute(query) && SQL_MoreResults(query))
 			formatex(line[length], charsmax(line) - length, " | You: #%d of %d", SQL_ReadResult(query, 0),
 				SQL_ReadResult(query, 1))

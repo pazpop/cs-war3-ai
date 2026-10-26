@@ -9,6 +9,7 @@
 #define BAN_MINUTES 10      // how long a player kicked by vote cannot come back
 
 new g_wants_kick[33]        // the userid each player wants to kick (0: nobody)
+new bool:g_told[33]         // whether everyone already saw this player's vote on this map
 
 public plugin_init()
 {
@@ -20,6 +21,7 @@ public plugin_init()
 public client_disconnected(id)
 {
 	g_wants_kick[id] = 0
+	g_told[id] = false
 }
 
 public cmd_votekick(id)
@@ -86,7 +88,10 @@ public on_votekick_choice(id, menu, item)
 	new name[32], target_name[32]
 	get_user_name(id, name, charsmax(name))
 	get_user_name(target, target_name, charsmax(target_name))
-	client_print(0, print_chat, "[Votekick] %s wants to kick %s (%d/%d). Type votekick to agree.", name, target_name, votes, goal)
+	// Told to everyone once a map; then to the voter only: switching between two players cannot flood the chat.
+	client_print(g_told[id] ? id : 0, print_chat, "[Votekick] %s wants to kick %s (%d/%d). Type votekick to agree.", name,
+		target_name, votes, goal)
+	g_told[id] = true
 	if (votes >= goal)
 	{
 		// Kept out for a while, by SteamID: otherwise they could come back at once. Only a real SteamID: banning

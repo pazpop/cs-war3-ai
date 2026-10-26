@@ -163,7 +163,7 @@ Kills minus deaths, updated when a player leaves and at each map change.</p>
 
 <?php if ($mvps): ?>
 <h3>MVPs of the month</h3>
-<p>At each map's end, the Game Master names the top of the scoreboard, bots included.</p>
+<p>At each map's end, the top of the scoreboard, bots included, when another human scored too.</p>
 <table class="ranking">
 <thead><tr><th>#</th><th>Player</th><th>Maps won</th></tr></thead>
 <tbody>

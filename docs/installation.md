@@ -89,7 +89,7 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
 - `achievements.sma`: 14 achievements (`/ach`), saved in War3FT's database; the player pages show them. An unlock
   shows to everyone (`[STATS]`).
 - `afk.sma`: 60 seconds without a key or a mouse move, and a player goes to spectator.
-- `ai.sma`: sends the chat, the kills between bots and humans, every 10 minutes the state of the game, a player's
+- `ai.sma`: sends the chat, the kills between bots and humans, the state of the game halfway through each map, a player's
   arrivals, name changes and numbers for the coach, and the Game Master's announcements to the AI relay, and does
   what it answers (see [The AI](#the-ai-optional)). At each map's end, a `[STATS]` line names the MVP: the top of the
   scoreboard.
@@ -193,7 +193,8 @@ sudo docker compose start hlds ai
   app on the repository). In that pull request,
   replace the version's SHA-256 in [server/Dockerfile](../server/Dockerfile): `curl -sL <archive URL> | sha256sum`.
   Until then, the check below fails, on purpose.
-- **From the PC**: `./deploy-all.sh` pushes this repository and `../pazpop.net` when they have new commits, then
+- **From the PC** (the owner's script: it expects this folder named `cs-war3-ai`, with `pazpop.net` next to it):
+  `./deploy-all.sh` pushes this repository and `../pazpop.net` when they have new commits, then
   runs `deploy.yml` (`--all`: everything, even without new commits).
 - **Checks**: every push runs [.github/workflows/check.yml](../.github/workflows/check.yml): `ansible-lint`,
   `shellcheck`, the Python and PHP syntax, the Python tests, and both image builds (the game's checks the SHA-256 and
@@ -238,7 +239,7 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
   `/coach on`: a tip every 5 minutes, kept by SteamID in the relay until `/coach off`. 60 seconds before the map's
   end, each human who played gets a summary: one strength, one thing to work on (and, without `/coach on`, a word
   about it).
-- **The Game Master**: every 10 minutes, it reads the score and may start an event: a bounty on a player far ahead,
+- **The Game Master**: halfway through each map (10 minutes), it reads the score and may start an event: a bounty on a player far ahead,
   a duel between two players, a challenge (kills, headshots or knife kills, in 2 minutes), a boss (a bot
   with 500 health and a red glow), 30 seconds of low gravity, money for everyone, 100 War3FT XP for every human
   (`changexp`), a War3FT shop item for everyone (`wc3_giveitem`). Each prize is $3000 and 200 XP, and nobody has to
@@ -250,8 +251,9 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
 What the AI may say: a strict system prompt, then a moderator (a second request) checks every line before it is
 shown: no slurs, hate, sexual content, threats, illegal activity, politics or personal information, in any
 language, nor an offensive player name repeated. Each human's name is checked too, on arrival and on each change:
-an offensive one is renamed "Player". On any doubt or error, nothing is shown. A bot answers the same player at most
-every 10 seconds; a player whose messages get 3 lines held back within an hour is ignored for an hour. In the game,
+an offensive one is renamed "Player" (without an answer, no key or no budget left, a name passes and is checked
+again later). On any doubt or error, no line is shown. A bot answers the same player at most
+every 10 seconds, and 30 times an hour; a player whose messages get 3 lines held back within an hour is ignored for an hour. In the game,
 the AI shows as `[AI] Zed`, `[AI Game Master]` and `[AI Coach]`: players know they talk to an AI (Anthropic requires
 it).
 
@@ -318,7 +320,8 @@ To take a player's name off the stats site (on request, with their SteamID), on 
 sudo docker run --rm -v cs-war3-ai_hlds:/h python:3.13-alpine python -c "import sqlite3, sys; db = sqlite3.connect('/h/cstrike/addons/amxmodx/data/sqlite3/war3ft.sq3'); db.execute(\"UPDATE cs_war3_ai_names SET name = 'Player' WHERE steamid = ?\", (sys.argv[1],)); db.commit()" STEAM_0:1:123456
 ```
 
-Their stats stay, under "Player"; if they come back, their new name shows.
+Their stats stay, under "Player"; if they come back, their new name shows. The bots' lines and the journal
+entries that name them stay until newer ones push them out (the last 200 lines, the last 30 entries).
 
 ## On the PC
 

@@ -1,5 +1,5 @@
 // The AI: bots that talk back, a Game Master, and a coach. This plugin sends the chat, the kills between bots and
-// humans, every few minutes the state of the game, a human's new name, a player's numbers for the coach, and the
+// humans, the state of the game halfway through each map, a human's new name, a player's numbers for the coach, and the
 // Game Master's announcements (for the nightly journal) to the AI relay (ai/relay.py), which asks Claude. The relay
 // answers with actions; this plugin checks each one (the players must still be here) and does only what it knows.
 // Relay down, or no API key: no answer, and the game is unchanged. At each map's end, a [STATS] line names the map's
@@ -17,9 +17,10 @@
 // lookup can block the server.
 #define RELAY_IP "10.27.15.10"
 #define RELAY_PORT 27100
-#define TIMEOUT 20.0          // seconds to wait for an answer: two requests to Claude (the line, then its check)
+#define TIMEOUT 30.0          // seconds to wait for an answer: up to 3 requests to Claude (a name, a line, its check)
 #define MAX_PENDING 16        // requests waiting at once: the map's summary goes to every human together
-#define STATE_EVERY 600.0     // seconds between two looks of the Game Master
+#define COACH_RESERVE 4       // places the coach's summaries and timed tips leave free for the other events
+#define STATE_EVERY 600.0     // seconds between two looks of the Game Master: once a map (20 minutes), halfway
 #define EVENT_TIME 180.0      // seconds a bounty, a duel or a boss lasts
 #define CHALLENGE_TIME 120.0  // seconds to meet a challenge
 #define REWARD 3000           // the prize of a bounty, a duel, a challenge or a boss, in dollars
@@ -56,6 +57,7 @@ new g_gravity
 // For the coach: deaths in a row, and how often each weapon killed the player; whether the map's summary was sent.
 new g_streak[33], g_killed_by[33][CSW_P90 + 1]
 new bool:g_summary_sent
+new Float:g_next_chat[33]  // when each player's next chat line may go to the relay
 
 public plugin_init()
 {
@@ -81,6 +83,7 @@ public client_putinserver(id)
 {
 	g_progress[id] = 0
 	g_streak[id] = 0
+	g_next_chat[id] = 0.0
 	arrayset(g_killed_by[id], 0, sizeof g_killed_by[])
 	if (!is_user_bot(id) && !is_user_hltv(id))
 		set_task(GREET_AFTER, "send_join", TASK_JOIN + id)
@@ -157,9 +160,14 @@ public plugin_end()
 
 // ---- To the relay ----
 
-send(JSON:event)
+// reserve: places left free for other events. Every place busy (the relay is slow): the event is lost.
+send(JSON:event, reserve = 0)
 {
+	new idle
 	for (new i = 0; i < MAX_PENDING; i++)
+		if (g_socket[i] <= 0)
+			idle++
+	for (new i = 0; i < MAX_PENDING && idle > reserve; i++)
 	{
 		if (g_socket[i] > 0)
 			continue
@@ -172,7 +180,6 @@ send(JSON:event)
 		g_deadline[i] = get_gametime() + TIMEOUT
 		break
 	}
-	// All slots busy: the relay is slow, this event is dropped.
 	json_free(event)
 }
 
@@ -259,8 +266,13 @@ public on_say(id)
 		ask_coach(id, message[7])
 		return PLUGIN_HANDLED
 	}
-	if (!message[0] || message[0] == '/' || message[0] == '!' || is_command(message))
+	// Not a dead player's line either: only the dead see it, and a bot's answer would show to everyone.
+	if (!message[0] || message[0] == '/' || message[0] == '!' || is_command(message) || !is_user_alive(id))
 		return PLUGIN_CONTINUE
+	// One line every 3 seconds per player at most: a flood cannot fill the places waiting for the relay.
+	if (get_gametime() < g_next_chat[id])
+		return PLUGIN_CONTINUE
+	g_next_chat[id] = get_gametime() + 3.0
 
 	new JSON:event = player(id)
 	json_object_set_string(event, "type", "chat")
@@ -733,7 +745,8 @@ send_coach(id, const kind[], const question[] = "")
 		json_object_set_string(event, "killed_by", name[7])
 	}
 	json_object_set_number(event, "streak", g_streak[id])
-	send(event)
+	// Asked by the player: any place. The summary and the timed tips: the others keep a few.
+	send(event, kind[0] ? COACH_RESERVE : 0)
 }
 
 give_money(id, amount)
