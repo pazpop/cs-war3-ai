@@ -82,8 +82,9 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2` en jeu.
 - **L'argent** : 800 $ au départ, et plus à chaque kill, pour les objets des boutiques.
 - **Des niveaux plus rapides** : moitié moins d'XP par niveau, l'ultime (niveau 6) arrive deux fois plus vite.
   Une race jamais jouée commence au niveau 3.
-- Des **bots** (YaPB) remplissent le serveur jusqu'à 10 joueurs. Un bot sort quand un humain arrive. Leur niveau
-  est varié, de moyen à bon, comme de vrais joueurs.
+- Des **bots** (YaPB) remplissent le serveur jusqu'à 10 joueurs. Un bot sort quand un humain arrive. Leur adresse
+  est variée, de moyenne à bonne, comme de vrais joueurs. Chaque bot a sa propre race de War3FT, et un niveau War3FT
+  de 1 à 5, nouveau à chaque carte.
 - **L'IA** : les bots (`[AI] Zed`…) répondent quand tu écris leur nom dans le chat, répondent à toute question avec un
   `?`, chacun avec son caractère, et se souviennent de toi : tue-en un souvent, et il te garde rancune. Un maître du jeu lance des primes, des duels et d'autres surprises.
 - Le premier humain qui arrive sur un serveur de bots seuls relance la partie : tout le monde repart de zéro.

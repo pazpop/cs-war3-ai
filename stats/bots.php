@@ -1,13 +1,13 @@
 <?php
-// The bots: their names and characters, from server/bots.txt (the same list the AI relay reads), with a portrait each
+// The bots: their names, races and characters, from server/bots.txt (the same list the AI relay reads), with a portrait each
 // (img/bots/<name>.png).
 require __DIR__ . '/common.php';
 
 $bots = [];
 foreach (file('/srv/server/bots.txt', FILE_IGNORE_NEW_LINES) ?: [] as $line) {
-    [$name, $character] = array_map('trim', explode('|', $line, 2)) + [1 => ''];
+    [$name, $race, $character] = array_map('trim', explode('|', $line, 3)) + [1 => '', 2 => ''];
     if ($name !== '' && $line[0] !== ';') {
-        $bots[$name] = $character;
+        $bots[$name] = ['race' => $race, 'character' => $character];
     }
 }
 
@@ -42,11 +42,12 @@ hold a grudge.</p>
 
 <h2>Meet them</h2>
 <div class="bots">
-<?php foreach ($bots as $name => $character): ?>
+<?php foreach ($bots as $name => $bot): ?>
 <div class="bot">
 <img src="/img/bots/<?= e(strtolower($name)) ?>.png" alt="" width="96" height="96">
 <h3><?= e($name) ?></h3>
-<p><?= e(ucfirst($character)) ?>.</p>
+<p class="race"><?= race_icon((int) array_search($bot['race'], RACES, true)) ?><?= e($bot['race']) ?></p>
+<p><?= e(ucfirst($bot['character'])) ?>.</p>
 </div>
 <?php endforeach; ?>
 </div>

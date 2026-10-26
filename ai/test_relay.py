@@ -34,7 +34,8 @@ class Relay(unittest.TestCase):
     def test_names(self):
         bots = [{"id": 4, "name": "[AI] Zed"}]
         self.assertEqual(relay.named_bot("zed, where are you?", bots)["id"], 4)  # players write it without [AI]
-        self.assertIn("Undead", relay.persona("[AI] Zed"))
+        self.assertIn("surfer", relay.persona("[AI] Kai"))
+        self.assertIn("you play Night Elves", relay.persona("[AI] Kai"))  # bots.txt's race column
         self.assertEqual(relay.persona("Someone"), relay.persona("[AI] Someone"))  # not in the list: still stable
 
     def test_seen(self):

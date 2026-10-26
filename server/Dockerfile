@@ -130,13 +130,12 @@ RUN set -eu; cd /opt/mods/cstrike; \
       grep -qxF "$line" addons/yapb/conf/yapb.cfg; \
     done
 
-# Our bots' names (bots.txt, before the "|"), in place of YaPB's: short and easy to type, to talk to them (YaPB's list
-# also has a racial slur).
-COPY bots.txt /tmp/bots.txt
+# Our bots' names (bots.txt, before the first "|"), in place of YaPB's: short and easy to type, to talk to them (YaPB's
+# list also has a racial slur). The whole file for bots.sma (their races).
+COPY bots.txt /opt/mods/cstrike/addons/amxmodx/configs/bots.txt
 RUN set -eu; names=/opt/mods/cstrike/addons/yapb/conf/lang/en_names.cfg; \
-    grep -v '^;' /tmp/bots.txt | cut -d'|' -f1 | sed 's/ *$//' | grep . > "$names"; \
-    [ "$(wc -l < "$names")" -ge 10 ]; \
-    rm /tmp/bots.txt
+    grep -v '^;' /opt/mods/cstrike/addons/amxmodx/configs/bots.txt | cut -d'|' -f1 | sed 's/ *$//' | grep . > "$names"; \
+    [ "$(wc -l < "$names")" -ge 10 ]
 
 # Our AMX Mod X plugins, compiled with the compiler from the War3FT package.
 COPY plugins/ /opt/mods/cstrike/addons/amxmodx/scripting/cs-war3-ai/

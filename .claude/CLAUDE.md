@@ -79,7 +79,7 @@ anyone who wants to run their own server, and get players to come back and bring
 - YaPB's `yb_difficulty_auto` balances each bot against the others and pushes them up to Expert: keep it off,
   use `yb_difficulty_min`/`max`.
 - YaPB's English bot names include a racial slur: our own list replaces it. `server/bots.txt` is the one list of
-  the bots (name | character): YaPB's names (Dockerfile), the relay's characters (its image is built from the
+  the bots (name | race | character): YaPB's names (Dockerfile), bots.sma's races, the relay's races and characters (its image is built from the
   repository's root, `.dockerignore` lets only its files through), the stats page (`stats/bots.php`).
 - YaPB's avatars are real Steam accounts' (`avatars.cfg`): off (`yb_show_avatars 0`).
 - The site's images (`stats/img/`) come from PixelLab, outside the MIT license (`stats/img/CREDITS.txt`).

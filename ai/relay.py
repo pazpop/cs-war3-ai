@@ -41,13 +41,13 @@ CHALLENGES = {"kills": (3, 6), "headshots": (2, 4), "knife": (1, 2), "grenade": 
 
 
 def load_personas(path):
-    """The bots' characters, from server/bots.txt: one "name | character" per line, ";" starts a comment."""
+    """The bots' characters, from server/bots.txt: one "name | race | character" per line, ";" starts a comment."""
     personas = {}
     with open(path, encoding="utf-8") as file:
         for line in file:
-            name, _, character = line.partition("|")
             if line.strip() and not line.startswith(";"):
-                personas[name.strip()] = character.strip()
+                name, race, character = (part.strip() for part in line.split("|", 2))
+                personas[name] = f"{character}; in War3FT, you play {race}"
     return personas
 
 

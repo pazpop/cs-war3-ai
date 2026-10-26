@@ -92,6 +92,8 @@ share):
 - `announcer.sma`: the voices and messages for first blood, multi-kills and kill streaks. Players download the voices
   over HTTP (FastDL).
 - `block_test.sma`: blocks War3FT's debug commands `test` and `test2`, open to every player (they fill the logs).
+- `bots.sma`: each bot of [server/bots.txt](../server/bots.txt) most often plays its own War3FT race, wears its own
+  skin on each team, and has a level of 1 to 5 at each map (its XP never adds up: no stronger than the humans).
 - `csdm_active.sma`: turns on War3FT's deathmatch mode (a new session at every respawn); ReDeathmatch does the
   respawns.
 - `damage.sma`: the damage the player deals, under the crosshair, at each hit.
@@ -153,7 +155,7 @@ sudo docker compose start hlds ai
   reads the database read-only.
 - `https://<domain>/status.php`: the server's state right now in JSON (humans, bots, map, slots), for other sites:
   [pazpop.net](https://pazpop.net) shows it. Asked to the game at most every 15 seconds.
-- `https://<domain>/bots.php`: the bots, their character and portrait (from [server/bots.txt](../server/bots.txt)).
+- `https://<domain>/bots.php`: the bots, their race, character and portrait (from [server/bots.txt](../server/bots.txt)).
   The images (`stats/img/`) were made with [PixelLab](https://pixellab.ai): see its `CREDITS.txt`. Also the bots'
   latest lines, from the AI relay's database (its volume, read-only).
 - `http://<domain>/guide.html`: the guide, shown on connect. The in-game browser (MOTD) is too old for today's
@@ -201,8 +203,8 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
 
 - **The bots talk**: a bot answers when a player names it in the chat (sometimes even when no one does), and
   after a kill between a bot and a human, now and then; one of them greets each human who arrives. Never bot to
-  bot. Each bot of [server/bots.txt](../server/bots.txt) has its own character, the same for YaPB, the
-  relay and the stats page, and shows as `[AI] Zed` in the scoreboard. The bots remember each human (by SteamID, in
+  bot. Each bot of [server/bots.txt](../server/bots.txt) has its own race and character, the same for
+  YaPB, the game, the relay and the stats page, and shows as `[AI] Zed` in the scoreboard. The bots remember each human (by SteamID, in
   the relay's volume): since when they play, how they fare against bots, and each bot's score against them. A bot
   killed 5 times by a player, more than it killed them, holds a grudge: it teases them, and greets them first.
 - **Questions**: a message with a `?` usually gets an answer from a bot, which has the mod's guide
