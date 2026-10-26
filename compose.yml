@@ -24,9 +24,8 @@ services:
     ports:
       - "27015:27015/udp"
     environment:
-      # DOMAIN, RCON and ADMINS: in .env, written by Ansible (the secrets come from the vault).
+      # DOMAIN and ADMINS: in .env, written by Ansible.
       DOMAIN: ${DOMAIN:?}
-      RCON: ${RCON:-}
       ADMINS: ${ADMINS:-}
       UPDATE: ${UPDATE:-0}  # UPDATE=1 docker compose up -d: reinstall or update CS 1.6
       TICRATE: ${TICRATE:-1000}  # TICRATE=100 docker compose up -d: back to Valve's default

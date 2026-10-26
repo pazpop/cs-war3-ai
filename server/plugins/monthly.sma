@@ -1,7 +1,8 @@
 // The ranking of the month, for the web page: each human's kills, deaths and headshots, per month (in
 // data/sqlite3/war3ft.sq3, table "cs_war3_ai_monthly"). A new month starts from zero: newcomers have a chance too.
 // Saved when a player leaves and at each map's end (every 20 minutes). Humans only (by SteamID): not the bots.
-// At each map start, each player sees the top 5 and their own place, in one [STATS] line.
+// At each map start, each player sees the top 5 and their own place, in one [STATS] line; at its end, their map
+// (kills, deaths, best streak, headshots) and their place before and after it.
 // Also each human's map MVPs per month (table "cs_war3_ai_mvp"): on top of the scoreboard, bots included, at a
 // map's end.
 #include <amxmodx>
@@ -14,6 +15,8 @@ new g_month[8]  // the month this map started in, "2026-10" (the VPS's time): it
 new g_kills[33]
 new g_deaths[33]
 new g_headshots[33]
+new g_streak[33], g_best_streak[33]  // kills without dying on this map: now, and the best
+new g_place_start[33]                // the player's place this month when this map started for them (0: none)
 
 public plugin_init()
 {
@@ -34,7 +37,13 @@ public plugin_init()
 public count_mvp()
 {
 	new best = map_mvp()
-	if (best && g_steamid[best][0] && humans_who_scored() >= 2)
+	new bool:counted = best && g_steamid[best][0] && humans_who_scored() >= 2
+	// Each human's line first (it saves their map), then the MVP.
+	new players[32], count
+	get_players(players, count, "ch")  // c: no bots; h: no HLTV
+	for (new i = 0; i < count; i++)
+		show_map(players[i])
+	if (counted)
 		run("INSERT INTO cs_war3_ai_mvp VALUES ('%s', '%s', 1) \
 			ON CONFLICT (month, steamid) DO UPDATE SET count = count + 1", g_month, g_steamid[best])
 }
@@ -60,6 +69,9 @@ public client_connect(id)
 	g_kills[id] = 0
 	g_deaths[id] = 0
 	g_headshots[id] = 0
+	g_streak[id] = 0
+	g_best_streak[id] = 0
+	g_place_start[id] = 0
 }
 
 public client_authorized(id, const authid[])
@@ -111,19 +123,50 @@ public show_top(id)
 	}
 	if (g_steamid[id][0])
 	{
-		query = SQL_PrepareQuery(g_db,
-			"SELECT (SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month \
-			AND (o.kills - o.deaths > m.kills - m.deaths \
-			OR (o.kills - o.deaths = m.kills - m.deaths AND o.kills > m.kills))) + 1, \
-			(SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month) FROM cs_war3_ai_monthly m \
-			WHERE m.month = '%s' AND m.steamid = '%s'", g_month, g_steamid[id])
-		if (SQL_Execute(query) && SQL_MoreResults(query))
-			formatex(line[length], charsmax(line) - length, " | You: #%d of %d", SQL_ReadResult(query, 0),
-				SQL_ReadResult(query, 1))
+		new total
+		g_place_start[id] = month_place(id, total)
+		if (g_place_start[id])
+			formatex(line[length], charsmax(line) - length, " | You: #%d of %d", g_place_start[id], total)
 		else
 			formatex(line[length], charsmax(line) - length, " | You: not ranked yet")
-		SQL_FreeHandle(query)
 	}
+	client_print_color(id, print_team_default, "^4[STATS]^1 %s", line)
+}
+
+// The player's place this month (0: not ranked yet), and how many are ranked. The same order as the web page.
+month_place(id, &total)
+{
+	new place = 0
+	new Handle:query = SQL_PrepareQuery(g_db,
+		"SELECT (SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month \
+		AND (o.kills - o.deaths > m.kills - m.deaths \
+		OR (o.kills - o.deaths = m.kills - m.deaths AND o.kills > m.kills))) + 1, \
+		(SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month) FROM cs_war3_ai_monthly m \
+		WHERE m.month = '%s' AND m.steamid = '%s'", g_month, g_steamid[id])
+	if (SQL_Execute(query) && SQL_MoreResults(query))
+	{
+		place = SQL_ReadResult(query, 0)
+		total = SQL_ReadResult(query, 1)
+	}
+	SQL_FreeHandle(query)
+	return place
+}
+
+// At the map's end, each human's map in one [STATS] line: kills, deaths, best streak, headshots, and their place this
+// month before and after it (saved here, so that the place counts this map).
+show_map(id)
+{
+	new kills = g_kills[id], deaths = g_deaths[id], headshots = g_headshots[id]
+	if (!g_steamid[id][0] || kills + deaths == 0)
+		return
+	save(id)
+	new line[160], total, place = month_place(id, total)
+	new length = formatex(line, charsmax(line), "Your map: %d kills, %d deaths, best streak %d, %d%% headshots.",
+		kills, deaths, g_best_streak[id], kills ? headshots * 100 / kills : 0)
+	if (place && g_place_start[id] && place != g_place_start[id])
+		formatex(line[length], charsmax(line) - length, " Month: #%d -> #%d", g_place_start[id], place)
+	else if (place)
+		formatex(line[length], charsmax(line) - length, " Month: #%d", place)
 	client_print_color(id, print_team_default, "^4[STATS]^1 %s", line)
 }
 
@@ -154,10 +197,12 @@ save(id)
 public on_kill(killer, victim, bool:headshot, const weapon[])
 {
 	g_deaths[victim]++
+	g_streak[victim] = 0
 	if (killer && killer != victim)
 	{
 		g_kills[killer]++
 		if (headshot)
 			g_headshots[killer]++
+		g_best_streak[killer] = max(g_best_streak[killer], ++g_streak[killer])
 	}
 }

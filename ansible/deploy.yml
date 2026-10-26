@@ -18,7 +18,6 @@
     - name: Check the settings before touching the server
       ansible.builtin.assert:
         that:
-          - vault_rcon | default('') is match('^([A-Za-z0-9_-]{16,})?$')
           - admin_steamids | select('match', '^STEAM_[0-5]:[01]:[0-9]+$') | list | length == admin_steamids | length
           - "'STEAM_0:1:123456' not in admin_steamids"
           - domain is match('^[a-z0-9.-]+$')
@@ -28,7 +27,6 @@
           - vault_hc_server | default('') is match('^(https://[A-Za-z0-9./_-]+)?$')
           - vault_anthropic_key | default('') is match('^(sk-ant-[A-Za-z0-9_-]+)?$')
         fail_msg: >-
-          vault_rcon (ansible/vault.yml, optional): 16 characters or more, letters, digits, _ and - only.
           admin_steamids (ansible/personal.yml): your own SteamIDs, like STEAM_0:1:123456 (not this example).
           domain and collect_domains (ansible/inventory.yml): lowercase letters, digits, dots and dashes.
           timezone (ansible/inventory.yml): a zone name, like America/Toronto or UTC.
@@ -96,7 +94,6 @@
         content: |
           DOMAIN={{ domain }}
           TIMEZONE={{ timezone }}
-          RCON={{ vault_rcon | default('') }}
           ADMINS={{ admin_steamids | join(' ') }}
           ANTHROPIC_API_KEY={{ vault_anthropic_key | default('') }}
         mode: "0600"

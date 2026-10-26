@@ -21,7 +21,8 @@ Counter-Strike 1.6, avec les races et les sorts de Warcraft 3 : Frozen Throne (l
 - **Pas de triche** : ni hack, ni script, ni bug utilisé exprès.
 - **Pas de spam**, ni de pub pour d'autres serveurs. Changer de pseudo 10 fois en 10 minutes te fait expulser pour
   une heure.
-- Absent **60 secondes** (aucune touche, souris immobile) : tu passes en spectateur. Un ping au-dessus de
+- Absent **60 secondes** (aucune touche, souris immobile) : tu passes en spectateur (ce temps ne compte pas pour
+  les succès). Un ping au-dessus de
   **300 ms** pendant 50 secondes te fait expulser.
 
 Les mêmes règles valent dans le chat d'équipe. Si tu les enfreins, les joueurs peuvent t'expulser 10 minutes
@@ -113,6 +114,8 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2`.
   stats.
 - **/coach** : un conseil du coach IA, en privé. `/coach on` : un toutes les 5 minutes (`/coach off` pour arrêter).
   Vers la fin de chaque carte, tu reçois un bilan.
+- À la fin de chaque carte, ta carte sur une ligne : kills, morts, meilleure série, headshots, et ta place du mois
+  avant et après.
 - Le top 10 affiche sa place dans le chat ; le top 3 du mois passé, l'étiquette **[Champion]**.
 - Dans le chat : **[HELP]** une commande, **[INFO]** le serveur, **[STATS]** le top 5 du mois à chaque début de
   carte, le MVP de la carte à sa fin, un succès débloqué, l'objectif de la semaine atteint.

@@ -24,7 +24,7 @@ jobs:
           pip install ansible-lint
           ansible-galaxy collection install -r ansible/requirements.yml
           cp ansible/personal.example.yml ansible/personal.yml
-          echo 'vault_rcon: ci-placeholder-1234' > ansible/vault.yml
+          echo '{}' > ansible/vault.yml
           ansible-lint ansible/init.yml ansible/config.yml ansible/deploy.yml ansible/backup.yml
 
       - name: Shell scripts

@@ -74,10 +74,6 @@ done
 # the one after it, instead of playing de_dust2 twice.
 set -- -game cstrike -console +ip 0.0.0.0 +port 27015 +maxplayers 16 \
   +sys_ticrate "${TICRATE:-1000}" +localinfo stats_domain "$DOMAIN" +map de_dust2 +sv_lan 0
-# Without a password, the remote console (rcon) stays closed.
-if [ -n "${RCON:-}" ]; then
-  set -- "$@" +rcon_password "$RCON"
-fi
 
 cd /hlds
 export LD_LIBRARY_PATH="/hlds:${LD_LIBRARY_PATH:-}"

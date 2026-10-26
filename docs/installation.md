@@ -53,9 +53,8 @@ git clone https://github.com/pazpop/cs-war3-ai.git && cd cs-war3-ai
    source vault.sh                       # the vault password, kept 2 h in this terminal
    ansible-vault create ansible/vault.yml
    ```
-   Inside, optional: `vault_rcon: <16 characters or more: letters, digits, _ and ->`. Without it, rcon stays
-   closed; the admins still work by SteamID. Optional too: `vault_anthropic_key: sk-ant-...`, for the AI (see
-   [The AI](#the-ai-optional)). An empty vault is fine: `{}`.
+   Inside, optional: `vault_anthropic_key: sk-ant-...`, for the AI (see [The AI](#the-ai-optional)). An empty
+   vault is fine: `{}`.
 
 ## Setting up the VPS
 
@@ -95,7 +94,7 @@ In [server/plugins/](../server/plugins/), compiled at build time (`common.inc`, 
 code several share; `kills.inc` also gets the kills of War3FT's spells, which the game's death notice misses):
 
 - `achievements.sma`: 14 achievements (`/ach`), saved in War3FT's database; the player pages show them. An unlock
-  shows to everyone (`[STATS]`).
+  shows to everyone (`[STATS]`). The time played ("Regular") counts only in a team, not as a spectator.
 - `afk.sma`: 60 seconds without a key or a mouse move, and a player goes to spectator.
 - `ai.sma`: sends the chat, the kills between bots and humans, the state of the game halfway through each map, a player's
   arrivals, name changes and numbers for the coach, and the Game Master's announcements to the AI relay, and does
@@ -120,7 +119,8 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
   `[HELP]` for a command, `[INFO]` for the rest (add the server to your favorites). One minute before the map's end:
   the next map.
 - `monthly.sma`: the ranking of the month (kills - deaths, from zero on the 1st), on the stats page. At each map, the
-  top 5 and the player's place, in one line. Also each human's map MVPs of the month (on top of the scoreboard at a
+  top 5 and the player's place, in one line; at its end, the player's map (kills, deaths, best streak, headshots)
+  and their place before and after it. Also each human's map MVPs of the month (on top of the scoreboard at a
   map's end, bots included, when two humans or more scored).
 - `name_spam.sma`: a human who changes their name 10 times within 10 minutes is kicked for an hour.
 - `no_spray.sma`: no sprays (the T key): `sv_allowupload 0` already hides custom images; the bots: `yb_spraypaints 0`.
@@ -324,7 +324,8 @@ it only filters what comes from outside OVHcloud, and only IPv4.
 ## Admins
 
 SteamIDs in `ansible/personal.yml`. In the game console: `amxmodmenu` (the admin menu), `amx_who`.
-Rcon (if `vault_rcon` is set): `rcon_password <vault_rcon>`, then `rcon status`.
+No rcon (its password would cross the Internet in clear). The server's console, on the VPS:
+`sudo docker attach cs-war3-ai-hlds-1` (leave with Ctrl+P then Ctrl+Q; Ctrl+C restarts the server).
 
 To take a player's name off the stats site (on request, with their SteamID), on the VPS:
 

@@ -30,7 +30,7 @@ new const ACH_DESCRIPTION[ACHIEVEMENTS][] = {
 	"Get your first kill", "Get 100 kills", "Get 1,000 kills", "Get 10,000 kills", "Get 100 headshots",
 	"Get 1,000 headshots", "Get 10 knife kills", "Get 100 kills with the Desert Eagle", "Get 100 kills with the AWP",
 	"Get 10 kills without dying", "Get 20 kills without dying", "Kill 25 enemies in the air",
-	"Get 10 kills with 10 HP or less", "Play 10 hours on the server"
+	"Get 10 kills with 10 HP or less", "Play 10 hours in a team"
 }
 new const ACH_COUNTER[ACHIEVEMENTS] = {
 	KILLS, KILLS, KILLS, KILLS, HEADSHOTS, HEADSHOTS, KNIFE, DEAGLE, AWP, BEST_STREAK, BEST_STREAK, AIR, LOW_HP, SECONDS
@@ -41,7 +41,8 @@ new g_saved[33][COUNTERS]          // what the database had when the player arri
 new g_new[33][COUNTERS]            // what they did since (best_streak: their best on this map)
 new bool:g_unlocked[33][ACHIEVEMENTS]
 new g_streak[33]
-new g_arrival[33]
+
+#define TIME_STEP 60  // seconds: the time played ("Regular") goes up by a minute for each minute in a team
 
 public plugin_init()
 {
@@ -49,6 +50,7 @@ public plugin_init()
 	register_kills()
 	register_clcmd("say /ach", "cmd_achievements")
 	register_clcmd("say /achievements", "cmd_achievements")
+	set_task(float(TIME_STEP), "count_time", .flags = "b")
 
 	connect_db()
 	run("CREATE TABLE IF NOT EXISTS ach_progress (steamid TEXT PRIMARY KEY, kills INTEGER DEFAULT 0, \
@@ -82,7 +84,6 @@ public client_authorized(id, const authid[])
 {
 	if (!keep_steamid(id, authid))
 		return
-	g_arrival[id] = get_systime()
 
 	new Handle:query = SQL_PrepareQuery(g_db,
 		"SELECT kills, headshots, knife, deagle, awp, air, low_hp, seconds, best_streak FROM ach_progress \
@@ -123,7 +124,6 @@ save(id)
 		return
 	// The time ("Regular") grows without any kill: check it now too.
 	check_unlocks(id)
-	g_new[id][SECONDS] = get_systime() - g_arrival[id]
 	run("INSERT INTO ach_progress (steamid) VALUES ('%s') ON CONFLICT (steamid) DO NOTHING", g_steamid[id])
 	run("UPDATE ach_progress SET kills = kills + %d, headshots = headshots + %d, knife = knife + %d, \
 		deagle = deagle + %d, awp = awp + %d, air = air + %d, low_hp = low_hp + %d, seconds = seconds + %d, \
@@ -136,9 +136,20 @@ value(id, counter)
 {
 	if (counter == BEST_STREAK)
 		return max(g_saved[id][counter], g_new[id][counter])
-	if (counter == SECONDS)
-		return g_saved[id][counter] + get_systime() - g_arrival[id]
 	return g_saved[id][counter] + g_new[id][counter]
+}
+
+// The time played, only in a team (T or CT): a player left as a spectator (afk.sma) earns no "Regular".
+public count_time()
+{
+	new players[32], count
+	get_players(players, count, "ch")  // c: no bots; h: no HLTV
+	for (new i = 0; i < count; i++)
+	{
+		new team = get_user_team(players[i])
+		if (g_steamid[players[i]][0] && (team == 1 || team == 2))
+			g_new[players[i]][SECONDS] += TIME_STEP
+	}
 }
 
 // Every kill, War3FT's spells included (kills.inc).

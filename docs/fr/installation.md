@@ -55,9 +55,8 @@ git clone https://github.com/pazpop/cs-war3-ai.git && cd cs-war3-ai
    source vault.sh                       # le mot de passe du coffre, gardé 2 h dans ce terminal
    ansible-vault create ansible/vault.yml
    ```
-   Dedans, optionnel : `vault_rcon: <16 caractères ou plus : lettres, chiffres, _ et ->`. Sans lui, le rcon reste
-   fermé ; les admins marchent toujours par SteamID. Optionnel aussi : `vault_anthropic_key: sk-ant-...`, pour
-   l'IA (voir [L'IA](#lia-optionnel)). Un coffre vide convient : `{}`.
+   Dedans, optionnel : `vault_anthropic_key: sk-ant-...`, pour l'IA (voir [L'IA](#lia-optionnel)). Un coffre vide
+   convient : `{}`.
 
 ## Installer le VPS
 
@@ -99,7 +98,8 @@ code que plusieurs partagent ; `kills.inc` reçoit aussi les kills des sorts de 
 rate) :
 
 - `achievements.sma` : 14 succès (`/ach`), gardés dans la base de War3FT ; les pages des joueurs les affichent. Un
-  succès débloqué s'affiche pour tous (`[STATS]`).
+  succès débloqué s'affiche pour tous (`[STATS]`). Le temps de jeu (« Regular ») ne compte qu'en équipe, pas en
+  spectateur.
 - `afk.sma` : 60 secondes sans toucher une touche ni bouger la souris, et un joueur passe en spectateur.
 - `ai.sma` : envoie le chat, les kills entre bots et humains, l'état de la partie à la moitié de chaque carte, les
   arrivées, changements de pseudo et chiffres d'un joueur pour le coach, et les annonces du maître du jeu au relais
@@ -126,7 +126,8 @@ rate) :
   [server/messages.txt](../../server/messages.txt) : `[HELP]` pour une commande, `[INFO]` pour le reste (ajouter le
   serveur aux favoris). Une minute avant la fin de la carte : la carte suivante.
 - `monthly.sma` : le classement du mois (kills - morts, repart de zéro le 1er), sur la page de stats. À chaque
-  carte, le top 5 et la place du joueur, sur une ligne. Compte aussi les MVP du mois de chaque humain (premier du
+  carte, le top 5 et la place du joueur, sur une ligne ; à sa fin, la carte du joueur (kills, morts, meilleure
+  série, headshots) et sa place avant et après. Compte aussi les MVP du mois de chaque humain (premier du
   tableau des scores en fin de carte, bots compris, quand au moins deux humains ont marqué).
 - `name_spam.sma` : un humain qui change de pseudo 10 fois en 10 minutes est expulsé pour une heure.
 - `no_spray.sma` : pas de sprays (la touche T) ; `sv_allowupload 0` cache déjà les images perso ; les bots :
@@ -346,7 +347,8 @@ ne filtre que ce qui vient de l'extérieur d'OVHcloud, et seulement en IPv4.
 ## Les admins
 
 SteamID dans `ansible/personal.yml`. Dans la console du jeu : `amxmodmenu` (le menu admin), `amx_who`.
-Le rcon (si `vault_rcon` est défini) : `rcon_password <vault_rcon>`, puis `rcon status`.
+Pas de rcon (son mot de passe traverserait Internet en clair). La console du serveur, sur le VPS :
+`sudo docker attach cs-war3-ai-hlds-1` (pour sortir : Ctrl+P puis Ctrl+Q ; Ctrl+C redémarre le serveur).
 
 Pour retirer le pseudo d'un joueur du site de stats (sur demande, avec son SteamID), sur le VPS :
 
