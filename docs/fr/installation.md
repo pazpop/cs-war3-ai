@@ -36,7 +36,7 @@ Les voix de l'annonceur sont les seuls fichiers de tiers qu'il contient
    avec tes propres serveurs dans `collect_domains`. Les messages du chat :
    [server/messages.txt](../../server/messages.txt).
 2. Une clé SSH pour Ansible (`ansible_ssh_private_key_file` dans l'inventaire), copiée sur le compte de l'hébergeur :
-   `ssh-copy-id -i ~/.ssh/cs_pazpop_net.pub debian@cs.pazpop.net`
+   `ssh-copy-id -i ~/.ssh/<ta clé>.pub debian@<domaine>`
 3. Copie [ansible/personal.example.yml](../../ansible/personal.example.yml) en `ansible/personal.yml` (ignoré par git)
    et remplis-le : le compte de l'hébergeur, ton compte, le dossier des sauvegardes, les SteamID des admins.
 4. Les collections d'Ansible : `ansible-galaxy collection install -r ansible/requirements.yml`
@@ -85,7 +85,8 @@ reprise en `maps.ini` : les cartes de CS 1.6 les plus aimées que les bots conna
 
 ## Nos plugins
 
-Dans [server/plugins/](../../server/plugins/), compilés au build :
+Dans [server/plugins/](../../server/plugins/), compilés au build (`common.inc` et `database.inc` : le code que
+plusieurs partagent) :
 
 - `achievements.sma` : 14 succès (`/ach`), gardés dans la base de War3FT ; les pages des joueurs les affichent. À
   chaque carte, le plus proche ; un mot au joueur quand il en reste 10 %.
@@ -204,15 +205,22 @@ des actions :
   joueur très en avance, un duel entre deux joueurs, 30 secondes de gravité basse, de l'argent pour tous. Il ne
   choisit que dans cette liste : le plugin vérifie chaque événement et le lance lui-même.
 
+Ce que l'IA peut dire : un prompt système strict, puis un modérateur (une seconde requête) vérifie chaque ligne
+avant qu'elle s'affiche : pas d'insulte raciste, de haine, de contenu sexuel, de menace, d'activité illégale, de
+politique ni d'information personnelle, dans aucune langue, ni un pseudo injurieux répété. Au moindre doute ou à
+la moindre erreur, rien ne s'affiche. Un bot répond au même joueur au plus toutes les 10 secondes, et les bots ne
+se parlent jamais entre eux.
+
 Mise en place : une clé API de [console.anthropic.com](https://console.anthropic.com) dans le vault
 (`vault_anthropic_key: sk-ant-...`), puis `deploy.yml`. Sans clé, le relais se tait et le jeu ne change pas. Il
-dépense au plus `AI_DAILY_USD` par jour (1 $ par défaut, dans `compose.yml`), puis se tait jusqu'à minuit UTC ;
+dépense au plus `AI_DAILY_USD` par jour (1 $ par défaut, dans `compose.yml` ; `0` coupe l'IA), puis se tait jusqu'à
+minuit UTC ;
 mets aussi une limite mensuelle dans la console d'Anthropic.
 
 Ce qui sort du VPS : les messages du chat, les noms, le score. Jamais les SteamID ni les IP. Le guide le dit aux
 joueurs.
 
-Ses logs : `docker compose logs ai`.
+Ses logs, sur le VPS : `cd /srv/cs-war3-ai && sudo docker compose logs ai`.
 
 ## Le monitoring (optionnel)
 

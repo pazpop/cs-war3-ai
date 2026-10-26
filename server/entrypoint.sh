@@ -3,7 +3,7 @@
 set -eu
 
 case "${DOMAIN:-}" in
-  '' | *[!a-z0-9.-]*) echo "DOMAIN: \"${DOMAIN:-}\" is not a domain name (war3.example.com)." >&2; exit 1 ;;
+  '' | *[!a-z0-9.-]*) echo "DOMAIN: \"${DOMAIN:-}\" is not a domain name (game.example.com)." >&2; exit 1 ;;
 esac
 
 # App 90 often stops before the end: run it again until the success message.

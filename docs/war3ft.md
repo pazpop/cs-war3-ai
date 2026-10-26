@@ -77,11 +77,14 @@ What each one does: `/itemsinfo` and `/itemsinfo2` in game.
 ## On this server
 
 - **Respawn**: you come back at once in your team's base. No rounds, no bomb. **G** opens the weapon menu.
+  3 seconds of protection after each respawn, lost when you shoot.
 - **Money**: $800 to start, and more with each kill, for the shops' items.
 - **Faster levels**: half the usual XP per level, so your ultimate (level 6) comes twice as fast. A race you have
   never played starts at level 3.
 - **Bots** (YaPB) fill the server up to 10 players. A bot leaves when a human joins. Their level is a mix, from
   average to strong, like real players.
+- **The AI**: the bots (`[AI] Zed`...) talk back when you write their name in the chat, each with its own
+  character, and remember you. A Game Master starts bounties, duels and other surprises.
 - Every 30 minutes, a vote picks the next map.
 - An announcer for first blood, multi-kills and kill streaks, up to GODLIKE.
 - Away for **60 seconds** (no key, no mouse move): you become a spectator. A ping over **300 ms** for 50 seconds

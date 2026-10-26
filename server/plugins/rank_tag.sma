@@ -4,11 +4,11 @@
 #include <amxmodx>
 #include <csstats>
 #include <sqlx>
+#include "database.inc"
 
 #define TAGGED 10  // the places that get a tag
 
-// Words our plugins read as commands (rtv: on cs-war3-ai); slash_commands.sma also sends /nextmap... here again
-// without the slash.
+// Words our plugins read as commands; slash_commands.sma also sends /nextmap... here again without the slash.
 new const COMMANDS[][] = { "help", "votekick", "rtv", "nextmap", "currentmap", "timeleft", "thetime" }
 
 new g_champions[3][35]  // last month's top 3, by SteamID
@@ -17,22 +17,20 @@ public plugin_init()
 {
 	register_plugin("Rank tag", "1.0", "cs-war3-ai")
 	register_clcmd("say", "on_say")
+	connect_db()
 	load_champions()
+}
+
+public plugin_end()
+{
+	SQL_FreeHandle(g_db)
 }
 
 // Read again at each map start: a new month changes them.
 load_champions()
 {
-	new error[128], code
-	SQL_SetAffinity("sqlite")
-	new Handle:db = SQL_Connect(SQL_MakeDbTuple("", "", "", "war3ft"), code, error, charsmax(error))
-	if (db == Empty_Handle)
-	{
-		log_amx("rank tag: %s", error)
-		return
-	}
 	// The same order as the web page's hall of fame.
-	new Handle:query = SQL_PrepareQuery(db, "SELECT steamid FROM cs_war3_ai_monthly \
+	new Handle:query = SQL_PrepareQuery(g_db, "SELECT steamid FROM cs_war3_ai_monthly \
 		WHERE month = strftime('%%Y-%%m', 'now', 'start of month', '-1 month') \
 		ORDER BY kills - deaths DESC, kills DESC LIMIT 3")
 	if (SQL_Execute(query))
@@ -44,7 +42,6 @@ load_champions()
 		}
 	}
 	SQL_FreeHandle(query)
-	SQL_FreeHandle(db)
 }
 
 bool:is_champion(id)

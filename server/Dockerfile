@@ -123,8 +123,7 @@ RUN set -eu; cd /opt/mods/cstrike; \
       grep -qxF "$line" addons/yapb/conf/yapb.cfg; \
     done
 
-# Our bots' names, in place of YaPB's: short and easy to type, to talk to them (and none of YaPB's, one of which is a
-# racial slur).
+# Our bots' names, in place of YaPB's: short and easy to type, to talk to them (YaPB's list also has a racial slur).
 COPY bot_names.txt /opt/mods/cstrike/addons/yapb/conf/lang/en_names.cfg
 
 # Our AMX Mod X plugins, compiled with the compiler from the War3FT package.

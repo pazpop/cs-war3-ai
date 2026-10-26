@@ -4,6 +4,7 @@
 #include <amxmodx>
 #include <sqlx>
 #include <csstats>
+#include "common.inc"
 
 #define COMBAT_TOP 100
 
@@ -26,7 +27,7 @@ public cmd_mystats(id)
 {
 	new steamid[35], steamid_sql[72], query[128], data[2]
 	get_user_authid(id, steamid, charsmax(steamid))
-	if (!equal(steamid, "STEAM_", 6) || !isdigit(steamid[6]) || steamid[7] != ':')
+	if (!is_real_steamid(steamid))
 	{
 		client_print(id, print_chat, "[Stats] Needs a Steam account.")
 		return PLUGIN_HANDLED
@@ -89,9 +90,7 @@ save_name(id)
 
 	new steamid[35], steamid_sql[72], name[64], name_sql[132], query[320]
 	get_user_authid(id, steamid, charsmax(steamid))
-	// Only real SteamIDs, which start with STEAM_ and a digit (STEAM_0:1:...): not STEAM_ID_PENDING or STEAM_ID_LAN,
-	// which many players would share.
-	if (!equal(steamid, "STEAM_", 6) || !isdigit(steamid[6]) || steamid[7] != ':')
+	if (!is_real_steamid(steamid))
 		return
 
 	// The name comes from the player: SQL_QuoteString escapes it for SQLite (' becomes ''). The SteamID too, like
@@ -121,8 +120,7 @@ export_combat_ranking()
 		// CSX's own place, as in /rank and /top15 (the skipped rows below keep theirs).
 		new place = index + 1
 		index = get_stats(index, stats, bodyhits, name, charsmax(name), steamid, charsmax(steamid))
-		// Only real SteamIDs: STEAM_ID_PENDING or STEAM_ID_LAN would be many players in one row.
-		if (!equal(steamid, "STEAM_", 6) || !isdigit(steamid[6]) || steamid[7] != ':')
+		if (!is_real_steamid(steamid))
 			continue
 		count++
 		// Both end up in a query: both are escaped.

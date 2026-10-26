@@ -3,8 +3,9 @@
 // Saved when a player leaves and at each map's end (every 30 minutes). Humans only (by SteamID): not the bots.
 #include <amxmodx>
 #include <sqlx>
+#include "common.inc"
+#include "database.inc"
 
-new Handle:g_db
 new g_steamid[33][35]  // empty: not counted (bot, or no SteamID)
 new g_kills[33]
 new g_deaths[33]
@@ -14,13 +15,7 @@ public plugin_init()
 {
 	register_plugin("Ranking of the month", "1.0", "cs-war3-ai")
 	register_event("DeathMsg", "on_death", "a")
-
-	// Local SQLite: plain (not threaded) queries are fast enough, and simple to follow.
-	new error[128], code
-	SQL_SetAffinity("sqlite")
-	g_db = SQL_Connect(SQL_MakeDbTuple("", "", "", "war3ft"), code, error, charsmax(error))
-	if (g_db == Empty_Handle)
-		set_fail_state("SQLite: %s", error)
+	connect_db()
 	run("CREATE TABLE IF NOT EXISTS cs_war3_ai_monthly (month TEXT, steamid TEXT, kills INTEGER, deaths INTEGER, \
 		headshots INTEGER, PRIMARY KEY (month, steamid))")
 }
@@ -28,20 +23,6 @@ public plugin_init()
 public plugin_end()
 {
 	SQL_FreeHandle(g_db)
-}
-
-// Runs a query that returns nothing. Every value in it comes from this plugin or is escaped.
-run(const format_string[], any:...)
-{
-	new query[512], error[128]
-	vformat(query, charsmax(query), format_string, 2)
-	new Handle:handle = SQL_PrepareQuery(g_db, "%s", query)
-	if (!SQL_Execute(handle))
-	{
-		SQL_QueryError(handle, error, charsmax(error))
-		log_amx("monthly: %s", error)
-	}
-	SQL_FreeHandle(handle)
 }
 
 public client_connect(id)
@@ -53,11 +34,9 @@ public client_connect(id)
 	g_headshots[id] = 0
 }
 
-// Only real SteamIDs, which start with STEAM_ and a digit (STEAM_0:1:...): not STEAM_ID_PENDING or STEAM_ID_LAN,
-// which many players would share.
 public client_authorized(id, const authid[])
 {
-	if (!is_user_bot(id) && equal(authid, "STEAM_", 6) && isdigit(authid[6]) && authid[7] == ':')
+	if (!is_user_bot(id) && is_real_steamid(authid))
 		SQL_QuoteString(Empty_Handle, g_steamid[id], charsmax(g_steamid[]), authid)
 }
 

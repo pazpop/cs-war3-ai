@@ -33,7 +33,7 @@ The announcer's voices are the only third-party files in it ([CREDITS.txt](../se
 1. A DNS name pointing to the VPS: set it as `domain` in [ansible/inventory.yml](../ansible/inventory.yml), with
    your own servers in `collect_domains`. The chat messages: [server/messages.txt](../server/messages.txt).
 2. An SSH key for Ansible (`ansible_ssh_private_key_file` in the inventory), copied to the provider's account:
-   `ssh-copy-id -i ~/.ssh/cs_pazpop_net.pub debian@cs.pazpop.net`
+   `ssh-copy-id -i ~/.ssh/<your key>.pub debian@<domain>`
 3. Copy [ansible/personal.example.yml](../ansible/personal.example.yml) to `ansible/personal.yml` (ignored by git)
    and fill it in: the provider's account, your account, the backup folder, the admins' SteamIDs.
 4. The Ansible collections: `ansible-galaxy collection install -r ansible/requirements.yml`
@@ -81,7 +81,8 @@ liked CS 1.6 maps that the bots know.
 
 ## Our plugins
 
-In [server/plugins/](../server/plugins/), compiled at build time:
+In [server/plugins/](../server/plugins/), compiled at build time (`common.inc` and `database.inc`: the code several
+share):
 
 - `achievements.sma`: 14 achievements (`/ach`), saved in War3FT's database; the player pages show them. At each map, the
   closest one; a word to the player when 10 % is left.
@@ -112,7 +113,8 @@ In [server/plugins/](../server/plugins/), compiled at build time:
   player's page.
 
 ReDeathmatch: teams, instant respawn in the team's base, no rounds, weapons with **G**, $800 to start (the War3
-shops cost money). 3 seconds of spawn protection, lost at the first shot (ReGameDLL's `mp_respawn_immunity*`). Mapchooser runs a map vote at the end of each map (every 30 minutes).
+shops cost money). 3 seconds of spawn protection, lost at the first shot (ReGameDLL's `mp_respawn_immunity*`).
+Mapchooser runs a map vote at the end of each map (every 30 minutes).
 AMX Mod X's `antiflood` blocks chat floods (one message every 0.75 s at most: `amx_flood_time`).
 
 ## Data and backup
@@ -193,15 +195,20 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
   a duel between two players, 30 seconds of low gravity, money for everyone. It can only pick from this list: the
   plugin checks each event and runs it itself.
 
+What the AI may say: a strict system prompt, then a moderator (a second request) checks every line before it is
+shown: no slurs, hate, sexual content, threats, illegal activity, politics or personal information, in any
+language, nor an offensive player name repeated. On any doubt or error, nothing is shown. A bot answers the same
+player at most every 10 seconds, and the bots never talk to each other.
+
 Setup: an API key from [console.anthropic.com](https://console.anthropic.com) in the vault
 (`vault_anthropic_key: sk-ant-...`), then `deploy.yml`. Without a key, the relay stays silent and the game is
-unchanged. It spends at most `AI_DAILY_USD` a day (1 $ by default, in `compose.yml`), then stays silent until
-midnight UTC; set a monthly limit in the Anthropic console too.
+unchanged. It spends at most `AI_DAILY_USD` a day (1 $ by default, in `compose.yml`; `0` turns the AI off), then
+stays silent until midnight UTC; set a monthly limit in the Anthropic console too.
 
 What leaves the VPS: the chat messages, the names, the score. Never the SteamIDs or the IPs. The guide tells the
 players.
 
-Its logs: `docker compose logs ai`.
+Its logs, on the VPS: `cd /srv/cs-war3-ai && sudo docker compose logs ai`.
 
 ## Monitoring (optional)
 

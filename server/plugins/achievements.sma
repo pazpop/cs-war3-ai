@@ -8,6 +8,8 @@
 #include <amxmodx>
 #include <engine>  // entity_get_int()
 #include <sqlx>
+#include "common.inc"
+#include "database.inc"
 
 // The counters, and their columns in ach_progress.
 enum { KILLS, HEADSHOTS, KNIFE, DEAGLE, AWP, AIR, LOW_HP, SECONDS, BEST_STREAK, COUNTERS }
@@ -34,7 +36,6 @@ new const ACH_COUNTER[ACHIEVEMENTS] = {
 }
 new const ACH_GOAL[ACHIEVEMENTS] = { 1, 100, 1000, 10000, 100, 1000, 10, 100, 100, 10, 20, 25, 10, 36000 }
 
-new Handle:g_db
 new g_steamid[33][35]             // empty: not counted (bot, or no SteamID)
 new g_saved[33][COUNTERS]          // what the database had when the player arrived on this map
 new g_new[33][COUNTERS]            // what they did since (best_streak: their best on this map)
@@ -49,13 +50,7 @@ public plugin_init()
 	register_clcmd("say /ach", "cmd_achievements")
 	register_clcmd("say /achievements", "cmd_achievements")
 
-	// Local SQLite: plain (not threaded) queries are fast enough, and simple to follow.
-	new error[128], code
-	SQL_SetAffinity("sqlite")
-	g_db = SQL_Connect(SQL_MakeDbTuple("", "", "", "war3ft"), code, error, charsmax(error))
-	if (g_db == Empty_Handle)
-		set_fail_state("SQLite: %s", error)
-
+	connect_db()
 	run("CREATE TABLE IF NOT EXISTS ach_progress (steamid TEXT PRIMARY KEY, kills INTEGER DEFAULT 0, \
 		headshots INTEGER DEFAULT 0, knife INTEGER DEFAULT 0, deagle INTEGER DEFAULT 0, awp INTEGER DEFAULT 0, \
 		air INTEGER DEFAULT 0, low_hp INTEGER DEFAULT 0, seconds INTEGER DEFAULT 0, best_streak INTEGER DEFAULT 0)")
@@ -77,20 +72,6 @@ public plugin_end()
 	SQL_FreeHandle(g_db)
 }
 
-// Runs a query that returns nothing. Every value in it comes from this plugin or is escaped.
-run(const format_string[], any:...)
-{
-	new query[512], error[128]
-	vformat(query, charsmax(query), format_string, 2)
-	new Handle:handle = SQL_PrepareQuery(g_db, "%s", query)
-	if (!SQL_Execute(handle))
-	{
-		SQL_QueryError(handle, error, charsmax(error))
-		log_amx("achievements: %s", error)
-	}
-	SQL_FreeHandle(handle)
-}
-
 // Arrival, also at each map change: a clean slate until Steam confirms who the player is.
 public client_connect(id)
 {
@@ -103,11 +84,9 @@ public client_connect(id)
 }
 
 // Steam has confirmed the SteamID: loads the counters and the unlocked achievements.
-// Only real SteamIDs, which start with STEAM_ and a digit (STEAM_0:1:...): not STEAM_ID_PENDING or STEAM_ID_LAN,
-// which many players would share.
 public client_authorized(id, const authid[])
 {
-	if (is_user_bot(id) || !equal(authid, "STEAM_", 6) || !isdigit(authid[6]) || authid[7] != ':')
+	if (is_user_bot(id) || !is_real_steamid(authid))
 		return
 	// Nothing to escape in a real SteamID, but it still goes through SQL_QuoteString.
 	SQL_QuoteString(Empty_Handle, g_steamid[id], charsmax(g_steamid[]), authid)

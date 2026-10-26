@@ -2,6 +2,7 @@
 // Counted against all the humans on the server, not only those who answer: one player alone never decides.
 // Admins are not in the menu (immunity).
 #include <amxmodx>
+#include "common.inc"
 
 #define SHARE 0.6           // share of the other humans needed
 #define KICK_MIN_HUMANS 3   // with 2, one player could kick the other alone
@@ -93,7 +94,7 @@ public on_votekick_choice(id, menu, item)
 		new authid[35]
 		get_user_authid(target, authid, charsmax(authid))
 		server_cmd("kick #%d ^"Kicked by vote for %d minutes^"", userid, BAN_MINUTES)
-		if (equal(authid, "STEAM_", 6) && isdigit(authid[6]) && authid[7] == ':')
+		if (is_real_steamid(authid))
 			server_cmd("banid %d %s", BAN_MINUTES, authid)
 		for (new i = 1; i <= MaxClients; i++)
 			if (g_wants_kick[i] == userid)

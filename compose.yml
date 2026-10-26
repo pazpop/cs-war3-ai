@@ -44,8 +44,9 @@ services:
     restart: unless-stopped
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      AI_DAILY_USD: ${AI_DAILY_USD:-1}  # the most it spends in a day, in dollars; then it is silent until midnight UTC
-    # game: its way out to the API, as the game's.
+      # The most it spends in a day, in dollars; then it is silent until midnight UTC. 0: the AI is off.
+      AI_DAILY_USD: ${AI_DAILY_USD:-1}
+    # game: its way out to the API.
     networks:
       game:
       ai:
@@ -112,8 +113,8 @@ volumes:
 networks:
   # The game alone, and its AI relay.
   game:
-  # Between the game and its AI relay. Internal (no way out): the game still goes out through "game", as before.
-  # A fixed range, for the relay's address (outside Docker's own ranges).
+  # Between the game and its AI relay. Internal (no way out): both go out through "game". A fixed range, for the
+  # relay's address (outside Docker's own ranges).
   ai:
     internal: true
     ipam:

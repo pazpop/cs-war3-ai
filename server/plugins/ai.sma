@@ -1,14 +1,15 @@
 // The AI: bots that talk back, and a Game Master. This plugin sends the chat, the kills between bots and humans,
 // and every few minutes the state of the game to the AI relay (ai/relay.py), which asks Claude. The relay answers
 // with actions; this plugin checks each one (the players must still be here) and does only what it knows.
-// Relay down, or no API key: no answer, and the game goes on as before.
+// Relay down, or no API key: no answer, and the game is unchanged.
 #include <amxmodx>
 #include <cstrike>
 #include <json>
 #include <sockets>
+#include "common.inc"
 
-// The relay's fixed address on the game's network (compose.yml): a name would be looked up at each request, and
-// a lookup can block the server.
+// The relay's fixed address on the "ai" network (compose.yml): a name would be looked up at each request, and a
+// lookup can block the server.
 #define RELAY_IP "10.27.15.10"
 #define RELAY_PORT 27100
 #define TIMEOUT 10.0          // seconds to wait for an answer
@@ -19,7 +20,8 @@
 #define GOLD 1500             // gold_rain: for everyone
 #define LOW_GRAVITY 300       // sv_gravity during low_gravity (the game's own is 800)
 #define GREET_AFTER 10.0      // seconds after a human enters, before a bot says hello
-#define TASK_JOIN 100         // + the player's slot (task 1: the end of low_gravity)
+#define TASK_GRAVITY 1        // the task that ends low_gravity
+#define TASK_JOIN 100         // + the player's slot: the task that greets them
 
 new g_socket[MAX_PENDING]
 new bool:g_sent[MAX_PENDING]
@@ -111,7 +113,7 @@ public poll()
 		}
 		if (!g_sent[i])
 		{
-			// shortcut: one send, enough for a line under 1.5 KB on the local network; loop if events grow.
+			// One send is enough: an event is under 1.5 KB, on the local network.
 			if (socket_is_writable(sock, 0))
 			{
 				if (socket_send(sock, g_out[i], strlen(g_out[i])) <= 0)
@@ -123,7 +125,7 @@ public poll()
 		}
 		if (socket_is_readable(sock, 0))
 		{
-			// shortcut: the relay writes its whole line at once (under 2 KB); read until "\n" if answers grow.
+			// One read is enough: the relay writes its whole answer (under 2 KB) at once.
 			new length = socket_recv(sock, answer, charsmax(answer))
 			close_slot(i)
 			if (length > 0)
@@ -138,12 +140,11 @@ close_slot(i)
 	g_socket[i] = 0
 }
 
-// Only a real SteamID (STEAM_0:1:...): not STEAM_ID_PENDING or STEAM_ID_LAN, which many players share.
 add_steamid(JSON:object, id)
 {
 	new authid[35]
 	get_user_authid(id, authid, charsmax(authid))
-	if (equal(authid, "STEAM_", 6) && isdigit(authid[6]) && authid[7] == ':')
+	if (is_real_steamid(authid))
 		json_object_set_string(object, "steamid", authid)
 }
 
@@ -330,8 +331,8 @@ game_master(JSON:gm)
 		if (!g_gravity)
 			g_gravity = get_cvar_num("sv_gravity")
 		set_cvar_num("sv_gravity", LOW_GRAVITY)
-		remove_task(1)
-		set_task(30.0, "end_low_gravity", 1)
+		remove_task(TASK_GRAVITY)
+		set_task(30.0, "end_low_gravity", TASK_GRAVITY)
 	}
 	else if (equal(event, "gold_rain"))
 	{

@@ -92,7 +92,7 @@ function player_link(array $row): string
 page_start('War3FT: rankings');
 ?>
 <h1>War3FT: rankings</h1>
-<p>A Counter-Strike 1.6 server with Warcraft 3 races and spells.</p>
+<p>A Counter-Strike 1.6 server with Warcraft 3 races and spells, and bots that talk back.</p>
 
 <?php if ($failed): ?>
 <p>Rankings are not available right now. Try again in a minute.</p>

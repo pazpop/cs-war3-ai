@@ -77,11 +77,14 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2` en jeu.
 ## Sur ce serveur
 
 - **Respawn** : tu réapparais tout de suite dans ta base. Pas de manches, pas de bombe. **G** ouvre le menu des armes.
+  3 secondes de protection à chaque réapparition, perdues dès que tu tires.
 - **L'argent** : 800 $ au départ, et plus à chaque kill, pour les objets des boutiques.
 - **Des niveaux plus rapides** : moitié moins d'XP par niveau, l'ultime (niveau 6) arrive deux fois plus vite.
   Une race jamais jouée commence au niveau 3.
 - Des **bots** (YaPB) remplissent le serveur jusqu'à 10 joueurs. Un bot sort quand un humain arrive. Leur niveau
   est varié, de moyen à fort, comme de vrais joueurs.
+- **L'IA** : les bots (`[AI] Zed`…) répondent quand tu écris leur nom dans le chat, chacun avec son caractère, et
+  se souviennent de toi. Un maître du jeu lance des primes, des duels et d'autres surprises.
 - Toutes les 30 minutes, un vote choisit la carte suivante.
 - Un annonceur pour le premier kill, les multi-kills et les séries, jusqu'à GODLIKE.
 - Absent **60 secondes** (aucune touche, souris immobile) : tu passes en spectateur. Un ping au-dessus de

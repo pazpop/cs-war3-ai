@@ -55,6 +55,11 @@ class Relay(unittest.TestCase):
         self.assertEqual(relay.handle(b'{"type": "state", "players": []}'), {})
         self.assertEqual(relay.handle(b"not json"), {})
         self.assertIsNone(relay.claude("system", "prompt"))
+        self.assertFalse(relay.safe("hello"))  # no moderator answer: the line is never shown
+
+    def test_gap(self):
+        self.assertTrue(relay.gap_passed("test", 60))
+        self.assertFalse(relay.gap_passed("test", 60))
 
 
 if __name__ == "__main__":
