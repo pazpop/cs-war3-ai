@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title">
+  <title id="title">cs-war3-ai: Counter-Strike 1.6 with Warcraft 3 races, spells and bots</title>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c2027"/>
+      <stop offset="1" stop-color="#0e1014"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="300" rx="16" fill="url(#background)"/>
+  <!-- A crosshair, for Counter-Strike. -->
+  <g transform="translate(170 150)" fill="none" stroke="#ffb000" stroke-width="8" stroke-linecap="round">
+    <circle r="70"/>
+    <circle r="6" fill="#ffb000" stroke="none"/>
+    <line x1="0" y1="-100" x2="0" y2="-38"/>
+    <line x1="0" y1="38" x2="0" y2="100"/>
+    <line x1="-100" y1="0" x2="-38" y2="0"/>
+    <line x1="38" y1="0" x2="100" y2="0"/>
+  </g>
+  <g font-family="Verdana, Tahoma, sans-serif">
+    <text x="320" y="150" font-size="88" font-weight="bold" fill="#ffb000">cs-war3-ai</text>
+    <text x="324" y="205" font-size="30" fill="#e4e4e4">Counter-Strike 1.6 · Warcraft 3 races and spells · AI bots</text>
+    <text x="324" y="248" font-size="22" fill="#9aa0a8">ReHLDS · AMX Mod X · War3FT · YaPB · Docker · Ansible</text>
+  </g>
+</svg>

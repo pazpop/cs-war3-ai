@@ -1,0 +1,121 @@
+# The game server, FastDL and the stats page. On the PC as on the VPS:
+#   docker compose up -d --build
+# On the PC, without a .env: DOMAIN=localhost docker compose up -d --build
+# HLDS's console: docker attach cs-war3-ai-hlds-1 (leave with Ctrl+P then Ctrl+Q; Ctrl+C stops the server
+# cleanly, and Docker starts it again).
+
+# Every container: no Linux capabilities (unless listed), and no way to gain more (setuid).
+x-hardening: &hardening
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+
+services:
+  hlds:
+    <<: *hardening
+    build: server
+    image: cs-war3-ai-hlds
+    # Its own network, shared only with the AI relay: the game cannot reach PHP (stats:9000) if it is ever taken over.
+    networks: [game, ai]
+    restart: unless-stopped
+    # The clean quit saves the XP, the ranking and every player's achievements: more time than Docker's 10 seconds.
+    stop_grace_period: 30s
+    ports:
+      - "27015:27015/udp"
+    environment:
+      # DOMAIN, RCON and ADMINS: in .env, written by Ansible (the secrets come from the vault).
+      DOMAIN: ${DOMAIN:?}
+      RCON: ${RCON:-}
+      ADMINS: ${ADMINS:-}
+      UPDATE: ${UPDATE:-0}  # UPDATE=1 docker compose up -d: reinstall or update CS 1.6
+      TICRATE: ${TICRATE:-1000}  # TICRATE=100 docker compose up -d: back to Valve's default
+    # HLDS's console waits for input: without a terminal, it spins.
+    stdin_open: true
+    tty: true
+    volumes:
+      - hlds:/hlds
+
+  # The AI relay (ai/relay.py): the game's plugin (server/plugins/ai.sma) asks it, it asks Claude. Only the game
+  # can reach it, at a fixed address (the plugin does not look up names: a lookup can block the game); its port is
+  # not published. Without ANTHROPIC_API_KEY, it stays silent.
+  ai:
+    <<: *hardening
+    build: ai
+    image: cs-war3-ai-ai
+    restart: unless-stopped
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AI_DAILY_USD: ${AI_DAILY_USD:-1}  # the most it spends in a day, in dollars; then it is silent until midnight UTC
+    # game: its way out to the API, as the game's.
+    networks:
+      game:
+      ai:
+        ipv4_address: 10.27.15.10
+    volumes:
+      - ai:/data
+
+  # The stats page: PHP reads War3FT's SQLite database, and nothing else from the volume, read-only.
+  stats:
+    <<: *hardening
+    image: php:8.5-fpm-alpine
+    # The game is on another network: status.php asks it through the port the host publishes.
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    restart: unless-stopped
+    # As the game's user, from the start: without capabilities, PHP could not switch to its own user.
+    user: "1000:1000"
+    # After hlds: its container fills the new volume first (see the Dockerfile).
+    depends_on: [hlds]
+    volumes:
+      - ./stats:/srv/stats:ro
+      - type: volume
+        source: hlds
+        target: /data
+        read_only: true
+        volume:
+          subpath: cstrike/addons/amxmodx/data/sqlite3
+
+  # FastDL: the game's files over HTTP, behind the front. It reads the whole game volume, read-only, but serves
+  # only the files players download, and holds no certificate (see caddy/fastdl.Caddyfile).
+  fastdl:
+    <<: *hardening
+    # The image's caddy program needs this one to start (it is set on the file).
+    cap_add: [NET_BIND_SERVICE]
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    command: ["caddy", "run", "--config", "/etc/caddy/fastdl.Caddyfile"]
+    volumes:
+      - ./caddy:/etc/caddy:ro
+      - hlds:/srv/hlds:ro
+
+  # The front: the stats pages and the guide (HTTP and HTTPS), FastDL passed on to "fastdl".
+  caddy:
+    <<: *hardening
+    # The image's caddy program needs this one to start (it is set on the file).
+    cap_add: [NET_BIND_SERVICE]
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?}
+    volumes:
+      # The folder, not the file: Ansible replaces the file, and a file mounted alone would keep the old one.
+      - ./caddy:/etc/caddy:ro
+      - ./stats:/srv/stats:ro
+      - caddy:/data
+
+volumes:
+  hlds:
+  caddy:
+  ai:
+
+networks:
+  # The game alone, and its AI relay.
+  game:
+  # Between the game and its AI relay. Internal (no way out): the game still goes out through "game", as before.
+  # A fixed range, for the relay's address (outside Docker's own ranges).
+  ai:
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.27.15.0/24

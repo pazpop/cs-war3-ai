@@ -1,0 +1,13 @@
+# FastDL: the files a game client downloads, over plain HTTP, for the front (Caddyfile) to pass on.
+# A Caddy of its own, without any certificate: the game can write its volume, and a link planted there could point
+# to any file of the container that serves it.
+:80 {
+	# Only the files the game makes clients download: War3FT's (wc3.css, sounds, sprites) and the announcer's voices.
+	# Never the configs, the XP, nor Valve's own files (every player has them). A new one needs its path here.
+	@fastdl path /cstrike/wc3.css /cstrike/sound/warcraft3/* /cstrike/sprites/warcraft3/* /cstrike/sound/announcer/*
+	handle @fastdl {
+		root * /srv/hlds
+		file_server
+	}
+	respond 404
+}

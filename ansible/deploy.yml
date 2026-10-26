@@ -1,0 +1,229 @@
+# The game server: copies the files to the VPS, writes the secrets, builds the image and starts the containers.
+# After config.yml. Run again after any change, and about once a month for the images' security updates:
+#   source vault.sh
+#   ansible-playbook -i ansible/inventory.yml ansible/deploy.yml
+- name: The game server
+  hosts: cs
+  become: true
+  # If a task fails, the pending reload of Caddy still happens.
+  force_handlers: true
+  vars:
+    app_dir: /srv/cs-war3-ai
+  vars_files:
+    - personal.yml
+    - vault.yml
+
+  pre_tasks:
+    # These values end up on HLDS's command line and in .env: no quotes, no spaces.
+    - name: Check the settings before touching the server
+      ansible.builtin.assert:
+        that:
+          - vault_rcon | default('') is match('^([A-Za-z0-9_-]{16,})?$')
+          - admin_steamids | select('match', '^STEAM_[0-5]:[01]:[0-9]+$') | list | length == admin_steamids | length
+          - "'STEAM_0:1:123456' not in admin_steamids"
+          - domain is match('^[a-z0-9.-]+$')
+          - collect_domains | select('match', '^[a-z0-9.-]+$') | list | length == collect_domains | length
+          - vault_hc_backup | default('') is match('^(https://[A-Za-z0-9./_-]+)?$')
+          - vault_hc_server | default('') is match('^(https://[A-Za-z0-9./_-]+)?$')
+          - vault_anthropic_key | default('') is match('^(sk-ant-[A-Za-z0-9_-]+)?$')
+        fail_msg: >-
+          vault_rcon (ansible/vault.yml, optional): 16 characters or more, letters, digits, _ and - only.
+          admin_steamids (ansible/personal.yml): your own SteamIDs, like STEAM_0:1:123456 (not this example).
+          domain and collect_domains (ansible/inventory.yml): lowercase letters, digits, dots and dashes.
+          vault_hc_backup, vault_hc_server (ansible/vault.yml, optional): ping URLs like https://hc-ping.com/<uuid>.
+          vault_anthropic_key (ansible/vault.yml, optional): an Anthropic API key, sk-ant-...
+        quiet: true
+
+  tasks:
+    # Ansible's copy never deletes: without this, a plugin removed from the repository would still be built
+    # into the image. The running containers do not use this folder.
+    - name: Delete the old copy of the plugins
+      ansible.builtin.file:
+        path: "{{ app_dir }}/server/plugins"
+        state: absent
+
+    - name: Create the folders
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ app_dir }}"
+        - "{{ app_dir }}/server"
+        - "{{ app_dir }}/ai"
+        - "{{ app_dir }}/caddy"
+        - "{{ app_dir }}/stats"
+        - /srv/collect
+
+    - name: Copy the compose file, the images and the stats page
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ app_dir }}/{{ item.dest }}"
+        mode: "0644"
+      loop:
+        - { src: ../compose.yml, dest: compose.yml }
+        - { src: ../server/, dest: server/ }
+        - { src: ../ai/, dest: ai/ }
+        - { src: ../stats/, dest: stats/ }
+
+    # Caddy does not reread its Caddyfile on its own: a change reloads it, at the end of the run.
+    - name: Copy the Caddyfiles (the front and FastDL)
+      ansible.builtin.copy:
+        src: ../caddy/
+        dest: "{{ app_dir }}/caddy/"
+        mode: "0644"
+      notify:
+        - Reload Caddy
+        - Reload FastDL
+
+    # Compose reads .env by itself. Readable by root only.
+    - name: Write the server's settings and secrets
+      ansible.builtin.copy:
+        dest: "{{ app_dir }}/.env"
+        content: |
+          DOMAIN={{ domain }}
+          RCON={{ vault_rcon | default('') }}
+          ADMINS={{ admin_steamids | join(' ') }}
+          ANTHROPIC_API_KEY={{ vault_anthropic_key | default('') }}
+        mode: "0600"
+      no_log: true
+
+    # The latest patch of Caddy and PHP (compose.yml pins their minor version). The game image is built below.
+    - name: Download the Caddy and PHP images
+      ansible.builtin.command:
+        cmd: docker compose pull caddy fastdl stats
+        chdir: "{{ app_dir }}"
+      changed_when: false
+
+    # --pull: a fresh Debian base, so the image gets its security updates. Unchanged layers come from the cache.
+    - name: Build the game image
+      ansible.builtin.command:
+        cmd: docker compose build --pull
+        chdir: "{{ app_dir }}"
+      changed_when: false
+
+    - name: Start the containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: present
+
+    - name: Install the backup, heartbeat and collect scripts
+      ansible.builtin.copy:
+        src: "files/{{ item.src }}"
+        dest: "/usr/local/sbin/{{ item.dest }}"
+        mode: "0755"
+      loop:
+        - { src: backup.sh, dest: cs-war3-ai-backup }
+        - { src: heartbeat.py, dest: cs-war3-ai-heartbeat }
+        - { src: collect.py, dest: cs-war3-ai-collect }
+
+    - name: Create the folder of the Healthchecks.io settings
+      ansible.builtin.file:
+        path: /etc/cs-war3-ai
+        state: directory
+        mode: "0700"
+
+    # The ping addresses are secret (anyone could ping in your place): from the vault, readable by root only.
+    # Without them, the scripts send nothing.
+    - name: Write the Healthchecks.io settings
+      ansible.builtin.copy:
+        dest: /etc/cs-war3-ai/healthchecks.env
+        content: |
+          DOMAIN={{ domain }}
+          HC_BACKUP={{ vault_hc_backup | default('') }}
+          HC_SERVER={{ vault_hc_server | default('') }}
+        mode: "0600"
+      no_log: true
+
+    # The backup: every night at 4:32, between the 4:00 updates and the 5:00 reboot (if an update needs it); not at
+    # 4:30, when the heartbeat checks the game it stops. Persistent: if the VPS was off, it runs at the next boot.
+    # The heartbeat and the player counts of every server: every 5 minutes.
+    - name: Install the timers
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ item.name }}"
+        content: "{{ item.content }}"
+        mode: "0644"
+      loop:
+        - name: cs-war3-ai-backup.service
+          content: |
+            [Unit]
+            Description=Back up the cs-war3-ai game data
+            After=docker.service
+
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/local/sbin/cs-war3-ai-backup
+        - name: cs-war3-ai-backup.timer
+          content: |
+            [Unit]
+            Description=Back up the cs-war3-ai game data every night
+
+            [Timer]
+            OnCalendar=*-*-* 04:32
+            Persistent=true
+
+            [Install]
+            WantedBy=timers.target
+        - name: cs-war3-ai-heartbeat.service
+          content: |
+            [Unit]
+            Description=Tell Healthchecks.io whether the cs-war3-ai server works
+
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/local/sbin/cs-war3-ai-heartbeat
+        - name: cs-war3-ai-heartbeat.timer
+          content: |
+            [Unit]
+            Description=Tell Healthchecks.io whether the cs-war3-ai server works, every 5 minutes
+
+            [Timer]
+            OnCalendar=*:0/5
+
+            [Install]
+            WantedBy=timers.target
+        - name: cs-war3-ai-collect.service
+          content: |
+            [Unit]
+            Description=Add the player counts of our game servers to /srv/collect/players.csv
+
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/local/sbin/cs-war3-ai-collect {{ collect_domains | join(' ') }}
+        - name: cs-war3-ai-collect.timer
+          content: |
+            [Unit]
+            Description=Add the player counts of our game servers to /srv/collect/players.csv, every 5 minutes
+
+            [Timer]
+            OnCalendar=*:0/5
+
+            [Install]
+            WantedBy=timers.target
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Start the timers, now and at every boot
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+        daemon_reload: true
+      loop:
+        - cs-war3-ai-backup.timer
+        - cs-war3-ai-heartbeat.timer
+        - cs-war3-ai-collect.timer
+
+  handlers:
+    # No downtime; a broken Caddyfile is refused (the old one stays).
+    - name: Reload Caddy
+      ansible.builtin.command:
+        cmd: docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
+        chdir: "{{ app_dir }}"
+      changed_when: true
+
+    - name: Reload FastDL
+      ansible.builtin.command:
+        cmd: docker compose exec -T fastdl caddy reload --config /etc/caddy/fastdl.Caddyfile
+        chdir: "{{ app_dir }}"
+      changed_when: true

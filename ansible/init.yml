@@ -1,0 +1,64 @@
+# Once, with the hosting provider's account on port 22: creates "deploy" and your account, opens SSH on 2222
+# (22 stays open). Then config.yml, as deploy on 2222, closes 22 and deletes the provider's account.
+#   ansible-playbook -i ansible/inventory.yml ansible/init.yml
+- name: Accounts and SSH
+  hosts: cs
+  become: true
+  # If a task fails, the pending SSH restart still happens.
+  force_handlers: true
+  vars:
+    ansible_user: "{{ provider_user }}"
+    ansible_port: 22
+  vars_files:
+    - personal.yml
+
+  tasks:
+    - name: Create the accounts
+      ansible.builtin.user:
+        name: "{{ item }}"
+        groups: sudo
+        shell: /bin/bash
+      loop:
+        - deploy
+        - "{{ personal_user }}"
+
+    # exclusive: only this key gets in, even if another one was left in authorized_keys.
+    # The full path: in --check mode, the account does not exist yet.
+    - name: Install each account's key
+      ansible.posix.authorized_key:
+        user: "{{ item.user }}"
+        key: "{{ lookup('file', item.key) }}"
+        path: /home/{{ item.user }}/.ssh/authorized_keys
+        exclusive: true
+      loop:
+        - { user: deploy, key: "{{ ansible_ssh_private_key_file }}.pub" }
+        - { user: "{{ personal_user }}", key: "{{ personal_key }}" }
+
+    # The accounts have no password: they only log in with their key.
+    - name: Let the accounts use sudo without a password
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/90-accounts
+        content: |
+          deploy ALL=(ALL) NOPASSWD:ALL
+          {{ personal_user }} ALL=(ALL) NOPASSWD:ALL
+        mode: "0440"
+        validate: visudo -cf %s
+
+    # 00-: sshd keeps the first value of each setting, so this must sort before 50-cloud-init.conf (password auth on).
+    - name: SSH on 22 and 2222, no root, no password
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/00-pazpop.conf
+        content: |
+          Port 22
+          Port 2222
+          PermitRootLogin no
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+        mode: "0644"
+      notify: Restart SSH
+
+  handlers:
+    # sshd -t first: a broken configuration never cuts access.
+    - name: Restart SSH
+      ansible.builtin.shell: sshd -t && systemctl restart ssh
+      changed_when: true

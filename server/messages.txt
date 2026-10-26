@@ -1,0 +1,5 @@
+; The messages in the chat, one every 2 minutes, in turn (server/plugins/messages.sma). One per line; ; starts a
+; comment. {domain} becomes the server's domain (the entrypoint replaces it).
+Like this server? Add it to your favorites, address {domain}:27015
+Your XP race by race, and the ranking of the month (from zero on the 1st): https://{domain}
+Type /help for the guide, /rank for your place, /ach for your achievements.

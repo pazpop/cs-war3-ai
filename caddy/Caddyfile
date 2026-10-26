@@ -1,0 +1,35 @@
+# The stats pages and the guide, shared by both sites below.
+(stats) {
+	root * /srv/stats
+	header {
+		Content-Security-Policy "default-src 'none'; style-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		-X-Powered-By
+	}
+	# The pages' shared code: nothing to show on its own.
+	respond /common.php* 404
+	# An unknown address is a 404, not the rankings page.
+	php_fastcgi stats:9000 {
+		try_files {path} {path}/index.php =404
+	}
+	file_server
+}
+
+# HTTPS, for browsers (automatic Let's Encrypt certificate).
+{$DOMAIN} {
+	import stats
+}
+
+# Plain HTTP, for the game: the client downloads files over HTTP (FastDL), and the in-game browser (MOTD) is too old
+# for today's HTTPS. The pages are public and read-only: nothing to protect.
+http://{$DOMAIN} {
+	# FastDL comes from its own Caddy (fastdl.Caddyfile): this one, which holds the certificates, never reads the
+	# game's files.
+	handle /cstrike/* {
+		reverse_proxy fastdl:80
+	}
+	handle {
+		import stats
+	}
+}

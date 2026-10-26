@@ -1,0 +1,13 @@
+# Your own settings. Copy this file to ansible/personal.yml (ignored by git: the repository is public).
+
+# The account created by the hosting provider, used once by init.yml.
+provider_user: debian
+# Your personal account on the VPS, and its public key.
+personal_user: myname
+personal_key: ~/.ssh/myname.pub
+# Where backup.yml stores the archives, on your PC.
+backup_dir: ~/backups/cs-war3-ai
+# The SteamIDs of the AMX Mod X admins: yours, from "status" in the game console. For example:
+#   admin_steamids:
+#     - STEAM_0:1:123456
+admin_steamids: []

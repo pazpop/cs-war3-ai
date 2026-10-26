@@ -1,0 +1,4 @@
+Announcer voices: "Announcer kill sounds", recorded by Antti Saari, edited by TripleSnail.
+https://opengameart.org/content/announcer-kill-sounds
+License: CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/).
+Changed: converted to 22 kHz mono WAV, files renamed to lowercase.

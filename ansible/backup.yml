@@ -1,0 +1,21 @@
+# Makes a backup now (the same script as the nightly one) and downloads it to your PC.
+# Stops the game for about 30 seconds: run it when nobody plays.
+#   ansible-playbook -i ansible/inventory.yml ansible/backup.yml
+# The archive lands in backup_dir (ansible/personal.yml). The VPS also keeps 15 days in /srv/backups/cs-war3-ai.
+- name: Back up the game data
+  hosts: cs
+  become: true
+  vars_files:
+    - personal.yml
+
+  tasks:
+    - name: Make a backup now
+      ansible.builtin.command: /usr/local/sbin/cs-war3-ai-backup
+      register: backup
+      changed_when: true
+
+    - name: Download it to the PC
+      ansible.builtin.fetch:
+        src: "{{ backup.stdout }}"
+        dest: "{{ backup_dir }}/"
+        flat: true

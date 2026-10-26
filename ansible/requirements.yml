@@ -1,0 +1,6 @@
+# The Ansible collections the playbooks use:
+#   ansible-galaxy collection install -r ansible/requirements.yml
+collections:
+  - name: ansible.posix
+  - name: community.docker
+  - name: community.general

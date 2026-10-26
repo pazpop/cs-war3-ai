@@ -1,0 +1,318 @@
+# The VPS system: updates, fail2ban, firewall, SSH on 2222 only, Docker, and no more provider account.
+# After init.yml, as deploy on 2222. Can be run again (it also upgrades the system packages), but it reboots the VPS
+# when an update needs it: run it when nobody plays.
+#   ansible-playbook -i ansible/inventory.yml ansible/config.yml
+- name: The VPS system
+  hosts: cs
+  become: true
+  # If a task fails, the pending restarts (SSH, fail2ban, Docker) still happen.
+  force_handlers: true
+  vars_files:
+    - personal.yml
+
+  tasks:
+    - name: Upgrade the whole system
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        lock_timeout: 600
+
+    # python3-systemd: fail2ban reads SSH logins from the systemd journal. curl: the pings to Healthchecks.io.
+    - name: Install fail2ban, the firewall and automatic updates
+      ansible.builtin.apt:
+        name:
+          - curl
+          - fail2ban
+          - python3-systemd
+          - ufw
+          - unattended-upgrades
+
+    - name: Install updates every day
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";
+          APT::Periodic::AutocleanInterval "1";
+        mode: "0644"
+
+    # Docker comes from its own repository: without the last line, automatic updates would never touch it.
+    # A reboot cuts the running game: 5 am, when nobody plays.
+    - name: Reboot after an update that needs it, at 5 am; update Docker too
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/52pazpop.conf
+        content: |
+          Unattended-Upgrade::Automatic-Reboot "true";
+          Unattended-Upgrade::Automatic-Reboot-Time "05:00";
+          Unattended-Upgrade::Origins-Pattern:: "origin=Docker";
+        mode: "0644"
+
+    # Every night in order: Docker cleanup at 3:30 (below), updates at 4:00, the backup at 4:32 (deploy.yml), the
+    # reboot at 5:00 if needed.
+    # Debian's default (6:00 plus up to an hour) would leave a kernel update waiting almost a day for its reboot.
+    - name: Create the update timer's settings folder
+      ansible.builtin.file:
+        path: /etc/systemd/system/apt-daily-upgrade.timer.d
+        state: directory
+        mode: "0755"
+
+    - name: Install the updates at 4 am
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/apt-daily-upgrade.timer.d/cs-war3-ai.conf
+        content: |
+          [Timer]
+          OnCalendar=
+          OnCalendar=*-*-* 04:00
+          RandomizedDelaySec=0
+        mode: "0644"
+      notify: Restart the update timer
+
+    # Otherwise cloud-init puts back the provider's name (vps-xxxx) and its /etc/hosts at every boot.
+    - name: Keep our machine name at boot
+      ansible.builtin.copy:
+        dest: /etc/cloud/cloud.cfg.d/99-pazpop.cfg
+        content: |
+          preserve_hostname: true
+          manage_etc_hosts: false
+        mode: "0644"
+
+    - name: Name the machine as in the inventory
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    # Otherwise sudo looks up the machine name in DNS on every call.
+    - name: Put the machine name in /etc/hosts
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.1\.1\s'
+        line: "127.0.1.1 {{ domain }} {{ inventory_hostname }}"
+
+    - name: Set the timezone
+      community.general.timezone:
+        name: "{{ timezone }}"
+
+    - name: Create the journal settings folder
+      ansible.builtin.file:
+        path: /etc/systemd/journald.conf.d
+        state: directory
+        mode: "0755"
+
+    - name: Cap the system logs at 200 MB
+      ansible.builtin.copy:
+        dest: /etc/systemd/journald.conf.d/size.conf
+        content: |
+          [Journal]
+          SystemMaxUse=200M
+        mode: "0644"
+      notify: Restart the journal
+
+    # recidive: an address banned three times in a day is banned for a week, on every port of the system. Not on the
+    # ports Docker publishes (game, web): Docker's rules come before fail2ban's.
+    - name: Ban an address for an hour after 5 failed SSH logins in 10 minutes
+      ansible.builtin.copy:
+        dest: /etc/fail2ban/jail.local
+        content: |
+          [DEFAULT]
+          bantime  = 1h
+          findtime = 10m
+          maxretry = 5
+
+          [sshd]
+          enabled = true
+          port    = 2222
+          backend = systemd
+          # OpenSSH 10 logs failed logins from sshd-session: Debian's rule only watches sshd.
+          journalmatch = _SYSTEMD_UNIT=ssh.service + _COMM=sshd + _COMM=sshd-session
+
+          [recidive]
+          enabled   = true
+          backend   = auto
+          logpath   = /var/log/fail2ban.log
+          banaction = %(banaction_allports)s
+          bantime   = 1w
+          findtime  = 1d
+          maxretry  = 3
+        mode: "0644"
+      notify: Restart fail2ban
+
+    - name: Start fail2ban, now and at every boot
+      ansible.builtin.systemd_service:
+        name: fail2ban
+        enabled: true
+        state: started
+
+    # Allow first, enable after: otherwise the firewall would cut our own connection.
+    # Docker opens the ports it publishes by itself (80, 443, 27015): these rules state the intent.
+    - name: Open SSH, the game and the web
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: "{{ item.proto }}"
+      loop:
+        - { port: "2222", proto: tcp }   # SSH
+        - { port: "27015", proto: udp }  # CS 1.6
+        - { port: "80", proto: tcp }     # FastDL, the guide and stats for the game, the HTTPS certificate
+        - { port: "443", proto: tcp }    # the stats pages, for browsers
+
+    - name: Deny everything else coming in, and enable the firewall
+      community.general.ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+
+    # 00-: sshd keeps the first value of each setting, so this must sort before 50-cloud-init.conf (password auth on).
+    - name: SSH on 2222 only, no root, no password
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/00-pazpop.conf
+        content: |
+          Port 2222
+          PermitRootLogin no
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+        mode: "0644"
+      notify: Restart SSH
+
+    - name: Docker's apt repository key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/debian/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Docker's apt repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/docker.sources
+        content: |
+          Types: deb
+          URIs: https://download.docker.com/linux/debian
+          Suites: {{ ansible_facts['distribution_release'] }}
+          Components: stable
+          Signed-By: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Install Docker and Docker Compose
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        update_cache: true
+
+    # Capped container logs (10 MB × 3 per container): by default they grow without limit.
+    - name: Cap the container logs
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {"log-driver": "json-file", "log-opts": {"max-size": "10m", "max-file": "3"}}
+        mode: "0644"
+      notify: Restart Docker
+
+    - name: Start Docker, now and at every boot
+      ansible.builtin.systemd_service:
+        name: docker
+        enabled: true
+        state: started
+
+    # Every build leaves its cache, and every update leaves the old images behind: gigabytes within weeks.
+    # Images in use, volumes (the game data) and running containers are never touched. At 3:30, before the updates.
+    # The build cache of the last 30 days stays: without it, every deploy would rebuild the game image, and a new
+    # image restarts the game.
+    - name: Install the Docker cleanup timer
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ item.name }}"
+        content: "{{ item.content }}"
+        mode: "0644"
+      loop:
+        - name: docker-cleanup.service
+          content: |
+            [Unit]
+            Description=Delete Docker's build cache and the images no container uses
+
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/bin/docker builder prune -af --filter until=720h
+            ExecStart=/usr/bin/docker image prune -af
+        - name: docker-cleanup.timer
+          content: |
+            [Unit]
+            Description=Delete Docker's build cache and unused images, every night
+
+            [Timer]
+            OnCalendar=*-*-* 03:30
+            Persistent=true
+
+            [Install]
+            WantedBy=timers.target
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Start the Docker cleanup timer, now and at every boot
+      ansible.builtin.systemd_service:
+        name: docker-cleanup.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    # Its SSH session from init.yml (kept open by Ansible) and its systemd --user block userdel.
+    - name: Stop everything running as the provider's account
+      ansible.builtin.shell: |
+        id {{ provider_user }} >/dev/null 2>&1 || exit 0
+        loginctl terminate-user {{ provider_user }} 2>/dev/null
+        pkill -KILL -u {{ provider_user }}
+        timeout 10 sh -c 'while pgrep -u {{ provider_user }} >/dev/null; do sleep 0.5; done'
+        echo stopped
+      register: provider_stop
+      changed_when: "'stopped' in provider_stop.stdout"
+
+    - name: Delete the provider's account
+      ansible.builtin.user:
+        name: "{{ provider_user }}"
+        state: absent
+        remove: true
+
+    # cloud-init's sudo rule for that account: a future account with the same name would be root without a password.
+    - name: Delete the provider's sudo rule
+      ansible.builtin.file:
+        path: /etc/sudoers.d/90-cloud-init-users
+        state: absent
+
+    # The pending restarts (SSH, fail2ban, Docker) first: after a reboot, they would cut the game a second time.
+    - name: Run the pending restarts before a reboot
+      ansible.builtin.meta: flush_handlers
+
+    - name: Check whether an update needs a reboot
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Reboot if needed
+      ansible.builtin.reboot:
+      when: reboot_required.stat.exists
+
+  handlers:
+    - name: Restart the update timer
+      ansible.builtin.systemd_service:
+        name: apt-daily-upgrade.timer
+        state: restarted
+        daemon_reload: true
+
+    - name: Restart the journal
+      ansible.builtin.systemd_service:
+        name: systemd-journald
+        state: restarted
+
+    - name: Restart fail2ban
+      ansible.builtin.systemd_service:
+        name: fail2ban
+        state: restarted
+
+    # sshd -t first: a broken configuration never cuts access.
+    - name: Restart SSH
+      ansible.builtin.shell: sshd -t && systemctl restart ssh
+      changed_when: true
+
+    - name: Restart Docker
+      ansible.builtin.systemd_service:
+        name: docker
+        state: restarted
