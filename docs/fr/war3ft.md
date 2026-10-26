@@ -21,7 +21,7 @@ Toutes les commandes marchent avec un `/` devant.
 
 | Commande | Rôle |
 |---|---|
-| `/help` | Rouvre ce guide (ou `help` dans la console) |
+| `/help` | Le guide du serveur, en jeu (ou `help` dans la console) |
 | `/changerace` | Changer de race (à ta prochaine réapparition) |
 | `/war3menu` | Le menu principal |
 | `/selectskill` | Placer tes points de compétence |

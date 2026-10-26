@@ -80,10 +80,22 @@ public client_authorized(id)
 
 public client_disconnected(id)
 {
+	remove_task(id)
 	save_name(id)
 }
 
-save_name(id)
+// A new name during the game (or "Player", for a name the AI found offensive): on the stats page at once, not only
+// when the player leaves. Half a second later: the game applies it after this.
+public client_infochanged(id)
+{
+	new old[32], name[32]
+	get_user_name(id, old, charsmax(old))
+	get_user_info(id, "name", name, charsmax(name))
+	if (is_user_connected(id) && !equal(old, name))
+		set_task(0.5, "save_name", id)
+}
+
+public save_name(id)
 {
 	if (is_user_bot(id) || is_user_hltv(id))
 		return

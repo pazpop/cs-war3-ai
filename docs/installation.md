@@ -82,8 +82,8 @@ liked CS 1.6 maps that the bots know.
 
 ## Our plugins
 
-In [server/plugins/](../server/plugins/), compiled at build time (`common.inc` and `database.inc`: the code several
-share):
+In [server/plugins/](../server/plugins/), compiled at build time (`common.inc`, `database.inc` and `kills.inc`: the
+code several share; `kills.inc` also gets the kills of War3FT's spells, which the game's death notice misses):
 
 - `achievements.sma`: 14 achievements (`/ach`), saved in War3FT's database; the player pages show them. At each map, the
   closest one; a word to the player when 10 % is left.
@@ -126,14 +126,14 @@ share):
 ReDeathmatch: teams, instant respawn in the team's base, no rounds, weapons with **G**, $800 to start (the War3
 shops cost money). 3 seconds of spawn protection, lost at the first shot (ReGameDLL's `mp_respawn_immunity*`).
 In this mode, War3FT turns off what brings a player back or keeps their gear: the Orcish Horde's equipment, the
-Blood Mage's revive, the Warden's ultimate, the ankh and the scroll (the guides say so).
+Blood Mage's revive, the Warden's ultimate, the ankh and the scroll.
 Mapchooser runs a map vote at the end of each map (every 20 minutes).
 AMX Mod X's `antiflood` blocks chat floods (one message every 0.75 s at most: `amx_flood_time`).
 
 ## Data and backup
 
-XP is in SQLite, in the volume: `cstrike/addons/amxmodx/data/sqlite3/war3ft.sq3`. Not MySQL: in MySQL mode,
-War3FT escapes player names badly (SQL injection possible); in SQLite mode it escapes them correctly.
+XP is in SQLite, in the volume: `cstrike/addons/amxmodx/data/sqlite3/war3ft.sq3`. Not MySQL: War3FT's MySQL mode
+escapes player names badly (SQL injection).
 
 Every night at 4:32 (between the 4:00 updates and the 5:00 reboot), the VPS backs up the XP, the rankings, the
 achievements and the AI's memory into `/srv/backups/cs-war3-ai`, and keeps 15 days (a few MB per archive at most).
@@ -160,10 +160,10 @@ sudo docker compose start hlds ai
 
 ## Web
 
-- `https://<domain>` (and `http://`): the Game Master's journal, the rankings (of the month, the goal of the week,
-  XP and combat), the number of players (since launch, last 30 and 90 days) ([stats/index.php](../stats/index.php)), and a page per
-  player ([stats/player.php](../stats/player.php)): XP and skill levels per race, combat stats, achievements. PHP
-  reads the database read-only.
+- `https://<domain>` (and `http://`): the Game Master's journal, the rankings (of the month and its MVPs, the goal
+  of the week, XP and combat), the number of players (since launch, last 30 and 90 days)
+  ([stats/index.php](../stats/index.php)), and a page per player ([stats/player.php](../stats/player.php)): XP and
+  skill levels per race, combat stats, achievements. PHP reads the database read-only.
 - `https://<domain>/status.php`: the server's state right now in JSON (humans, bots, map, slots), for other sites:
   [pazpop.net](https://pazpop.net) shows it. Asked to the game at most every 15 seconds.
 - `https://<domain>/bots.php`: the bots, their race, character and portrait (from [server/bots.txt](../server/bots.txt)).
@@ -188,6 +188,8 @@ sudo docker compose start hlds ai
   app on the repository). In that pull request,
   replace the version's SHA-256 in [server/Dockerfile](../server/Dockerfile): `curl -sL <archive URL> | sha256sum`.
   Until then, the check below fails, on purpose.
+- **From the PC**: `./deploy-all.sh` pushes this repository and `../pazpop.net` when they have new commits, then
+  runs `deploy.yml` (`--all`: everything, even without new commits).
 - **Checks**: every push runs [.github/workflows/check.yml](../.github/workflows/check.yml): `ansible-lint`,
   `shellcheck`, the Python and PHP syntax, the Python tests, and both image builds (the game's checks the SHA-256 and
   compiles our plugins).
@@ -195,9 +197,9 @@ sudo docker compose start hlds ai
 ## Player counts
 
 Every 5 minutes, [ansible/files/collect.py](../ansible/files/collect.py) adds one line per server to
-`/srv/collect/players.csv`: time (the VPS's, with its offset from UTC), server, online, humans, bots, slots, map. Only numbers, nothing about the
-players (about 15 KB a day per server). The servers: `collect_domains` in [ansible/inventory.yml](../ansible/inventory.yml).
-To download it:
+`/srv/collect/players.csv`: time (the VPS's, with its offset from UTC), server, online, humans, bots, slots, map.
+Only numbers and the map, nothing about the players (about 15 KB a day per server). The servers: `collect_domains`
+in [ansible/inventory.yml](../ansible/inventory.yml). To download it:
 
 ```bash
 scp -P 2222 -i ~/.ssh/<your key> deploy@<domain>:/srv/collect/players.csv .
@@ -206,9 +208,10 @@ scp -P 2222 -i ~/.ssh/<your key> deploy@<domain>:/srv/collect/players.csv .
 ## Chat reports
 
 Every night at 0:30, [ansible/files/chat_report.py](../ansible/files/chat_report.py) writes the day before's
-chat (the VPS's time, like the game's logs) into `/srv/collect/chat/<date>.txt`, from the game's logs (kept 14 days): the humans (team chat marked),
-the bots, the Game Master and the coach, with arrivals and departures. Names only, no SteamID or IP; readable by root
-only, kept 90 days. A day with no chat writes nothing. Another day, at once: `sudo cs-war3-ai-chat-report 2026-10-26`.
+chat (the VPS's time, like the game's logs) into `/srv/collect/chat/<date>.txt`, from the game's logs (kept 14
+days): the humans (team chat marked), the bots, the Game Master and the coach, with arrivals and departures. Names
+only, no SteamID or IP; readable by root only, kept 90 days. A day without any of these writes nothing. Another
+day, at once: `sudo cs-war3-ai-chat-report 2026-10-26`.
 
 ## The AI (optional)
 
@@ -223,26 +226,27 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
   against bots, and each bot's score against them. A bot
   killed 5 times by a player, more than it killed them, holds a grudge: it teases them, and greets them first.
 - **Questions**: a message with a `?` usually gets an answer from a bot, which has the mod's guide
-  ([docs/war3ft.md](war3ft.md)) at hand; a newcomer gets a tip from it with the hello. These requests are longer
-  (the guide is about 1,200 tokens), so a little dearer.
+  ([docs/war3ft.md](war3ft.md), about 1,500 tokens) at hand; a newcomer gets a tip from it with the hello.
 - **The coach**: `/coach` sends the player's numbers on this map (CSX: kills, deaths, headshots, hits and where,
   each weapon's accuracy, deaths in a row, the weapon that killed them most) and gets one tip back, in private, one a
-  minute at most. `/coach <question>`: the answer to a question about these numbers, never shown in the chat. After 5 deaths in a row, a tip comes on its own, once per map; 60 seconds before the map's end,
-  each human who played gets a summary: one strength, one thing to work on.
+  minute at most. `/coach <question>`: the answer to a question about these numbers, never shown in the chat.
+  After 5 deaths in a row, a tip comes on its own, once per map; 60 seconds before the map's end, each human who
+  played gets a summary: one strength, one thing to work on.
 - **The Game Master**: every 10 minutes, it reads the score and may start an event: a bounty on a player far ahead,
-  a duel between two players, a challenge (kills, headshots, knife or grenade kills, in 2 minutes), a boss (a bot
+  a duel between two players, a challenge (kills, headshots or knife kills, in 2 minutes), a boss (a bot
   with 500 health and a red glow), 30 seconds of low gravity, money for everyone, 100 War3FT XP for every human
   (`changexp`), a War3FT shop item for everyone (`wc3_giveitem`). Each prize is $3000 and 200 XP, and nobody has to
-  take part. It can only pick from this list: the plugin checks each event and runs it itself, and never the same
-  event twice in a row.
+  take part. It can only pick from this list, never the same event twice in a row; the plugin checks each event
+  and runs it itself.
 - **The journal**: each night, the relay writes the day before's entry (3 to 5 sentences) from the Game Master's
   announcements and the bots' lines, never from what players write; the home page shows the last 3 days.
 
 What the AI may say: a strict system prompt, then a moderator (a second request) checks every line before it is
 shown: no slurs, hate, sexual content, threats, illegal activity, politics or personal information, in any
-language, nor an offensive player name repeated. On any doubt or error, nothing is shown. A bot answers the same
-player at most every 10 seconds. In the game, the AI shows as `[AI] Zed`, `[AI Game Master]` and `[AI Coach]`:
-players know they talk to an AI (Anthropic requires it).
+language, nor an offensive player name repeated. Each human's name is checked too, once: an offensive one is
+renamed "Player". On any doubt or error, nothing is shown. A bot answers the same player at most every 10 seconds;
+a player whose messages get 3 lines held back within an hour is ignored for an hour. In the game, the AI shows as
+`[AI] Zed`, `[AI Game Master]` and `[AI Coach]`: players know they talk to an AI (Anthropic requires it).
 
 Setup: an API key from [console.anthropic.com](https://console.anthropic.com) in the vault
 (`vault_anthropic_key: sk-ant-...`), then `deploy.yml`. Without a key, the relay stays silent and the game is
@@ -250,17 +254,17 @@ unchanged. It spends at most `AI_DAILY_USD` a day (1 $ by default, in `compose.y
 most 1/8 of it in an hour, then stays silent; set a monthly limit in the Anthropic console too.
 
 What leaves the VPS: the public chat messages (never the team chat), the names, the score, each human's history
-against the bots (since when they play, the last map, kills and deaths against them), each player's numbers for the
-coach, and for the journal the day's announcements and bot lines. Never the SteamIDs or the IPs. The bots' memory
-(by SteamID, in the relay's volume) forgets a player not seen for 180 days; the day's story goes 2 days later, the
-journal keeps 30 days. The guide tells the players.
+against the bots (since when they play, the last map, kills and deaths against them), each player's numbers and
+questions for the coach, and for the journal the day's announcements and bot lines. Never the SteamIDs or the IPs.
+The bots' memory forgets a player not seen for 180 days; the day's story goes 2 days later, the journal keeps 30
+days. The guide tells the players.
 
 Its logs, on the VPS: `cd /srv/cs-war3-ai && sudo docker compose logs ai`.
 
 ## Monitoring (optional)
 
-[Healthchecks.io](https://healthchecks.io) (free up to 20 checks, open source) warns you by email, Discord,
-Telegram… when a ping does not arrive in time. It also catches a VPS that is completely down.
+[Healthchecks.io](https://healthchecks.io) (free, open source) warns you when a ping does not arrive in time, even
+if the VPS is down.
 
 1. Create two checks: **backup** (period 1 day, grace 1 hour) and **server** (period 5 minutes, grace 10 minutes).
 2. Put their ping URLs in the vault: `ansible-vault edit ansible/vault.yml`, then
@@ -276,7 +280,7 @@ Without these URLs, nothing is sent.
 ## OVHcloud Edge Network Firewall (optional)
 
 At OVHcloud, the Edge Network Firewall filters traffic before it reaches the VPS. It also turns itself on during a
-DDoS attack, so its rules should be right. Control panel: Network > Public IP Addresses > `⁝` next to the IPv4 >
+DDoS attack. Control panel: Network > Public IP Addresses > `⁝` next to the IPv4 >
 Configure Edge Network Firewall, then turn it on.
 
 | Priority | Action | Protocol | Source port | Destination port | Option | Why |

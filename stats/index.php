@@ -72,7 +72,7 @@ try {
     }
 
     // This week's goal (written by the week's first map) and the 10 closest to it. The week as the plugin counts it.
-    $week = "strftime('%Y-%W', 'now', 'localtime')";
+    $week = "date('now', 'localtime', 'weekday 0', '-6 days')";  // its Monday
     $goal = $db->query("SELECT goal, target FROM cs_war3_ai_weekly_goal WHERE week = $week")->fetch();
     $weekly = $db->query(
         "SELECT w.count, p.player_id, COALESCE(n.name, '?') AS name

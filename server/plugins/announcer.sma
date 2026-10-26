@@ -1,6 +1,7 @@
 // The announcer: a voice and a message for everyone at first blood, multi-kills and kill streaks.
 // The voices are in sound/announcer/ (CC-BY 3.0, see CREDITS.txt there); players download them over HTTP (FastDL).
 #include <amxmodx>
+#include "kills.inc"
 
 #define MULTI_KILL_TIME 3.0   // seconds between two kills of the same multi-kill
 
@@ -37,7 +38,7 @@ precache_announcer(const sound[])
 public plugin_init()
 {
 	register_plugin("Announcer", "1.0", "cs-war3-ai")
-	register_event("DeathMsg", "on_death", "a")
+	register_kills()
 }
 
 public client_putinserver(id)
@@ -47,10 +48,9 @@ public client_putinserver(id)
 	g_last_kill[id] = 0.0
 }
 
-public on_death()
+// Every kill, War3FT's spells included (kills.inc).
+public on_kill(killer, victim, bool:headshot, const weapon[])
 {
-	new killer = read_data(1)
-	new victim = read_data(2)
 	g_streak[victim] = 0
 	g_multi[victim] = 0
 	if (!killer || killer == victim)

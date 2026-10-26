@@ -11,30 +11,16 @@ Game Master. And the code to run your own.
 
 ## The game
 
-- Respawn: you come back at once, no rounds, no waiting. Choose your weapons with **G**. 3 seconds of protection
-  after each respawn, lost when you shoot.
-- Pick one of 8 races (Undead, Human, Orc, Night Elf...). Each has 3 skills and an ultimate.
-- Earn XP, level up, unlock skills. Your XP is saved, race by race: you get it back next time.
-- Levels come twice as fast as usual, and a race you have never played starts at level 3: your ultimate
-  (level 6) comes quickly.
-- Bots fill the server when few people play. One leaves for each human who joins. They talk back: name one in the
-  chat, or ask a question with a `?`. They remember you and your last map together; kill one often, and it holds a
-  grudge. And a Game Master (an AI) starts bounties, duels and other surprises, names each map's MVP, and writes the
-  server's journal each night.
-- A goal of the week, the same for everyone (`/goal`), with its board on the stats site.
-- `/coach`: an AI coach looks at your numbers on this map and gives you a tip, in private, or answers your
-  question about them (`/coach what is my best weapon?`). A summary near each map's end.
-- An announcer for first blood, multi-kills and kill streaks, up to GODLIKE. Your damage shows under the crosshair.
-- 14 achievements to unlock (`/ach`, the closest one is shown at each map), and the top 10's place shown in the
-  chat. Last month's top 3 get a `[Champion]` tag and a place in the hall of fame.
-- 10 classic maps (de_dust2, de_inferno, cs_office...); a vote picks the next one, and `rtv` asks for a vote now.
-- Rankings at [cs.pazpop.net](https://cs.pazpop.net): the month's (from zero on the 1st), XP per race,
-  combat, and a page per player (`/mystats` gives yours).
-- Join a server of bots only, and the game restarts: every score of the map starts from zero
-  (XP and rankings stay).
+- Respawn, in teams: you come back at once. 8 Warcraft 3 races with skills and an ultimate; your XP is saved, race
+  by race, and levels come twice as fast.
+- Bots fill the server when few people play, and talk back: name one in the chat, or ask a question with a `?`.
+  They remember you, and hold grudges.
+- An AI Game Master: bounties, duels, a boss, challenges; each map's MVP; a journal each night on the site.
+- `/coach`: a tip from an AI coach, or the answer to your question, from your numbers on the map, in private.
+- A goal of the week, achievements, and rankings with a hall of fame on [cs.pazpop.net](https://cs.pazpop.net).
 - 1000 FPS server, North America (east).
 
-How the mod works: [docs/war3ft.md](docs/war3ft.md).
+Everything else (commands, races, rules): [docs/war3ft.md](docs/war3ft.md).
 
 ## Join the server
 

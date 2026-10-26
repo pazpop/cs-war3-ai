@@ -134,7 +134,8 @@ function race_icon(int $race): string
 // The name, with a link to the player's page when War3FT knows the player.
 function player_link(array $row): string
 {
-    $name = e((string) $row['name']);
+    // Without format characters (reversed text, zero width...): they can disguise a name.
+    $name = e(preg_replace('/\p{Cf}/u', '', (string) $row['name']) ?? '?');
     return $row['player_id'] ? '<a href="/player.php?id=' . (int) $row['player_id'] . '">' . $name . '</a>' : $name;
 }
 

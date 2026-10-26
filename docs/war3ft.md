@@ -21,7 +21,7 @@ Every command works with a `/` in front.
 
 | Command | What it does |
 |---|---|
-| `/help` | This guide again (or `help` in the console) |
+| `/help` | The server's guide, in the game (or `help` in the console) |
 | `/changerace` | Change race (at your next respawn) |
 | `/war3menu` | The main menu |
 | `/selectskill` | Spend your skill points |

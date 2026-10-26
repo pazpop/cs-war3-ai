@@ -5,6 +5,7 @@
 #include <sqlx>
 #include "common.inc"
 #include "database.inc"
+#include "kills.inc"
 
 // One goal a week, in turn: the death notice's weapon ("" = any), headshots only or not, how many, and its text.
 enum _:Goal { WEAPON[16], bool:HEADSHOTS, TARGET, TEXT[48] }
@@ -19,7 +20,7 @@ new const GOALS[][Goal] = {
 	{ "", false, 250, "250 kills, any weapon" }
 }
 
-new g_week[8]          // "2026-43": the year and the week (from Monday), as the stats page counts it (SQLite)
+new g_week[11]         // the week's Monday, "2026-10-26", as the stats page counts it (SQLite, the VPS's time)
 new g_goal             // this week's goal, in GOALS
 new g_steamid[33][35]  // empty: not counted (bot, or no SteamID)
 new g_count[33]        // the player's count this week
@@ -28,19 +29,23 @@ new g_unsaved[33]      // the part of it not saved yet
 public plugin_init()
 {
 	register_plugin("Goal of the week", "1.0", "cs-war3-ai")
-	register_event("DeathMsg", "on_death", "a")
+	register_kills()
 	register_clcmd("say /goal", "cmd_goal")
 	register_clcmd("say_team /goal", "cmd_goal")
 	connect_db()
 	run("CREATE TABLE IF NOT EXISTS cs_war3_ai_weekly_goal (week TEXT PRIMARY KEY, goal TEXT, target INTEGER)")
 	run("CREATE TABLE IF NOT EXISTS cs_war3_ai_weekly (week TEXT, steamid TEXT, count INTEGER, \
 		PRIMARY KEY (week, steamid))")
-	// The week this map started in: its kills count for it, even after Sunday midnight.
-	new Handle:query = SQL_PrepareQuery(g_db, "SELECT strftime('%%Y-%%W', 'now', 'localtime')")
+	// The week this map started in (its Monday): its kills count for it, even after Sunday midnight. Its goal: the
+	// weeks since a fixed day, in turn.
+	new Handle:query = SQL_PrepareQuery(g_db, "SELECT date('now', 'localtime', 'weekday 0', '-6 days'), \
+		CAST(julianday(date('now', 'localtime', 'weekday 0', '-6 days')) / 7 AS INTEGER)")
 	if (SQL_Execute(query) && SQL_MoreResults(query))
+	{
 		SQL_ReadResult(query, 0, g_week, charsmax(g_week))
+		g_goal = SQL_ReadResult(query, 1) % sizeof GOALS
+	}
 	SQL_FreeHandle(query)
-	g_goal = str_to_num(g_week[5]) % sizeof GOALS
 	// For the stats page: this week's goal, written by the first map of the week.
 	run("INSERT OR IGNORE INTO cs_war3_ai_weekly_goal VALUES ('%s', '%s', %d)",
 		g_week, GOALS[g_goal][TEXT], GOALS[g_goal][TARGET])
@@ -79,14 +84,12 @@ public client_disconnected(id)
 	g_steamid[id][0] = 0
 }
 
-public on_death()
+// Every kill, War3FT's spells included (kills.inc).
+public on_kill(killer, victim, bool:headshot, const weapon[])
 {
-	new killer = read_data(1)
-	new weapon[16]
-	read_data(4, weapon, charsmax(weapon))
-	if (!killer || killer == read_data(2) || !g_steamid[killer][0]
+	if (!killer || killer == victim || !g_steamid[killer][0]
 		|| GOALS[g_goal][WEAPON][0] && !equal(weapon, GOALS[g_goal][WEAPON])
-		|| GOALS[g_goal][HEADSHOTS] && !read_data(3))
+		|| GOALS[g_goal][HEADSHOTS] && !headshot)
 		return
 	g_unsaved[killer]++
 	// Once: the kill that reaches the goal.

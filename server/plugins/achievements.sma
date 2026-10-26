@@ -10,6 +10,7 @@
 #include <sqlx>
 #include "common.inc"
 #include "database.inc"
+#include "kills.inc"
 
 // The counters, and their columns in ach_progress.
 enum { KILLS, HEADSHOTS, KNIFE, DEAGLE, AWP, AIR, LOW_HP, SECONDS, BEST_STREAK, COUNTERS }
@@ -46,7 +47,7 @@ new g_arrival[33]
 public plugin_init()
 {
 	register_plugin("Achievements", "1.0", "cs-war3-ai")
-	register_event("DeathMsg", "on_death", "a")
+	register_kills()
 	register_clcmd("say /ach", "cmd_achievements")
 	register_clcmd("say /achievements", "cmd_achievements")
 
@@ -185,21 +186,18 @@ value(id, counter)
 	return g_saved[id][counter] + g_new[id][counter]
 }
 
-public on_death()
+// Every kill, War3FT's spells included (kills.inc).
+public on_kill(killer, victim, bool:headshot, const weapon[])
 {
-	new killer = read_data(1)
-	new victim = read_data(2)
 	g_streak[victim] = 0
 	if (!killer || killer == victim || !g_steamid[killer][0])
 		return
 
-	new weapon[16]
-	read_data(4, weapon, charsmax(weapon))
 	// The counters before this kill: only those it raises can come close to a goal.
 	new before[COUNTERS]
 	before = g_new[killer]
 	g_new[killer][KILLS]++
-	if (read_data(3))
+	if (headshot)
 		g_new[killer][HEADSHOTS]++
 	if (equal(weapon, "knife"))
 		g_new[killer][KNIFE]++

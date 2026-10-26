@@ -180,7 +180,35 @@ class Relay(unittest.TestCase):
                 mock.patch.object(relay, "safe", return_value=True) as safe:
             self.assertEqual(relay.on_coach(event)["coach"]["text"], "The AK-47: 7 kills.")
         self.assertIn('Their question: "my best weapon?"', claude.call_args[0][1])
-        self.assertEqual(safe.call_args[0], ("The AK-47: 7 kills.", "my best weapon?"))
+        self.assertEqual(safe.call_args[0], ("The AK-47: 7 kills.", "my best weapon?", "STEAM_0:1:6"))
+
+    def test_name_check(self):
+        # A refused name is asked once, then known; no answer (no key, an error): allowed, and asked again later.
+        refused = '{"allowed": false}'
+        with mock.patch.object(relay, "claude", return_value=refused) as claude:
+            self.assertFalse(relay.name_allowed("Bad Name"))
+            self.assertFalse(relay.name_allowed("Bad Name"))
+        self.assertEqual(claude.call_count, 1)
+        with mock.patch.object(relay, "claude", return_value=None) as claude:
+            self.assertTrue(relay.name_allowed("Someone"))
+            self.assertTrue(relay.name_allowed("Someone"))
+        self.assertEqual(claude.call_count, 2)
+        # Arriving with it: no hello, the plugin renames the player.
+        event = {"type": "join", "id": 8, "name": "Bad Name", "steamid": "STEAM_0:1:7", "bots": [{"id": 2}]}
+        self.assertEqual(relay.on_join(event), {"rename": [8]})
+
+    def test_muted(self):
+        # Three lines held back because of one player's messages: the AI ignores that player for the hour.
+        with mock.patch.object(relay, "claude", return_value='{"allowed": false}'):
+            for _ in range(relay.REFUSALS):
+                self.assertFalse(relay.safe("a bad line", "a bad question", "STEAM_0:1:8"))
+        self.assertTrue(relay.muted("STEAM_0:1:8"))
+        self.assertFalse(relay.muted("STEAM_0:1:9"))
+        event = {"type": "chat", "id": 9, "name": "Troll", "steamid": "STEAM_0:1:8", "text": "zed?",
+                 "bots": [{"id": 2, "name": "[AI] Zed"}]}
+        with mock.patch.object(relay, "claude") as claude:
+            self.assertEqual(relay.on_chat(event), {})
+        claude.assert_not_called()
 
     def test_gm_no_repeat(self):
         # The same event twice in a row: the second is dropped.

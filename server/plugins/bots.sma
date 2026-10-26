@@ -1,6 +1,6 @@
 // Our bots' identity, from server/bots.txt: each one plays its own War3FT race (War3FT still gives a bot a random race
-// at about one respawn in five; back to its own at the next), wears its own skin on each team, and gets a level of 1
-// to 5 at each map, so that its XP never makes it stronger than the humans. And only the bots wear "[AI]".
+// at one respawn in four; back to its own at the next), wears its own skin on each team, and gets a level of 1 to 5
+// at each map, so that its XP never makes it stronger than the humans. And only the bots wear "[AI]".
 #include <amxmodx>
 #include <amxmisc>
 #include <cstrike>
@@ -14,7 +14,9 @@
 // War3FT's races, in its order (race 1 to 8), as written in bots.txt.
 new const RACES[][] = { "Undead Scourge", "Human Alliance", "Orcish Horde", "Night Elves", "Blood Mage",
 	"Shadow Hunter", "Warden", "Crypt Lord" }
-new const AI_WORDS[][] = { "[AI]", "Game Master" }
+// Taken out of a human's name: what only the AI wears (the relay's name check catches look-alikes), and < and >, which
+// War3FT's /playerskills page would read as HTML.
+new const NAME_BANNED[][] = { "[AI]", "Game Master", "<", ">" }
 new const T_SKINS[][] = { "terror", "leet", "arctic", "guerilla" }
 new const CT_SKINS[][] = { "urban", "gsg9", "sas", "gign" }
 
@@ -64,7 +66,7 @@ public client_putinserver(id)
 	g_bot[id] = -1
 	if (!is_user_bot(id))
 	{
-		keep_ai_words_off(id)
+		clean_name(id)
 		return
 	}
 	new name[32]
@@ -88,17 +90,17 @@ public client_disconnected(id)
 public client_infochanged(id)
 {
 	if (is_user_connected(id) && !is_user_bot(id))
-		keep_ai_words_off(id)
+		clean_name(id)
 }
 
-// Only the AI wears these words: a human's name loses them, so nobody can pass for a bot or the Game Master in the
-// chat (or in the daily chat report).
-keep_ai_words_off(id)
+// A human's name without NAME_BANNED: nobody passes for a bot or the Game Master in the chat (or the daily chat
+// report), and no name becomes HTML.
+clean_name(id)
 {
 	new name[32], bool:changed
 	get_user_info(id, "name", name, charsmax(name))
-	for (new i = 0; i < sizeof AI_WORDS; i++)
-		if (replace_string(name, charsmax(name), AI_WORDS[i], "", false))
+	for (new i = 0; i < sizeof NAME_BANNED; i++)
+		if (replace_string(name, charsmax(name), NAME_BANNED[i], "", false))
 			changed = true
 	if (!changed)
 		return

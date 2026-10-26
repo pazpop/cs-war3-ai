@@ -85,8 +85,9 @@ reprise en `maps.ini` : les cartes de CS 1.6 les plus aimées que les bots conna
 
 ## Nos plugins
 
-Dans [server/plugins/](../../server/plugins/), compilés au build (`common.inc` et `database.inc` : le code que
-plusieurs partagent) :
+Dans [server/plugins/](../../server/plugins/), compilés au build (`common.inc`, `database.inc` et `kills.inc` : le
+code que plusieurs partagent ; `kills.inc` reçoit aussi les kills des sorts de War3FT, que le message de mort du jeu
+rate) :
 
 - `achievements.sma` : 14 succès (`/ach`), gardés dans la base de War3FT ; les pages des joueurs les affichent. À
   chaque carte, le plus proche ; un mot au joueur quand il en reste 10 %.
@@ -135,14 +136,14 @@ ReDeathmatch : par équipes, réapparition immédiate dans sa base, pas de manch
 départ (les boutiques de War3 se paient). 3 secondes de protection à la réapparition, perdues au premier tir
 (`mp_respawn_immunity*` de ReGameDLL). Dans ce mode, War3FT coupe ce qui fait revenir un joueur ou garde son
 équipement : l'équipement gardé de l'Orcish Horde, la résurrection du Blood Mage, l'ultime du Warden, l'ankh et le
-scroll (les guides le disent). Mapchooser lance un vote en fin de carte (toutes les 20 minutes).
+scroll. Mapchooser lance un vote en fin de carte (toutes les 20 minutes).
 Le plugin `antiflood` d'AMX Mod X bloque le flood dans le chat (un message toutes les 0,75 s au plus :
 `amx_flood_time`).
 
 ## Les données et la sauvegarde
 
-L'XP est en SQLite, dans le volume : `cstrike/addons/amxmodx/data/sqlite3/war3ft.sq3`. Pas MySQL : en mode MySQL,
-War3FT échappe mal les noms des joueurs (injection SQL possible) ; en mode SQLite, il les échappe bien.
+L'XP est en SQLite, dans le volume : `cstrike/addons/amxmodx/data/sqlite3/war3ft.sq3`. Pas MySQL : le mode MySQL de
+War3FT échappe mal les noms des joueurs (injection SQL).
 
 Chaque nuit à 4 h 32 (entre les mises à jour de 4 h et le redémarrage de 5 h), le VPS sauvegarde l'XP, les
 classements, les succès et la mémoire de l'IA dans `/srv/backups/cs-war3-ai`, et garde 15 jours (quelques Mo par
@@ -170,9 +171,9 @@ sudo docker compose start hlds ai
 
 ## Le web
 
-- `https://<domaine>` (et `http://`) : le journal du maître du jeu, les classements (du mois, de l'objectif de la
-  semaine, XP et combat),
-  le nombre de joueurs (depuis le lancement, 30 et 90 derniers jours) ([stats/index.php](../../stats/index.php)),
+- `https://<domaine>` (et `http://`) : le journal du maître du jeu, les classements (du mois et ses MVP, de
+  l'objectif de la semaine, XP et combat), le nombre de joueurs (depuis le lancement, 30 et 90 derniers jours)
+  ([stats/index.php](../../stats/index.php)),
   et une page par joueur ([stats/player.php](../../stats/player.php)) : XP et niveaux des compétences par race,
   succès, stats de combat. PHP lit la base en lecture seule.
 - `https://<domaine>/status.php` : l'état du serveur en ce moment, en JSON (humains, bots, carte, places), pour
@@ -202,6 +203,8 @@ sudo docker compose start hlds ai
   l'application gratuite Renovate sur le dépôt). Dans cette
   pull request, remplace l'empreinte SHA-256 de la version dans [server/Dockerfile](../../server/Dockerfile) :
   `curl -sL <adresse de l'archive> | sha256sum`. D'ici là, la vérification ci-dessous échoue, exprès.
+- **Depuis le PC** : `./deploy-all.sh` pousse ce dépôt et `../pazpop.net` quand ils ont de nouveaux commits, puis
+  lance `deploy.yml` (`--all` : tout, même sans nouveau commit).
 - **Les vérifications** : chaque push lance [.github/workflows/check.yml](../../.github/workflows/check.yml) :
   `ansible-lint`, `shellcheck`, la syntaxe Python et PHP, les tests Python, et le build des deux images (celle du jeu
   vérifie les SHA-256 et compile nos plugins).
@@ -209,8 +212,8 @@ sudo docker compose start hlds ai
 ## Le nombre de joueurs
 
 Toutes les 5 minutes, [ansible/files/collect.py](../../ansible/files/collect.py) ajoute une ligne par serveur dans
-`/srv/collect/players.csv` : heure (celle du VPS, avec son décalage sur UTC), serveur, en ligne, humains, bots, places, carte. Seulement des nombres, rien
-sur les joueurs (environ 15 Ko par jour et par serveur). Les serveurs : `collect_domains` dans
+`/srv/collect/players.csv` : heure (celle du VPS, avec son décalage sur UTC), serveur, en ligne, humains, bots, places, carte.
+Seulement des nombres et la carte, rien sur les joueurs (environ 15 Ko par jour et par serveur). Les serveurs : `collect_domains` dans
 [ansible/inventory.yml](../../ansible/inventory.yml). Pour le télécharger :
 
 ```bash
@@ -222,7 +225,8 @@ scp -P 2222 -i ~/.ssh/<ta clé> deploy@<domaine>:/srv/collect/players.csv .
 Chaque nuit à 0 h 30, [ansible/files/chat_report.py](../../ansible/files/chat_report.py) écrit le chat de la
 veille (à l'heure du VPS, comme les logs du jeu) dans `/srv/collect/chat/<date>.txt`, à partir des logs du jeu (gardés 14 jours) : les humains (le chat
 d'équipe signalé), les bots, le maître du jeu et le coach, avec les arrivées et les départs. Seulement les noms, ni
-SteamID ni IP ; lisible par root seulement, gardé 90 jours. Un jour sans chat n'écrit rien. Un autre jour, tout de suite :
+SteamID ni IP ; lisible par root seulement, gardé 90 jours. Un jour sans rien de tout ça n'écrit rien. Un autre
+jour, tout de suite :
 `sudo cs-war3-ai-chat-report 2026-10-26`.
 
 ## L'IA (optionnel)
@@ -239,26 +243,30 @@ des actions :
   comment il s'en sort contre eux, et le score de chaque bot contre lui. Un bot tué 5 fois par un joueur, plus qu'il ne l'a tué, lui garde rancune : il le taquine, et
   c'est lui qui l'accueille.
 - **Les questions** : un message avec un `?` reçoit en général la réponse d'un bot, qui a le guide du mod
-  ([docs/war3ft.md](../war3ft.md)) sous les yeux ; un nouveau reçoit un conseil tiré du guide avec le bonjour. Ces
-  requêtes sont plus longues (le guide fait environ 1 200 tokens), donc un peu plus chères.
+  ([docs/war3ft.md](../war3ft.md), environ 1 500 tokens) sous les yeux ; un nouveau reçoit un conseil tiré du guide
+  avec le bonjour.
 - **Le coach** : `/coach` envoie les chiffres du joueur sur cette carte (CSX : kills, morts, headshots, touches et
   où, précision de chaque arme, morts d'affilée, l'arme qui l'a le plus tué) et reçoit un conseil, en privé, un par
-  minute au plus. `/coach <question>` : la réponse à une question sur ces chiffres, jamais affichée dans le chat. Après 5 morts d'affilée, un conseil arrive tout seul, une fois par carte ; 60 secondes avant la fin
-  de la carte, chaque humain qui a joué reçoit un bilan : un point fort, une chose à travailler.
+  minute au plus. `/coach <question>` : la réponse à une question sur ces chiffres, jamais affichée dans le chat.
+  Après 5 morts d'affilée, un conseil arrive tout seul, une fois par carte ; 60 secondes avant la fin de la carte,
+  chaque humain qui a joué reçoit un bilan : un point fort, une chose à travailler.
 - **Le maître du jeu** : toutes les 10 minutes, il lit le score et peut lancer un événement : une prime sur un
-  joueur très en avance, un duel entre deux joueurs, un défi (kills, headshots, kills au couteau ou à la grenade,
+  joueur très en avance, un duel entre deux joueurs, un défi (kills, headshots ou kills au couteau,
   en 2 minutes), un boss (un bot à 500 points de vie, entouré d'un halo rouge), 30 secondes de gravité basse, de
   l'argent pour tous, 100 XP de War3FT pour chaque humain (`changexp`), un objet des boutiques de War3FT pour tous
   (`wc3_giveitem`). Chaque prix vaut 3000 $ et 200 XP, et personne n'est obligé de participer. Il ne choisit que dans
-  cette liste : le plugin vérifie chaque événement et le lance lui-même, et jamais deux fois de suite le même.
+  cette liste, et jamais deux fois de suite le même événement ; le plugin vérifie chaque événement et le lance
+  lui-même.
 - **Le journal** : chaque nuit, le relais écrit l'entrée de la veille (3 à 5 phrases) à partir des annonces du
   maître du jeu et des répliques des bots, jamais de ce qu'écrivent les joueurs ; la page d'accueil montre les 3
   derniers jours.
 
 Ce que l'IA peut dire : un prompt système strict, puis un modérateur (une seconde requête) vérifie chaque ligne
 avant qu'elle s'affiche : pas d'insulte raciste, de haine, de contenu sexuel, de menace, d'activité illégale, de
-politique ni d'information personnelle, dans aucune langue, ni un pseudo injurieux répété. Au moindre doute ou à
-la moindre erreur, rien ne s'affiche. Un bot répond au même joueur au plus toutes les 10 secondes. En jeu, l'IA
+politique ni d'information personnelle, dans aucune langue, ni un pseudo injurieux répété. Le pseudo de chaque
+humain est vérifié aussi, une fois : un pseudo injurieux est renommé « Player ». Au moindre doute ou à la moindre
+erreur, rien ne s'affiche. Un bot répond au même joueur au plus toutes les 10 secondes ; un joueur dont les messages
+font refuser 3 répliques en une heure est ignoré pendant une heure. En jeu, l'IA
 s'affiche `[AI] Zed`, `[AI Game Master]` et `[AI Coach]` : les joueurs savent qu'ils parlent à une IA (Anthropic
 l'exige).
 
@@ -269,16 +277,15 @@ cette somme en une heure, puis se tait ; mets aussi une limite mensuelle dans la
 
 Ce qui sort du VPS : les messages du chat public (jamais le chat d'équipe), les noms, le score, l'historique de
 chaque humain contre les bots (depuis quand il joue, sa dernière carte, ses kills et ses morts contre eux), les
-chiffres de chaque joueur pour le coach, et pour le journal les annonces et les répliques des bots du jour. Jamais
-les SteamID ni les IP. La mémoire des bots (par SteamID, dans le volume du relais) oublie un joueur qu'elle n'a pas
-vu depuis 180 jours ; l'histoire du jour part 2 jours après, le journal garde 30 jours. Le guide le dit aux joueurs.
+chiffres et les questions de chaque joueur pour le coach, et pour le journal les annonces et les répliques des bots
+du jour. Jamais les SteamID ni les IP. La mémoire des bots oublie un joueur qu'elle n'a pas vu depuis 180 jours ; l'histoire du jour part 2 jours après, le journal garde 30 jours. Le guide le dit aux joueurs.
 
 Ses logs, sur le VPS : `cd /srv/cs-war3-ai && sudo docker compose logs ai`.
 
 ## Le monitoring (optionnel)
 
-[Healthchecks.io](https://healthchecks.io) (gratuit jusqu'à 20 vérifications, libre) te prévient par courriel,
-Discord, Telegram… quand un ping n'arrive pas à temps. Il repère aussi un VPS complètement tombé.
+[Healthchecks.io](https://healthchecks.io) (gratuit, libre) te prévient quand un ping n'arrive pas à temps, même
+si le VPS est tombé.
 
 1. Crée deux vérifications : **backup** (période 1 jour, délai de grâce 1 heure) et **server** (période 5 minutes,
    délai de grâce 10 minutes).
@@ -295,7 +302,7 @@ Sans ces adresses, rien n'est envoyé.
 ## L'Edge Network Firewall d'OVHcloud (optionnel)
 
 Chez OVHcloud, l'Edge Network Firewall filtre le trafic avant qu'il atteigne le VPS. Il s'active aussi tout seul
-pendant une attaque DDoS : ses règles doivent donc être justes. Espace client : Network > Public IP Addresses > `⁝` à
+pendant une attaque DDoS. Espace client : Network > Public IP Addresses > `⁝` à
 côté de l'IPv4 > Configure Edge Network Firewall, puis l'activer.
 
 | Priorité | Action | Protocole | Port source | Port destination | Option | Pourquoi |

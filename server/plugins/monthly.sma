@@ -7,6 +7,7 @@
 #include <sqlx>
 #include "common.inc"
 #include "database.inc"
+#include "kills.inc"
 
 new g_steamid[33][35]  // empty: not counted (bot, or no SteamID)
 new g_kills[33]
@@ -16,7 +17,7 @@ new g_headshots[33]
 public plugin_init()
 {
 	register_plugin("Ranking of the month", "1.0", "cs-war3-ai")
-	register_event("DeathMsg", "on_death", "a")
+	register_kills()
 	// The map's end (the intermission).
 	register_event("30", "count_mvp", "a")
 	connect_db()
@@ -26,14 +27,28 @@ public plugin_init()
 		PRIMARY KEY (month, steamid))")
 }
 
-// The map's MVP (common.inc), if it is a human with a SteamID: one more this month. Not the best human when a bot is
-// on top: alone with the bots, a player would be it every map.
+// The map's MVP (common.inc), if it is a human with a SteamID who beat at least one other human who scored: one more
+// this month. Not the best human when a bot is on top, nor a player alone with the bots: they would be it every map.
 public count_mvp()
 {
 	new best = map_mvp()
-	if (best && g_steamid[best][0])
+	if (best && g_steamid[best][0] && humans_who_scored() >= 2)
 		run("INSERT INTO cs_war3_ai_mvp VALUES (strftime('%%Y-%%m', 'now', 'localtime'), '%s', 1) \
 			ON CONFLICT (month, steamid) DO UPDATE SET count = count + 1", g_steamid[best])
+}
+
+// The humans in a team who killed on this map.
+humans_who_scored()
+{
+	new players[32], count, scored
+	get_players(players, count, "ch")  // c: no bots; h: no HLTV
+	for (new i = 0; i < count; i++)
+	{
+		new team = get_user_team(players[i])  // 1: T, 2: CT
+		if ((team == 1 || team == 2) && get_user_frags(players[i]) > 0)
+			scored++
+	}
+	return scored
 }
 
 public plugin_end()
@@ -103,15 +118,14 @@ save(id)
 	g_headshots[id] = 0
 }
 
-public on_death()
+// Every kill, War3FT's spells included (kills.inc).
+public on_kill(killer, victim, bool:headshot, const weapon[])
 {
-	new killer = read_data(1)
-	new victim = read_data(2)
 	g_deaths[victim]++
 	if (killer && killer != victim)
 	{
 		g_kills[killer]++
-		if (read_data(3))
+		if (headshot)
 			g_headshots[killer]++
 	}
 }

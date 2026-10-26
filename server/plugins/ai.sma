@@ -10,6 +10,7 @@
 #include <json>
 #include <sockets>
 #include "common.inc"
+#include "kills.inc"
 
 // The relay's fixed address on the "ai" network (compose.yml): a name would be looked up at each request, and a
 // lookup can block the server.
@@ -60,7 +61,7 @@ public plugin_init()
 	register_plugin("AI", "1.0", "cs-war3-ai")
 	register_clcmd("say", "on_say")
 	// Not say_team: a bot's answer shows to everyone, and a team's chat must stay within the team.
-	register_event("DeathMsg", "on_death", "a")
+	register_kills()
 	// A new round: in Respawn mode, only a restart (fresh_start.sma, sv_restart) or a new map.
 	register_event("HLTV", "on_new_round", "a", "1=0", "2=0")
 	// The map's end (the intermission: the scores show for a few seconds).
@@ -254,13 +255,9 @@ add_bots(JSON:event)
 	json_free(bots)
 }
 
-public on_death()
+// Every kill, War3FT's spells included (kills.inc).
+public on_kill(killer, victim, bool:headshot, const weapon[])
 {
-	new killer = read_data(1)
-	new victim = read_data(2)
-	new bool:headshot = bool:read_data(3)
-	new weapon[32]
-	read_data(4, weapon, charsmax(weapon))
 	check_events(killer, victim, headshot, weapon)
 	count_for_coach(killer, victim, weapon)
 	// Only a bot against a human: the bots talk to the humans.
@@ -355,7 +352,23 @@ do_actions(const answer[])
 		}
 	}
 	free(coach)
+	// Humans whose name the AI found offensive: they play as "Player".
+	new JSON:renames = json_object_get_value(root, "rename")
+	if (json_is_array(renames))
+		for (new i = 0; i < json_array_get_count(renames); i++)
+			rename_player(json_array_get_number(renames, i))
+	free(renames)
 	free(root)
+}
+
+// The new name goes everywhere the old one would: the chat, the Game Master's announcements, the stats site.
+rename_player(userid)
+{
+	new id = find_player("k", userid)
+	if (!id || is_user_bot(id))
+		return
+	set_user_info(id, "name", "Player")
+	client_print_color(id, print_team_default, "^4[AI Game Master]^1 Your name is not allowed here: you play as Player.")
 }
 
 // json_free refuses a value that does not exist (a missing key, a line that is not JSON).
@@ -442,7 +455,7 @@ bool:start_event(JSON:gm, const event[], target, target2)
 		|| equal(event, "duel") && (!target || !target2 || target == target2)
 		|| equal(event, "boss") && (!target || !is_user_bot(target) || !is_user_alive(target))
 		|| equal(event, "challenge") && !equal(challenge, "kills") && !equal(challenge, "headshots")
-			&& !equal(challenge, "knife") && !equal(challenge, "grenade"))
+			&& !equal(challenge, "knife"))
 		return false
 	end_event()
 
