@@ -36,6 +36,18 @@
           vault_anthropic_key (ansible/vault.yml, optional): an Anthropic API key, sk-ant-...
         quiet: true
 
+    # Ansible copies the folders as they are on the PC: a file left there for a test (a page, a database, a plugin)
+    # would go public or into the image. Only the files git knows.
+    - name: Check that the copied folders hold no file unknown to git
+      ansible.builtin.command:  # noqa: command-instead-of-module
+        cmd: git status --porcelain --ignored --untracked-files=all -- server ai stats caddy docs compose.yml
+        chdir: "{{ playbook_dir }}/.."
+      delegate_to: localhost
+      become: false
+      register: stray
+      changed_when: false
+      failed_when: stray.stdout_lines | select('match', '^(\\?\\?|!!)') | reject('search', '__pycache__') | list | length > 0
+
   tasks:
     # Ansible's copy never deletes: without this, a plugin removed from the repository would still be built
     # into the image. The running containers do not use this folder.
@@ -93,7 +105,7 @@
         mode: "0600"
       no_log: true
 
-    # The latest patch of Caddy and PHP (compose.yml pins their minor version). The game image is built below.
+    # The latest patch of Caddy and PHP (compose.yml pins their minor version). The game's and the AI relay's images are built below.
     - name: Download the Caddy and PHP images
       ansible.builtin.command:
         cmd: docker compose pull caddy fastdl stats

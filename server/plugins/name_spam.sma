@@ -24,10 +24,7 @@ public client_connect(id)
 
 public client_infochanged(id)
 {
-	new old[32], name[32]
-	get_user_name(id, old, charsmax(old))
-	get_user_info(id, "name", name, charsmax(name))
-	if (!is_user_connected(id) || is_user_bot(id) || equal(old, name) || (get_user_flags(id) & ADMIN_IMMUNITY))
+	if (!is_user_connected(id) || is_user_bot(id) || !name_changed(id) || (get_user_flags(id) & ADMIN_IMMUNITY))
 		return
 	new now = get_systime()
 	g_times[id][g_next[id]] = now
@@ -35,15 +32,5 @@ public client_infochanged(id)
 	// The next place holds the oldest of the last CHANGES changes (0: fewer changes so far).
 	new oldest = g_times[id][g_next[id]]
 	if (oldest && now - oldest < WINDOW)
-		kick_for_an_hour(id)
-}
-
-// Only a real SteamID is banned: banning STEAM_ID_PENDING would keep out everyone who has it.
-kick_for_an_hour(id)
-{
-	new authid[35]
-	get_user_authid(id, authid, charsmax(authid))
-	server_cmd("kick #%d ^"Too many name changes: come back in an hour^"", get_user_userid(id))
-	if (is_real_steamid(authid))
-		server_cmd("banid %d %s", BAN_MINUTES, authid)
+		kick_and_ban(id, BAN_MINUTES, "Too many name changes: come back in an hour")
 }

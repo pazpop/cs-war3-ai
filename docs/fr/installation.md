@@ -286,7 +286,7 @@ chaque humain contre les bots (depuis quand et quand il a joué la dernière foi
 morts contre eux), les chiffres et les questions de chaque joueur pour le coach, et pour le journal les annonces et
 les répliques des bots du jour. Jamais les SteamID ni les IP. La mémoire des bots oublie un joueur qu'elle n'a pas vu
 depuis 180 jours ; l'histoire du jour part 2 jours après ; le journal garde ses 30 dernières entrées, la page de stats
-les 200 dernières répliques des bots, la vérification des pseudos ses réponses 30 jours. Le guide le dit aux
+les 200 dernières répliques des bots (30 jours au plus), la vérification des pseudos ses réponses 30 jours. Le guide le dit aux
 joueurs.
 
 Ses logs, sur le VPS : `cd /srv/cs-war3-ai && sudo docker compose logs ai`.
@@ -343,7 +343,7 @@ sudo docker run --rm -v cs-war3-ai_hlds:/h python:3.13-alpine python -c "import 
 
 Ses stats restent, sous « Player » ; s'il revient, son nouveau pseudo s'affiche. Les répliques des bots et les
 entrées du journal qui le nomment restent jusqu'à ce que de plus récentes les poussent dehors (les 200 dernières
-répliques, les 30 dernières entrées).
+répliques, 30 jours au plus ; les 30 dernières entrées).
 
 ## Sur le PC
 

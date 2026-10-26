@@ -16,8 +16,9 @@
 	file_server
 }
 
-# HTTPS, for browsers (automatic Let's Encrypt certificate).
+# HTTPS, for browsers (automatic Let's Encrypt certificate). HSTS here only: the game needs the plain HTTP below.
 {$DOMAIN} {
+	header Strict-Transport-Security "max-age=31536000"
 	import stats
 }
 

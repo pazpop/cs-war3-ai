@@ -17,10 +17,10 @@
 // lookup can block the server.
 #define RELAY_IP "10.27.15.10"
 #define RELAY_PORT 27100
-#define TIMEOUT 30.0          // seconds to wait for an answer: up to 3 requests to Claude (a name, a line, its check)
+#define TIMEOUT 30.0          // seconds to wait for an answer: a few requests to Claude (names, a line, its check)
 #define MAX_PENDING 16        // requests waiting at once: the map's summary goes to every human together
 #define COACH_RESERVE 4       // places the coach's summaries and timed tips leave free for the other events
-#define STATE_EVERY 600.0     // seconds between two looks of the Game Master: once a map (20 minutes), halfway
+#define STATE_AT 600.0        // seconds into the map when the Game Master looks at the game: once, halfway
 #define EVENT_TIME 180.0      // seconds a bounty, a duel or a boss lasts
 #define CHALLENGE_TIME 120.0  // seconds to meet a challenge
 #define REWARD 3000           // the prize of a bounty, a duel, a challenge or a boss, in dollars
@@ -57,7 +57,7 @@ new g_gravity
 // For the coach: deaths in a row, and how often each weapon killed the player; whether the map's summary was sent.
 new g_streak[33], g_killed_by[33][CSW_P90 + 1]
 new bool:g_summary_sent
-new Float:g_next_chat[33]  // when each player's next chat line may go to the relay
+new Float:g_next_request[33]  // when each player's next chat line or /coach may go to the relay
 
 public plugin_init()
 {
@@ -72,7 +72,7 @@ public plugin_init()
 	register_clcmd("say /coach", "cmd_coach")
 	register_clcmd("say_team /coach", "cmd_coach")
 	set_task(0.1, "poll", _, _, _, "b")
-	set_task(STATE_EVERY, "send_state", _, _, _, "b")
+	set_task(STATE_AT, "send_state")
 	set_task(10.0, "check_summary", _, _, _, "b")
 	set_task(COACH_EVERY, "coach_every", _, _, _, "b")
 }
@@ -83,7 +83,7 @@ public client_putinserver(id)
 {
 	g_progress[id] = 0
 	g_streak[id] = 0
-	g_next_chat[id] = 0.0
+	g_next_request[id] = 0.0
 	arrayset(g_killed_by[id], 0, sizeof g_killed_by[])
 	if (!is_user_bot(id) && !is_user_hltv(id))
 		set_task(GREET_AFTER, "send_join", TASK_JOIN + id)
@@ -93,10 +93,7 @@ public client_putinserver(id)
 // only at the next map or look. A second later: the game applies the name after this.
 public client_infochanged(id)
 {
-	new old[32], name[32]
-	get_user_name(id, old, charsmax(old))
-	get_user_info(id, "name", name, charsmax(name))
-	if (!is_user_connected(id) || is_user_bot(id) || equal(old, name))
+	if (!is_user_connected(id) || is_user_bot(id) || !name_changed(id))
 		return
 	remove_task(TASK_NAME + id)
 	set_task(1.0, "send_name", TASK_NAME + id)
@@ -269,10 +266,8 @@ public on_say(id)
 	// Not a dead player's line either: only the dead see it, and a bot's answer would show to everyone.
 	if (!message[0] || message[0] == '/' || message[0] == '!' || is_command(message) || !is_user_alive(id))
 		return PLUGIN_CONTINUE
-	// One line every 3 seconds per player at most: a flood cannot fill the places waiting for the relay.
-	if (get_gametime() < g_next_chat[id])
+	if (too_soon(id))
 		return PLUGIN_CONTINUE
-	g_next_chat[id] = get_gametime() + 3.0
 
 	new JSON:event = player(id)
 	json_object_set_string(event, "type", "chat")
@@ -615,6 +610,16 @@ win(winner, victim, const what[])
 	announce(text)
 }
 
+// One request every 3 seconds per player at most (a chat line, /coach): a flood cannot fill the places waiting for
+// the relay.
+bool:too_soon(id)
+{
+	if (get_gametime() < g_next_request[id])
+		return true
+	g_next_request[id] = get_gametime() + 3.0
+	return false
+}
+
 // ---- The coach ----
 
 // /coach: a tip in private, from the player's numbers on this map. The relay allows one a minute.
@@ -627,6 +632,8 @@ public cmd_coach(id)
 // /coach, with or without a question: a word at once (the answer takes a few seconds), then the relay's answer.
 ask_coach(id, const question[])
 {
+	if (too_soon(id))
+		return
 	client_print_color(id, print_team_default, "^4[AI Coach]^1 Looking at your game...")
 	send_coach(id, "", question)
 }
@@ -650,6 +657,8 @@ count_for_coach(killer, victim, const weapon[])
 // The relay keeps the choice by SteamID, from one map and one visit to the next, until /coach off.
 coach_mode(id, bool:on)
 {
+	if (too_soon(id))
+		return
 	new authid[35]
 	get_user_authid(id, authid, charsmax(authid))
 	if (!is_real_steamid(authid))

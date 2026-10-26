@@ -171,10 +171,9 @@ sudo docker compose start hlds ai
   skill levels per race, combat stats, achievements. PHP reads the database read-only.
 - `https://<domain>/status.php`: the server's state right now in JSON (humans, bots, map, slots), for other sites:
   [pazpop.net](https://pazpop.net) shows it. Asked to the game at most every 15 seconds.
-- `https://<domain>/bots.php`: the bots, their race, character and portrait (from [server/bots.txt](../server/bots.txt)).
-  Also the bots'
-  latest lines and the great rivalries (each bot's score against each human), from the AI relay's database (its
-  volume, read-only), with the names from the game's.
+- `https://<domain>/bots.php`: the bots, their race, character and portrait (from
+  [server/bots.txt](../server/bots.txt)). Also the bots' latest lines and the great rivalries (each bot's score
+  against each human), from the AI relay's database (its volume, read-only), with the names from the game's.
 - `http://<domain>/guide.html`: the guide, shown on connect. The in-game browser (MOTD) is too old for today's
   HTTPS: in game, only `http://` pages open.
 - `http://<domain>/cstrike/…`: FastDL. The game's own download (UDP) crashes the client on War3FT's files.
@@ -266,7 +265,7 @@ What leaves the VPS: the public chat messages (never the team chat), the names, 
 against the bots (since when and when last they played, the last map, kills and deaths against them), each player's
 numbers and questions for the coach, and for the journal the day's announcements and bot lines. Never the SteamIDs or
 the IPs. The bots' memory forgets a player not seen for 180 days; the day's story goes 2 days later; the journal keeps
-its last 30 entries, the stats page the bots' last 200 lines, the name check its answers 30 days. The guide tells the
+its last 30 entries, the stats page the bots' last 200 lines (30 days at most), the name check its answers 30 days. The guide tells the
 players.
 
 Its logs, on the VPS: `cd /srv/cs-war3-ai && sudo docker compose logs ai`.
@@ -321,7 +320,7 @@ sudo docker run --rm -v cs-war3-ai_hlds:/h python:3.13-alpine python -c "import 
 ```
 
 Their stats stay, under "Player"; if they come back, their new name shows. The bots' lines and the journal
-entries that name them stay until newer ones push them out (the last 200 lines, the last 30 entries).
+entries that name them stay until newer ones push them out (the last 200 lines, 30 days at most; the last 30 entries).
 
 ## On the PC
 

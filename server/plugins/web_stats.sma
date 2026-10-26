@@ -66,10 +66,7 @@ public client_disconnected(id)
 // when the player leaves. Half a second later: the game applies it after this.
 public client_infochanged(id)
 {
-	new old[32], name[32]
-	get_user_name(id, old, charsmax(old))
-	get_user_info(id, "name", name, charsmax(name))
-	if (!is_user_connected(id) || equal(old, name))
+	if (!is_user_connected(id) || !name_changed(id))
 		return
 	remove_task(id)
 	set_task(0.5, "save_name", id)

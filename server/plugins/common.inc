@@ -6,6 +6,26 @@ stock bool:is_real_steamid(const authid[])
 	return equal(authid, "STEAM_", 6) && isdigit(authid[6]) && authid[7] == ':'
 }
 
+// In client_infochanged: true when the name the player is getting is not the one they have.
+stock bool:name_changed(id)
+{
+	new old[32], name[32]
+	get_user_name(id, old, charsmax(old))
+	get_user_info(id, "name", name, charsmax(name))
+	return !equal(old, name)
+}
+
+// Kicks a player and keeps them out for a while, by SteamID: otherwise they could come back at once. Only a real
+// SteamID: banning STEAM_ID_PENDING would keep out everyone who has it. Not saved (no writeid): a restart lifts it.
+stock kick_and_ban(id, minutes, const reason[])
+{
+	new authid[35]
+	get_user_authid(id, authid, charsmax(authid))
+	server_cmd("kick #%d ^"%s^"", get_user_userid(id), reason)
+	if (is_real_steamid(authid))
+		server_cmd("banid %d %s", minutes, authid)
+}
+
 // A chat command typed without / or !: not a chat line. Ours, then War3FT's (it reads them with or without /, and
 // its item names buy the item).
 stock const COMMANDS[][] = { "help", "votekick", "rtv", "nextmap", "currentmap", "timeleft", "thetime",

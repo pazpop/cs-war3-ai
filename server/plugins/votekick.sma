@@ -94,13 +94,9 @@ public on_votekick_choice(id, menu, item)
 	g_told[id] = true
 	if (votes >= goal)
 	{
-		// Kept out for a while, by SteamID: otherwise they could come back at once. Only a real SteamID: banning
-		// STEAM_ID_PENDING would keep out everyone who has it. Not saved (no writeid): a restart lifts it.
-		new authid[35]
-		get_user_authid(target, authid, charsmax(authid))
-		server_cmd("kick #%d ^"Kicked by vote for %d minutes^"", userid, BAN_MINUTES)
-		if (is_real_steamid(authid))
-			server_cmd("banid %d %s", BAN_MINUTES, authid)
+		new reason[48]
+		formatex(reason, charsmax(reason), "Kicked by vote for %d minutes", BAN_MINUTES)
+		kick_and_ban(target, BAN_MINUTES, reason)
 		for (new i = 1; i <= MaxClients; i++)
 			if (g_wants_kick[i] == userid)
 				g_wants_kick[i] = 0

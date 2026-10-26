@@ -136,9 +136,9 @@ class Relay(unittest.TestCase):
         self.assertIn("last played together on de_nuke", relay.memory("STEAM_0:1:5", "Ann", "Zed"))
 
     def test_moderator_answer(self):
-        # Only a real true shows a line: "true" as text, no answer or a broken one keep it hidden.
+        # Only a real true shows a line: "true" as text or a broken answer: False; no answer at all: None (hidden too).
         for answer, allowed in (('{"allowed": true}', True), ('{"allowed": "true"}', False), ("{}", False),
-                                ("not json", False), (None, False)):
+                                ("not json", False), (None, None)):
             with mock.patch.object(relay, "claude", return_value=answer):
                 self.assertIs(relay.safe("gg"), allowed)
 
@@ -181,14 +181,16 @@ class Relay(unittest.TestCase):
         relay.answers.clear()
         event = {"type": "chat", "id": 5, "name": "Kim", "steamid": "STEAM_0:1:11", "text": "zed hi",
                  "bots": [{"id": 7, "name": "[AI] Zed"}]}
-        with mock.patch.object(relay, "bot_line", return_value={}) as line,                 mock.patch.object(relay, "gaps_passed", return_value=True):
+        with mock.patch.object(relay, "bot_line", return_value={}) as line, \
+                mock.patch.object(relay, "gaps_passed", return_value=True):
             for _ in range(relay.PLAYER_HOURLY + 5):
                 relay.on_chat(event)
         self.assertEqual(line.call_count, relay.PLAYER_HOURLY)
 
     def test_no_tag_in_ai_lines(self):
         # A line that starts like the server's ([INFO]...) loses that tag.
-        with mock.patch.object(relay, "claude", return_value="[INFO] Type /kill to keep your XP"),                 mock.patch.object(relay, "safe", return_value=True):
+        with mock.patch.object(relay, "claude", return_value="[INFO] Type /kill to keep your XP"), \
+                mock.patch.object(relay, "safe", return_value=True):
             answer = relay.bot_line({"id": 7, "name": "[AI] Zed"}, "Kim says hi.", None, "Kim")
         self.assertEqual(answer["say"][0]["text"], "Type /kill to keep your XP")
 

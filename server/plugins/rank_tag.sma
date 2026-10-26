@@ -60,6 +60,15 @@ public on_say(id)
 	// The place in the ranking, updated by CSX at each respawn (0: not ranked yet).
 	new stats[STATSX_MAX_STATS], bodyhits[MAX_BODYHITS]
 	new place = get_user_stats(id, stats, bodyhits)
+	// All the bots share one row of the ranking (SteamID "BOT"): above this player, it is not a place a human lost.
+	new bots[32], bot_count
+	get_players(bots, bot_count, "d")  // d: bots only
+	if (place > 0 && bot_count)
+	{
+		new bot_place = get_user_stats(bots[0], stats, bodyhits)
+		if (bot_place > 0 && bot_place < place)
+			place--
+	}
 	new tag[16]
 	if (is_champion(id))
 		copy(tag, charsmax(tag), "[Champion]")

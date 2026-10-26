@@ -1,4 +1,4 @@
-# The game server, FastDL and the stats page. On the PC as on the VPS:
+# The game server, the AI relay, FastDL and the stats page. On the PC as on the VPS:
 #   docker compose up -d --build
 # On the PC, without a .env: DOMAIN=localhost docker compose up -d --build
 # HLDS's console: docker attach cs-war3-ai-hlds-1 (leave with Ctrl+P then Ctrl+Q; Ctrl+C stops the server

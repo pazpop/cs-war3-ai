@@ -165,7 +165,7 @@ function page_start(string $title): void
 <div class="live">
 <?php if ($status['online']): ?>
 <span class="dot on"></span> <?= (int) $status['humans'] ?> <?= $status['humans'] == 1 ? 'player' : 'players' ?> and
-<?= (int) $status['bots'] ?> bots on
+<?= (int) $status['bots'] ?> <?= $status['bots'] == 1 ? 'bot' : 'bots' ?> on
 <b><?= e((string) $status['map']) ?></b>
 <?php else: ?>
 <span class="dot"></span> The server does not answer right now.

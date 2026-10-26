@@ -32,7 +32,7 @@ public plugin_init()
 
 	if (!g_count)
 		return
-	// A map shows about 4: each map starts somewhere else in the list, so that every message shows.
+	// A map shows 3 (the 4th would fall at its end): each map starts somewhere else, so that every message shows.
 	g_next = random(g_count)
 	set_task(INTERVAL, "show_next", .flags = "b")
 }

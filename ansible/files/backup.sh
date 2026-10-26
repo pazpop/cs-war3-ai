@@ -52,7 +52,8 @@ import sys
 for source, copy in zip(sys.argv[1::2], sys.argv[2::2]):
     if not os.path.exists(source):
         continue
-    if os.path.exists(copy):
+    # lexists: a link the game left in its folder is removed too, never followed (this runs as root).
+    if os.path.lexists(copy):
         os.remove(copy)
     reader = sqlite3.connect(f"file:{source}?mode=ro", uri=True)
     writer = sqlite3.connect(copy)
