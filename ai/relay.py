@@ -29,7 +29,7 @@ PLAYER_GAP = 10       # seconds between two answers to the same player: one play
 BUTT_IN = 0.10        # chance that a bot answers a message that names no bot
 TAUNT = 0.25          # chance that a bot talks after a kill between a bot and a human
 GREET_AGAIN = 900     # seconds without news of a human before a bot greets them again: not at every map change
-EVENTS = ["none", "bounty", "duel", "low_gravity", "gold_rain", "challenge", "boss"]
+EVENTS = ["none", "bounty", "duel", "low_gravity", "gold_rain", "challenge", "boss", "xp_rain", "item_gift"]
 # The challenges, and how many of each a human must reach in 2 minutes (the Game Master picks within these bounds).
 CHALLENGES = {"kills": (3, 6), "headshots": (2, 4), "knife": (1, 2), "grenade": (1, 2)}
 
@@ -61,14 +61,17 @@ RULES = (
 GM_SYSTEM = (
     "You are the Game Master of a Counter-Strike 1.6 server with War3FT (Warcraft 3 races and skills), team "
     "deathmatch with instant respawn. Every few minutes you may spice up the game with one event:\n"
-    "- bounty: on target, a player far ahead of the others; whoever kills them gets $3000.\n"
-    "- duel: target and target2, two players of opposite teams; the first to kill the other gets $3000.\n"
+    "- bounty: on target, a player far ahead of the others; whoever kills them wins the prize.\n"
+    "- duel: target and target2, two players of opposite teams; the first to kill the other wins the prize.\n"
     "- low_gravity: 30 seconds of low gravity for everyone.\n"
     "- gold_rain: $1500 for everyone.\n"
     "- challenge: a goal for every human, within 2 minutes: challenge is kills, headshots, knife (knife kills) or "
     "grenade (grenade kills), count how many (kills 3-6, headshots 2-4, knife or grenade 1-2). The first human to "
-    "reach it gets $3000; nobody has to take part.\n"
-    "- boss: target, a bot, becomes a boss: 500 health and a red glow; whoever kills it gets $3000.\n"
+    "reach it wins the prize; nobody has to take part.\n"
+    "- boss: target, a bot, becomes a boss: 500 health and a red glow; whoever kills it wins the prize.\n"
+    "- xp_rain: 100 War3FT XP for every human.\n"
+    "- item_gift: a random War3FT shop item for everyone.\n"
+    "The prize of a bounty, a duel, a challenge or a boss: $3000 and 200 War3FT XP.\n"
     "- none: no event; line can be a short comment on the game, or empty.\n"
     "Make the game fairer or more fun: bounties on players far ahead, never on someone who struggles. "
     "Vary: do not repeat the last event. target and target2 are player ids from the list, 0 when unused; challenge "

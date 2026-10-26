@@ -197,8 +197,9 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
   volume): since when they play, how they fare against bots.
 - **The Game Master**: every 10 minutes, it reads the score and may start an event: a bounty on a player far ahead,
   a duel between two players, a challenge (kills, headshots, knife or grenade kills, in 2 minutes), a boss (a bot
-  with 500 health and a red glow), 30 seconds of low gravity, money for everyone. Each prize is $3000, and nobody
-  has to take part. It can only pick from this list: the plugin checks each event and runs it itself.
+  with 500 health and a red glow), 30 seconds of low gravity, money for everyone, 100 War3FT XP for every human
+  (`changexp`), a War3FT shop item for everyone (`wc3_giveitem`). Each prize is $3000 and 200 XP, and nobody has to
+  take part. It can only pick from this list: the plugin checks each event and runs it itself.
 
 What the AI may say: a strict system prompt, then a moderator (a second request) checks every line before it is
 shown: no slurs, hate, sexual content, threats, illegal activity, politics or personal information, in any

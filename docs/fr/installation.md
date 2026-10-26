@@ -209,7 +209,8 @@ des actions :
 - **Le maître du jeu** : toutes les 10 minutes, il lit le score et peut lancer un événement : une prime sur un
   joueur très en avance, un duel entre deux joueurs, un défi (kills, headshots, kills au couteau ou à la grenade,
   en 2 minutes), un boss (un bot à 500 points de vie, entouré d'un halo rouge), 30 secondes de gravité basse, de
-  l'argent pour tous. Chaque prix vaut 3000 $, et personne n'est obligé de participer. Il ne choisit que dans
+  l'argent pour tous, 100 XP de War3FT pour chaque humain (`changexp`), un objet des boutiques de War3FT pour tous
+  (`wc3_giveitem`). Chaque prix vaut 3000 $ et 200 XP, et personne n'est obligé de participer. Il ne choisit que dans
   cette liste : le plugin vérifie chaque événement et le lance lui-même.
 
 Ce que l'IA peut dire : un prompt système strict, puis un modérateur (une seconde requête) vérifie chaque ligne

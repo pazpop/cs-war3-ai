@@ -19,6 +19,8 @@
 #define EVENT_TIME 180.0      // seconds a bounty, a duel or a boss lasts
 #define CHALLENGE_TIME 120.0  // seconds to meet a challenge
 #define REWARD 3000           // the prize of a bounty, a duel, a challenge or a boss, in dollars
+#define XP_REWARD 200         // and the same prize in War3FT XP (saved, unlike money): about 13 kills
+#define XP_RAIN 100           // xp_rain: War3FT XP for every human
 #define BOSS_HEALTH 500
 #define GOLD 1500             // gold_rain: for everyone
 #define LOW_GRAVITY 300       // sv_gravity during low_gravity (the game's own is 800)
@@ -27,6 +29,10 @@
 #define TASK_EVENT 2          // the task that ends a bounty, a duel, a challenge or a boss
 #define TASK_RED 3            // the task that keeps the boss red
 #define TASK_JOIN 100         // + the player's slot: the task that greets them
+
+// item_gift: War3FT's shop items that help at once (its numbers, items.h); not the ankh, the tome, the scroll, the
+// mole and its protectant, nor the chameleon.
+new const GIFTS[] = { 1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14, 15 }
 
 new g_socket[MAX_PENDING]
 new bool:g_sent[MAX_PENDING]
@@ -341,6 +347,15 @@ game_master(JSON:gm)
 		for (new i = 0; i < count; i++)
 			give_money(players[i], GOLD)
 	}
+	else if (equal(event, "xp_rain"))
+	{
+		new players[32], count
+		get_players(players, count, "ch")
+		for (new i = 0; i < count; i++)
+			give_xp(players[i], XP_RAIN)
+	}
+	else if (equal(event, "item_gift"))
+		server_cmd("wc3_giveitem @ALL %d", GIFTS[random(sizeof GIFTS)])
 	else if (!equal(event, "none"))
 		return
 	if (text[0])
@@ -456,11 +471,12 @@ win(winner, victim, const what[])
 	if (victim)
 	{
 		get_user_name(victim, prey, charsmax(prey))
-		formatex(text, charsmax(text), "%s %s %s: $%d!", name, what, prey, REWARD)
+		formatex(text, charsmax(text), "%s %s %s: $%d and %d XP!", name, what, prey, REWARD, XP_REWARD)
 	}
 	else
-		formatex(text, charsmax(text), "%s %s: $%d!", name, what, REWARD)
+		formatex(text, charsmax(text), "%s %s: $%d and %d XP!", name, what, REWARD, XP_REWARD)
 	give_money(winner, REWARD)
+	give_xp(winner, XP_REWARD)
 	end_event()
 	announce(text)
 }
@@ -468,6 +484,14 @@ win(winner, victim, const what[])
 give_money(id, amount)
 {
 	cs_set_user_money(id, min(cs_get_user_money(id) + amount, 16000))
+}
+
+// War3FT XP for the player's race, through War3FT's own server command (changexp <slot> <xp>). Humans only: a bot's
+// XP serves nothing.
+give_xp(id, xp)
+{
+	if (!is_user_bot(id))
+		server_cmd("changexp %d %d", id, xp)
 }
 
 announce(const text[])
