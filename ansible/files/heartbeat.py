@@ -62,7 +62,7 @@ def main():
         return
 
     problems = problems_now(settings["DOMAIN"])
-    # A restart (the nightly backup, an update, a reboot) stops the game for a few seconds: look again before alerting.
+    # A restart (an update, a reboot) stops the game for a few seconds: look again before alerting.
     if problems:
         time.sleep(30)
         problems = problems_now(settings["DOMAIN"])

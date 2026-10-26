@@ -60,7 +60,7 @@ RUN set -eu; cd /tmp; \
 # wc3_xp_multiplier 0.5: half the XP for each level, so new players reach their ultimate (level 6) twice as fast.
 # wc3_start_level 3: a race never played starts at level 3 (3 skills at once); the ultimate is still to earn.
 # wc3_psychostats 0: no log line at each skill used, for PsychoStats, which we do not use.
-# yb_difficulty_min 1, max 3: each bot gets a random level from Average to Professional, a mix like real players.
+# yb_difficulty_min 0, max 2: each bot gets a random level from Newbie to Normal, a mix like real players.
 # YaPB's automatic mode is off: it balances each bot against the others, and pushes them up to Expert.
 # War3FT and ReDeathmatch run without AMX Mod X's debug mode (slower). No AMX Mod X ads (scrollmsg, imessage): our own messages are in messages.txt.
 # ReDeathmatch's rules (gamemode_deathmatch.json) are made for free-for-all: here, teams (War3 has team skills, at
@@ -70,7 +70,8 @@ RUN set -eu; cd /tmp; \
 # players use (AK-47 or M4A1; Deagle, USP or Glock), not ReDeathmatch's (Famas, Galil, P228, Elite). Their names
 # start with "[AI] ": the AI shows in the scoreboard. No avatars: YaPB borrows them from real Steam accounts.
 # Spawn protection (ReGameDLL's game.cfg): 3 seconds without damage after a respawn, lost at the first shot (not when
-# moving: "2"). ReDeathmatch tints the protected players in their team's color. game.cfg's lines end with \r.
+# moving: "2"). ReDeathmatch tints the protected players in their team's color. A map lasts 30 minutes: game.cfg is
+# read after server.cfg at each map, so its mp_timelimit (20) is the one that counts. game.cfg's lines end with \r.
 # CS's ranking (/rank, /top15) counts the fights with bots, most of the fights here. All bots share one row in it
 # (SteamID "BOT"), which the stats page leaves out.
 RUN set -eu; cd /opt/mods/cstrike; \
@@ -79,6 +80,7 @@ RUN set -eu; cd /opt/mods/cstrike; \
     sed -i 's/^;sqlite/sqlite/' addons/amxmodx/configs/modules.ini; \
     sed -i 's/^csstats_rankbots 0$/csstats_rankbots 1/' addons/amxmodx/configs/amxx.cfg; \
     sed -i -e 's/^mp_respawn_immunitytime "0"\r$/mp_respawn_immunitytime "3"/' \
+      -e 's/^mp_timelimit "20"\r$/mp_timelimit "30"/' \
       -e 's/^mp_respawn_immunity_force_unset "1"\r$/mp_respawn_immunity_force_unset "2"/' game.cfg; \
     sed -i -e 's/^war3ft.amxx debug$/war3ft.amxx/' -e 's/^scrollmsg.amxx/;scrollmsg.amxx/' \
       -e 's/^imessage.amxx/;imessage.amxx/' addons/amxmodx/configs/plugins.ini; \
@@ -96,8 +98,8 @@ RUN set -eu; cd /opt/mods/cstrike; \
     sed -i 's/^wc3_psychostats\t*1\t/wc3_psychostats\t\t0\t/' addons/amxmodx/configs/war3ft/war3FT.cfg; \
     sed -i -e 's/^yb_quota "9"/yb_quota "10"/' -e 's/^yb_quota_mode "normal"/yb_quota_mode "fill"/' \
       -e 's/^yb_chat "1"/yb_chat "0"/' -e 's/^yb_radio_mode "2"/yb_radio_mode "0"/' \
-      -e 's/^yb_csdm_mode "0"/yb_csdm_mode "1"/' -e 's/^yb_difficulty_min "-1"/yb_difficulty_min "1"/' \
-      -e 's/^yb_difficulty_max "-1"/yb_difficulty_max "3"/' \
+      -e 's/^yb_csdm_mode "0"/yb_csdm_mode "1"/' -e 's/^yb_difficulty_min "-1"/yb_difficulty_min "0"/' \
+      -e 's/^yb_difficulty_max "-1"/yb_difficulty_max "2"/' \
       -e 's/^yb_camping_allowed "1"/yb_camping_allowed "0"/' -e 's/^yb_name_prefix ""/yb_name_prefix "[AI] "/' \
       -e 's/^yb_show_avatars "1"/yb_show_avatars "0"/' \
       addons/yapb/conf/yapb.cfg; \
@@ -106,6 +108,7 @@ RUN set -eu; cd /opt/mods/cstrike; \
     grep -qx 'csstats_rankbots 1' addons/amxmodx/configs/amxx.cfg; \
     grep -qx 'mp_respawn_immunitytime "3"' game.cfg; \
     grep -qx 'mp_respawn_immunity_force_unset "2"' game.cfg; \
+    grep -qx 'mp_timelimit "30"' game.cfg; \
     grep -qx 'war3ft.amxx' addons/amxmodx/configs/plugins.ini; \
     ! grep -qE '^(scrollmsg|imessage).amxx' addons/amxmodx/configs/plugins.ini || exit 1; \
     grep -q '^ReDeathmatch.amxx$' addons/amxmodx/configs/plugins-redm.ini; \
@@ -122,7 +125,7 @@ RUN set -eu; cd /opt/mods/cstrike; \
     grep -qP '^wc3_start_level\t+3\t' addons/amxmodx/configs/war3ft/war3FT.cfg; \
     grep -qP '^wc3_psychostats\t+0\t' addons/amxmodx/configs/war3ft/war3FT.cfg; \
     for line in 'yb_quota "10"' 'yb_quota_mode "fill"' 'yb_chat "0"' 'yb_radio_mode "0"' \
-                'yb_csdm_mode "1"' 'yb_difficulty_min "1"' 'yb_difficulty_max "3"' 'yb_camping_allowed "0"' \
+                'yb_csdm_mode "1"' 'yb_difficulty_min "0"' 'yb_difficulty_max "2"' 'yb_camping_allowed "0"' \
                 'yb_name_prefix "[AI] "' 'yb_show_avatars "0"'; do \
       grep -qxF "$line" addons/yapb/conf/yapb.cfg; \
     done

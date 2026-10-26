@@ -27,6 +27,8 @@ PORT = 27100
 BOT_LINE_GAP = 4      # seconds between two bot lines, at least: the chat stays readable
 KILL_LINE_GAP = 15    # seconds between two lines about a kill
 PLAYER_GAP = 10       # seconds between two answers to the same player: one player cannot keep the bots for himself
+QUESTION_GAP = 30     # seconds between two answers with the guide to the same player (longer requests, dearer)
+FORGET_DAYS = 180     # a player not seen for this long: the bots forget them (history, grudges)
 BUTT_IN = 0.10        # chance that a bot answers a message that names no bot
 TAUNT = 0.25          # chance that a bot talks after a kill between a bot and a human
 GREET_AGAIN = 900     # seconds without news of a human before a bot greets them again: not at every map change
@@ -140,6 +142,10 @@ CREATE TABLE IF NOT EXISTS rivals (bot TEXT, steamid TEXT, human_wins INTEGER DE
     PRIMARY KEY (bot, steamid));
 CREATE TABLE IF NOT EXISTS quotes (time INTEGER, bot TEXT, line TEXT);
 """)
+# Players not seen for FORGET_DAYS: their history and grudges go (SteamIDs are not kept for ever).
+db.execute("DELETE FROM players WHERE last_seen < date('now', ?)", (f"-{FORGET_DAYS} days",))
+db.execute("DELETE FROM rivals WHERE steamid NOT IN (SELECT steamid FROM players)")
+db.commit()
 recent_chat = deque(maxlen=8)
 last_line = {}  # "bot", "kill" or a player -> when the last line of that kind was said (time.monotonic)
 last_events = deque(maxlen=3)
@@ -152,9 +158,9 @@ def today():
 
 
 def clean(text, limit):
-    """One line the game can show: no control characters (the chat colors are bytes 1 to 4), no quotes around it, at
-    most limit bytes (the plugin's buffers count bytes, and an accent takes two), cut at a word."""
-    text = "".join(c if c.isprintable() else " " for c in text)
+    """One line the game can show: no control characters (the chat colors are bytes 1 to 4), no Markdown stars, no
+    quotes around it, at most limit bytes (the plugin's buffers count bytes, and an accent takes two), cut at a word."""
+    text = "".join(c if c.isprintable() else " " for c in text).replace("*", "")
     text = " ".join(text.split()).strip('" ')
     if len(text.encode()) > limit:
         # One byte more: a word that ends right at the limit stays. A single word longer than the limit is cut.
@@ -319,9 +325,13 @@ def safe(text):
     """True when the moderator allows the line; False when it refuses, or on any error: the line is not shown."""
     answer = claude(MODERATOR, f"Line: {text}", schema=MODERATION_SCHEMA, max_tokens=50)
     try:
-        return json.loads(answer)["allowed"] is True
+        allowed = json.loads(answer)["allowed"] is True
     except (TypeError, ValueError, KeyError):
-        return False
+        allowed = False
+    if not allowed:
+        # In the relay's log (docker compose logs ai), to see what was held back.
+        print("Not shown:", text, flush=True)
+    return allowed
 
 
 def bot_line(bot, situation, steamid, name, guide=False):
@@ -336,6 +346,8 @@ def bot_line(bot, situation, steamid, name, guide=False):
         chat = "\n".join(recent_chat) or "(empty)"
     prompt = f"Recent chat:\n{chat}\n\nWhat you know: {memory(steamid, name, me)}\n\n{situation}\nYour line:"
     text = clean(claude(system, prompt, max_tokens=200) or "", limit)
+    # The game already shows the bot's name before its line.
+    text = re.sub(rf"^{re.escape(me)}\s*:\s*", "", text, flags=re.IGNORECASE)
     if not text or not safe(text):
         return {}
     # The bots' own lines too: the next answer follows the conversation. And the latest ones, for the stats page.
@@ -358,30 +370,39 @@ def seen(human):
     return None if before is None else now - before
 
 
-def gap_passed(kind, gap):
-    """True, and the clock starts again, when the last line of this kind is at least gap seconds old."""
+def gaps_passed(*gaps, mark=True):
+    """True when, for each (kind, seconds), the last line of that kind is at least that old. Then, unless mark is
+    False, their clocks all start again; when one is too soon, none is touched."""
     now = time.monotonic()
     with lock:
-        if now - last_line.get(kind, -gap) < gap:
+        if any(now - last_line.get(kind, -gap) < gap for kind, gap in gaps):
             return False
-        last_line[kind] = now
+        if mark:
+            for kind, _ in gaps:
+                last_line[kind] = now
         return True
+
+
+def player_key(event):
+    """A human, for the limits: their SteamID, or their id in the game (a name can change at any time)."""
+    return event.get("steamid") or f"id:{event.get('id')}"
 
 
 def on_chat(event):
     name, text, bots = event["name"], clean(event["text"], 190), event.get("bots", [])
     remember(event.get("steamid"))
     seen(event)
-    player = event.get("steamid") or name
+    player = player_key(event)
     with lock:
         recent_chat.append(f"{name}: {text}")
         last_said[player] = text
-    # A question always gets an answer, from the bot named or any bot, with the guide at hand.
-    question = "?" in text
+    # A question gets an answer, from the bot named or any bot, with the guide at hand: one every QUESTION_GAP.
+    question = "?" in text and gaps_passed(("guide:" + player, QUESTION_GAP), mark=False)
     bot = named_bot(text, bots)
     if not bot and bots and (question or random.random() < BUTT_IN):
         bot = random.choice(bots)
-    if not bot or not gap_passed(player, PLAYER_GAP) or not gap_passed("bot", BOT_LINE_GAP):
+    gaps = [(player, PLAYER_GAP), ("bot", BOT_LINE_GAP)] + ([("guide:" + player, QUESTION_GAP)] if question else [])
+    if not bot or not gaps_passed(*gaps):
         return {}
     return bot_line(bot, f'{name} just wrote in the chat: "{text}"', event.get("steamid"), name, guide=question)
 
@@ -392,7 +413,7 @@ def on_kill(event):
     remember(human.get("steamid"), "bot_deaths" if killer["bot"] else "bot_kills")
     rival(bot["name"], human.get("steamid"), "bot_wins" if killer["bot"] else "human_wins")
     seen(human)
-    if random.random() >= TAUNT or not gap_passed("kill", KILL_LINE_GAP) or not gap_passed("bot", BOT_LINE_GAP):
+    if random.random() >= TAUNT or not gaps_passed(("kill", KILL_LINE_GAP), ("bot", BOT_LINE_GAP)):
         return {}
     how = f"with {event.get('weapon', 'a weapon')}" + (", a headshot" if event.get("headshot") else "")
     if killer["bot"]:
@@ -441,9 +462,9 @@ def coach_numbers(event):
 def on_coach(event):
     """A tip for this player, from their numbers, in private: asked (/coach), after a run of deaths (auto), or the
     map's summary near its end (summary: one strength, one thing to work on)."""
-    player = event.get("steamid") or event["name"]
+    player = player_key(event)
     asked = not event.get("auto") and not event.get("summary")
-    if asked and not gap_passed("coach:" + player, COACH_GAP):
+    if asked and not gaps_passed(("coach:" + player, COACH_GAP)):
         return {"coach": {"id": event["id"], "text": "One tip a minute: play a little, then ask again."}}
     with lock:
         said = last_said.get(player, "")
@@ -463,8 +484,9 @@ def on_state(event):
             seen(p)
     if not any(not p["bot"] for p in players):
         return {}
-    table = "\n".join(f"id {p['id']} | {p['name']} | {'bot' if p['bot'] else 'human'} | team {p['team']} | "
-                      f"{p['kills']} kills, {p['deaths']} deaths" for p in players)
+    # Names in quotes (json.dumps): a name is data, even one that reads like an order.
+    table = "\n".join(f"id {p['id']} | {json.dumps(p['name'])} | {'bot' if p['bot'] else 'human'} | "
+                      f"team {p['team']} | {p['kills']} kills, {p['deaths']} deaths" for p in players)
     with lock:
         last = ", ".join(last_events) or "none yet"
     text = claude(GM_SYSTEM, f"Players:\n{table}\n\nLast events: {last}", schema=GM_SCHEMA)
@@ -505,7 +527,7 @@ async def serve(reader, writer):
 
 async def main():
     # As many requests at once as the plugin can wait for (MAX_PENDING in ai.sma): the map's summaries all come
-    # together, and Python's default (CPUs + 4) would make the last ones miss the plugin's 10 seconds.
+    # together, and Python's default (CPUs + 4) would make the last ones miss the plugin's TIMEOUT.
     asyncio.get_running_loop().set_default_executor(ThreadPoolExecutor(max_workers=16))
     server = await asyncio.start_server(serve, "0.0.0.0", PORT, limit=16384)
     print(f"AI relay on port {PORT}, model {MODEL}, {DAILY_USD} $ a day" + ("" if API_KEY else ", no API key: silent"),

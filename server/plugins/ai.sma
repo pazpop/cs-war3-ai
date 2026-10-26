@@ -14,7 +14,7 @@
 // lookup can block the server.
 #define RELAY_IP "10.27.15.10"
 #define RELAY_PORT 27100
-#define TIMEOUT 10.0          // seconds to wait for an answer
+#define TIMEOUT 20.0          // seconds to wait for an answer: two requests to Claude (the line, then its check)
 #define MAX_PENDING 16        // requests waiting at once: the map's summary goes to every human together
 #define STATE_EVERY 600.0     // seconds between two looks of the Game Master
 #define EVENT_TIME 180.0      // seconds a bounty, a duel or a boss lasts
@@ -58,7 +58,7 @@ public plugin_init()
 {
 	register_plugin("AI", "1.0", "cs-war3-ai")
 	register_clcmd("say", "on_say")
-	register_clcmd("say_team", "on_say")
+	// Not say_team: a bot's answer shows to everyone, and a team's chat must stay within the team.
 	register_event("DeathMsg", "on_death", "a")
 	// A new round: in Respawn mode, only a restart (fresh_start.sma, sv_restart) or a new map.
 	register_event("HLTV", "on_new_round", "a", "1=0", "2=0")
@@ -456,6 +456,10 @@ public time_up()
 		announce("The boss survived. Too strong for you all!")
 	else if (g_goal)
 		announce("Time is up: nobody met the challenge.")
+	else if (g_bounty)
+		announce("Time is up: nobody claimed the bounty.")
+	else if (g_duel[0])
+		announce("Time is up: the duel ends with no winner.")
 	end_event()
 }
 

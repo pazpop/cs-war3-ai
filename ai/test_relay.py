@@ -104,8 +104,14 @@ class Relay(unittest.TestCase):
         self.assertFalse(relay.safe("hello"))  # no moderator answer: the line is never shown
 
     def test_gap(self):
-        self.assertTrue(relay.gap_passed("test", 60))
-        self.assertFalse(relay.gap_passed("test", 60))
+        self.assertTrue(relay.gaps_passed(("test", 60)))
+        self.assertFalse(relay.gaps_passed(("test", 60)))
+        # One gap too soon: the others are not used up.
+        self.assertFalse(relay.gaps_passed(("other", 60), ("test", 60)))
+        self.assertTrue(relay.gaps_passed(("other", 60)))
+
+    def test_clean_bot_line(self):
+        self.assertEqual(relay.clean("buy with **G** now", 100), "buy with G now")
 
 
 if __name__ == "__main__":

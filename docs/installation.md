@@ -124,9 +124,9 @@ AMX Mod X's `antiflood` blocks chat floods (one message every 0.75 s at most: `a
 XP is in SQLite, in the volume: `cstrike/addons/amxmodx/data/sqlite3/war3ft.sq3`. Not MySQL: in MySQL mode,
 War3FT escapes player names badly (SQL injection possible); in SQLite mode it escapes them correctly.
 
-Every night at 4:32 (between the 4:00 updates and the 5:00 reboot), the VPS backs up the XP, the rankings and the
-achievements into `/srv/backups/cs-war3-ai`, and keeps 15 days (about 1.5 MB per archive). The game stops for about 30 seconds.
-The script:
+Every night at 4:32 (between the 4:00 updates and the 5:00 reboot), the VPS backs up the XP, the rankings, the
+achievements and the AI's memory into `/srv/backups/cs-war3-ai`, and keeps 15 days (a few MB per archive at most).
+The game keeps running: SQLite's own backup copies the databases while they are in use. The script:
 [ansible/files/backup.sh](../ansible/files/backup.sh), run by the `cs-war3-ai-backup.timer` systemd timer.
 
 To make one now and download it to your PC (into `backup_dir`, `ansible/personal.yml`):
@@ -135,13 +135,14 @@ To make one now and download it to your PC (into `backup_dir`, `ansible/personal
 ansible-playbook -i ansible/inventory.yml ansible/backup.yml
 ```
 
-To restore an archive, on the VPS (the game stops meanwhile):
+To restore an archive, on the VPS (the game and the AI stop meanwhile): the game's data, then the AI's memory.
 
 ```bash
 cd /srv/cs-war3-ai
-sudo docker compose stop hlds
-sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_hlds:/data -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz -C /data/cstrike/addons/amxmodx
-sudo docker compose start hlds
+sudo docker compose stop hlds ai
+sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_hlds:/data -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz -C /data/cstrike/addons/amxmodx data
+sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_ai:/ai -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz -C / ai
+sudo docker compose start hlds ai
 ```
 
 ## Web
@@ -179,7 +180,7 @@ sudo docker compose start hlds
 
 Every 5 minutes, [ansible/files/collect.py](../ansible/files/collect.py) adds one line per server to
 `/srv/collect/players.csv`: time (UTC), server, online, humans, bots, slots, map. Only numbers, nothing about the
-players (about 60 KB a day). The servers: `collect_domains` in [ansible/inventory.yml](../ansible/inventory.yml).
+players (about 15 KB a day per server). The servers: `collect_domains` in [ansible/inventory.yml](../ansible/inventory.yml).
 To download it:
 
 ```bash
@@ -220,9 +221,10 @@ Setup: an API key from [console.anthropic.com](https://console.anthropic.com) in
 unchanged. It spends at most `AI_DAILY_USD` a day (1 $ by default, in `compose.yml`; `0` turns the AI off), then
 stays silent until midnight UTC; set a monthly limit in the Anthropic console too.
 
-What leaves the VPS: the chat messages, the names, the score, each player's numbers for the coach. Never the
-SteamIDs or the IPs. The guide tells the
-players.
+What leaves the VPS: the public chat messages (never the team chat), the names, the score, each human's history
+against the bots (since when they play, kills and deaths against them), each player's numbers for the coach. Never
+the SteamIDs or the IPs. The bots' memory (by SteamID, in the relay's volume) forgets a player not seen for 180 days.
+The guide tells the players.
 
 Its logs, on the VPS: `cd /srv/cs-war3-ai && sudo docker compose logs ai`.
 

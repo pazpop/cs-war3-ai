@@ -137,9 +137,8 @@
         mode: "0600"
       no_log: true
 
-    # The backup: every night at 4:32, between the 4:00 updates and the 5:00 reboot (if an update needs it); not at
-    # 4:30, when the heartbeat checks the game it stops. Persistent: if the VPS was off, it runs at the next boot.
-    # The heartbeat and the player counts of every server: every 5 minutes.
+    # The backup: every night at 4:32, between the 4:00 updates and the 5:00 reboot (if an update needs it).
+    # Persistent: if the VPS was off, it runs at the next boot. The heartbeat and the player counts: every 5 minutes.
     - name: Install the timers
       ansible.builtin.copy:
         dest: "/etc/systemd/system/{{ item.name }}"
