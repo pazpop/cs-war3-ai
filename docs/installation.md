@@ -153,7 +153,8 @@ sudo docker compose start hlds
 - `https://<domain>/status.php`: the server's state right now in JSON (humans, bots, map, slots), for other sites:
   [pazpop.net](https://pazpop.net) shows it. Asked to the game at most every 15 seconds.
 - `https://<domain>/bots.php`: the bots, their character and portrait (from [server/bots.txt](../server/bots.txt)).
-  The images (`stats/img/`) were made with [PixelLab](https://pixellab.ai): see its `CREDITS.txt`.
+  The images (`stats/img/`) were made with [PixelLab](https://pixellab.ai): see its `CREDITS.txt`. Also the bots'
+  latest lines, from the AI relay's database (its volume, read-only).
 - `http://<domain>/guide.html`: the guide, shown on connect. The in-game browser (MOTD) is too old for today's
   HTTPS: in game, only `http://` pages open.
 - `http://<domain>/cstrike/…`: FastDL. The game's own download (UDP) crashes the client on War3FT's files.
@@ -193,8 +194,12 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
 - **The bots talk**: a bot answers when a player names it in the chat (sometimes even when no one does), and
   after a kill between a bot and a human, now and then; one of them greets each human who arrives. Never bot to
   bot. Each bot of [server/bots.txt](../server/bots.txt) has its own character, the same for YaPB, the
-  relay and the stats page, and shows as `[AI] Zed` in the scoreboard. The bots remember each human (by SteamID, in the relay's
-  volume): since when they play, how they fare against bots.
+  relay and the stats page, and shows as `[AI] Zed` in the scoreboard. The bots remember each human (by SteamID, in
+  the relay's volume): since when they play, how they fare against bots, and each bot's score against them. A bot
+  killed 5 times by a player, more than it killed them, holds a grudge: it teases them, and greets them first.
+- **Questions**: a message with a `?` always gets an answer from a bot, which has the mod's guide
+  ([docs/war3ft.md](war3ft.md)) at hand; a newcomer gets a tip from it with the hello. These requests are longer
+  (the guide is about 2,500 tokens), so a little dearer.
 - **The Game Master**: every 10 minutes, it reads the score and may start an event: a bounty on a player far ahead,
   a duel between two players, a challenge (kills, headshots, knife or grenade kills, in 2 minutes), a boss (a bot
   with 500 health and a red glow), 30 seconds of low gravity, money for everyone, 100 War3FT XP for every human

@@ -292,7 +292,7 @@ do_actions(const answer[])
 		for (new i = 0; i < json_array_get_count(lines); i++)
 		{
 			new JSON:line = json_array_get_value(lines, i)
-			new text[128]
+			new text[160]  // the relay sends at most 150 bytes (an answer to a question)
 			if (json_object_has_value(line, "text", JSONString))
 			{
 				json_object_get_string(line, "text", text, charsmax(text))

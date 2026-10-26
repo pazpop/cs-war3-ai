@@ -29,6 +29,8 @@ PLAYER_GAP = 10       # seconds between two answers to the same player: one play
 BUTT_IN = 0.10        # chance that a bot answers a message that names no bot
 TAUNT = 0.25          # chance that a bot talks after a kill between a bot and a human
 GREET_AGAIN = 900     # seconds without news of a human before a bot greets them again: not at every map change
+GRUDGE = 5            # a bot killed this many times by a player, and more than it killed them, holds a grudge
+QUOTES_KEPT = 200     # the bots' latest lines kept for the stats page (stats/bots.php)
 EVENTS = ["none", "bounty", "duel", "low_gravity", "gold_rain", "challenge", "boss", "xp_rain", "item_gift"]
 # The challenges, and how many of each a human must reach in 2 minutes (the Game Master picks within these bounds).
 CHALLENGES = {"kills": (3, 6), "headshots": (2, 4), "knife": (1, 2), "grenade": (1, 2)}
@@ -47,10 +49,14 @@ def load_personas(path):
 
 # The same bot is the same person, map after map.
 PERSONAS = load_personas(os.environ.get("AI_BOTS", "/app/bots.txt"))
+# The mod's guide (docs/war3ft.md), for a bot that answers a question or welcomes a newcomer.
+with open(os.environ.get("AI_GUIDE", "/app/war3ft.md"), encoding="utf-8") as guide_file:
+    GUIDE = guide_file.read()
 PREFIX = re.compile(r"^\[AI\]\s*")  # yb_name_prefix (server/Dockerfile)
 
 RULES = (
-    "Write ONE chat line of at most 100 characters, in the language of the player's last message (English if unsure). "
+    "Write ONE chat line of at most {limit} characters, in the language of the player's last message (English if "
+    "unsure). "
     "Plain text only: no emojis (the game cannot show them), no quotes around the line, no name prefix. "
     "Banter and trash talk about the game are welcome. Never write slurs, sexual content, threats, politics, "
     "or anything about real-life traits, and never ask for personal information. You are a bot and you know it. "
@@ -119,6 +125,9 @@ db.executescript("""
 CREATE TABLE IF NOT EXISTS players (steamid TEXT PRIMARY KEY, first_seen TEXT, last_seen TEXT,
     bot_kills INTEGER DEFAULT 0, bot_deaths INTEGER DEFAULT 0);
 CREATE TABLE IF NOT EXISTS spend (day TEXT PRIMARY KEY, usd REAL);
+CREATE TABLE IF NOT EXISTS rivals (bot TEXT, steamid TEXT, human_wins INTEGER DEFAULT 0, bot_wins INTEGER DEFAULT 0,
+    PRIMARY KEY (bot, steamid));
+CREATE TABLE IF NOT EXISTS quotes (time INTEGER, bot TEXT, line TEXT);
 """)
 recent_chat = deque(maxlen=8)
 last_line = {}  # "bot", "kill" or a player -> when the last line of that kind was said (time.monotonic)
@@ -199,17 +208,60 @@ def remember(steamid, column=None):
         db.commit()
 
 
-def memory(steamid, name):
+def rival(bot_name, steamid, column):
+    """One more win between this bot and this human: human_wins (the human killed the bot) or bot_wins."""
+    if not steamid or column not in ("human_wins", "bot_wins"):
+        return
+    with lock:
+        db.execute("INSERT INTO rivals (bot, steamid) VALUES (?, ?) ON CONFLICT (bot, steamid) DO NOTHING",
+                   (short(bot_name), steamid))
+        db.execute(f"UPDATE rivals SET {column} = {column} + 1 WHERE bot = ? AND steamid = ?",
+                   (short(bot_name), steamid))
+        db.commit()
+
+
+def score(bot_name, steamid):
+    """(times the human killed this bot, times the bot killed the human)."""
+    with lock:
+        row = db.execute("SELECT human_wins, bot_wins FROM rivals WHERE bot = ? AND steamid = ?",
+                         (short(bot_name), steamid)).fetchone()
+    return row or (0, 0)
+
+
+def is_new(steamid):
+    """Never seen on the server before (or no real SteamID, so no memory)."""
+    with lock:
+        return not steamid or not db.execute("SELECT 1 FROM players WHERE steamid = ?", (steamid,)).fetchone()
+
+
+def memory(steamid, name, bot_name):
+    """What this bot knows of this human: their history here, and the score between the two of them."""
     row = None
     if steamid:
         with lock:
             row = db.execute("SELECT first_seen, last_seen, bot_kills, bot_deaths FROM players WHERE steamid = ?",
                              (steamid,)).fetchone()
     if not row:
-        return f"{name}: nothing known yet, maybe a newcomer."
+        return f"{name}: nothing known yet, a newcomer."
     first, last, kills, deaths = row
-    return (f"{name}: plays here since {first}, last seen {last}, has killed {kills} bots, "
+    text = (f"{name}: plays here since {first}, last seen {last}, has killed {kills} bots, "
             f"was killed by bots {deaths} times.")
+    human_wins, bot_wins = score(bot_name, steamid)
+    if human_wins or bot_wins:
+        text += f" Between you two: {name} killed you {human_wins} times, you killed them {bot_wins} times."
+    if human_wins >= GRUDGE and human_wins > bot_wins:
+        text += " You hold a grudge against them: tease them about it, as a rival, never meanly."
+    return text
+
+
+def grudge_bot(bots, steamid):
+    """The bot with the biggest grudge against this human, or None."""
+    best, best_wins = None, GRUDGE - 1
+    for bot in bots:
+        human_wins, bot_wins = score(bot["name"], steamid) if steamid else (0, 0)
+        if human_wins > best_wins and human_wins > bot_wins:
+            best, best_wins = bot, human_wins
+    return best
 
 
 def claude(system, prompt, schema=None, max_tokens=300):
@@ -260,19 +312,27 @@ def safe(text):
         return False
 
 
-def bot_line(bot, situation, steamid, name):
+def bot_line(bot, situation, steamid, name, guide=False):
+    """A line from this bot to this human; with the guide, to answer a question or welcome a newcomer."""
     me = short(bot["name"])
+    limit = 150 if guide else 100
     system = f"You are {me}, a bot player in a Counter-Strike 1.6 War3FT game. Your character: " \
-             f"{persona(me)}. {RULES}"
+             f"{persona(me)}. {RULES.format(limit=limit)}"
+    if guide:
+        system += f"\n\nThe server's guide, for questions about the game (answer from it, never invent):\n{GUIDE}"
     with lock:
         chat = "\n".join(recent_chat) or "(empty)"
-    prompt = f"Recent chat:\n{chat}\n\nWhat you know: {memory(steamid, name)}\n\n{situation}\nYour line:"
-    text = clean(claude(system, prompt, max_tokens=120) or "", 100)
+    prompt = f"Recent chat:\n{chat}\n\nWhat you know: {memory(steamid, name, me)}\n\n{situation}\nYour line:"
+    text = clean(claude(system, prompt, max_tokens=200) or "", limit)
     if not text or not safe(text):
         return {}
-    # The bots' own lines too: the next answer follows the conversation.
+    # The bots' own lines too: the next answer follows the conversation. And the latest ones, for the stats page.
     with lock:
         recent_chat.append(f"{me}: {text}")
+        db.execute("INSERT INTO quotes VALUES (?, ?, ?)", (int(time.time()), me, text))
+        db.execute("DELETE FROM quotes WHERE rowid NOT IN (SELECT rowid FROM quotes ORDER BY time DESC LIMIT ?)",
+                   (QUOTES_KEPT,))
+        db.commit()
     return {"say": [{"id": bot["id"], "text": text}]}
 
 
@@ -302,19 +362,22 @@ def on_chat(event):
     seen(event)
     with lock:
         recent_chat.append(f"{name}: {text}")
+    # A question always gets an answer, from the bot named or any bot, with the guide at hand.
+    question = "?" in text
     bot = named_bot(text, bots)
-    if not bot and bots and random.random() < BUTT_IN:
+    if not bot and bots and (question or random.random() < BUTT_IN):
         bot = random.choice(bots)
     player = event.get("steamid") or name
     if not bot or not gap_passed(player, PLAYER_GAP) or not gap_passed("bot", BOT_LINE_GAP):
         return {}
-    return bot_line(bot, f'{name} just wrote in the chat: "{text}"', event.get("steamid"), name)
+    return bot_line(bot, f'{name} just wrote in the chat: "{text}"', event.get("steamid"), name, guide=question)
 
 
 def on_kill(event):
     killer, victim = event["killer"], event["victim"]
     human, bot = (victim, killer) if killer["bot"] else (killer, victim)
     remember(human.get("steamid"), "bot_deaths" if killer["bot"] else "bot_kills")
+    rival(bot["name"], human.get("steamid"), "bot_wins" if killer["bot"] else "human_wins")
     seen(human)
     if random.random() >= TAUNT or not gap_passed("kill", KILL_LINE_GAP) or not gap_passed("bot", BOT_LINE_GAP):
         return {}
@@ -327,14 +390,19 @@ def on_kill(event):
 
 
 def on_join(event):
-    """A human arrives: one bot, at random, says hello, with what the bots remember of them. Always."""
-    bots = event.get("bots", [])
+    """A human arrives: a bot says hello, the one with a grudge against them if any; a newcomer also gets a tip."""
+    bots, steamid, name = event.get("bots", []), event.get("steamid"), event["name"]
     answer = {}
     since = seen(event)
     # A map change puts every player in the game again: only a real arrival gets a hello.
     if bots and (since is None or since > GREET_AGAIN):
-        answer = bot_line(random.choice(bots), f"{event['name']} just joined the server. Greet them, in English.",
-                          event.get("steamid"), event["name"])
+        bot = grudge_bot(bots, steamid) or random.choice(bots)
+        if is_new(steamid):
+            situation = (f"{name} joins the server for the first time. Welcome them, in English, with one short tip "
+                         "from the guide for a beginner.")
+            answer = bot_line(bot, situation, steamid, name, guide=True)
+        else:
+            answer = bot_line(bot, f"{name} just joined the server. Greet them, in English.", steamid, name)
     # After the greeting: before, "last seen" would already be today.
     remember(event.get("steamid"))
     return answer

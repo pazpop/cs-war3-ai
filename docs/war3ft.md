@@ -83,8 +83,8 @@ What each one does: `/itemsinfo` and `/itemsinfo2` in game.
   never played starts at level 3.
 - **Bots** (YaPB) fill the server up to 10 players. A bot leaves when a human joins. Their level is a mix, from
   average to strong, like real players.
-- **The AI**: the bots (`[AI] Zed`...) talk back when you write their name in the chat, each with its own
-  character, and remember you. A Game Master starts bounties, duels and other surprises.
+- **The AI**: the bots (`[AI] Zed`...) talk back when you write their name in the chat, answer any question with a
+  `?`, each with its own character, and remember you: kill one often, and it holds a grudge. A Game Master starts bounties, duels and other surprises.
 - The first human to join a server of bots only restarts the game: everyone starts from zero.
 - Every 30 minutes, a vote picks the next map.
 - An announcer for first blood, multi-kills and kill streaks, up to GODLIKE.

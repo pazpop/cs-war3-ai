@@ -105,6 +105,9 @@ tbody tr:hover { background: #262a1e; }
 .bot h3::before { content: "[AI] "; color: var(--muted); font-size: 0.7em; }
 .bot p { margin: 0; color: var(--muted); font-size: 0.9em; }
 .note { color: var(--muted); font-size: 0.9em; }
+/* The bots' latest lines: the line itself stands out, the time stays quiet. */
+.quotes td:nth-child(2) { font-style: italic; }
+.quotes td:last-child { color: var(--muted); font-size: 0.85em; white-space: nowrap; }
 
 footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9em; }
 

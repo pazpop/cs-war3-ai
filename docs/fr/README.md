@@ -19,7 +19,7 @@ répondent, et un maître du jeu. Et le code pour monter le tien.
 - Les niveaux viennent deux fois plus vite que d'habitude, et une race jamais jouée commence au niveau 3 : ton
   ultime (niveau 6) arrive vite.
 - Des bots remplissent le serveur quand il y a peu de monde. Un s'en va pour chaque humain qui arrive. Ils
-  répondent : nomme-en un dans le chat. Et un maître du jeu (une IA) lance des primes, des duels et d'autres
+  répondent : nomme-en un dans le chat, ou pose une question avec un `?`. Tue-en un souvent, et il te garde rancune. Et un maître du jeu (une IA) lance des primes, des duels et d'autres
   surprises.
 - Un annonceur pour le premier kill, les multi-kills et les séries, jusqu'à GODLIKE. Tes dégâts s'affichent sous
   le viseur.

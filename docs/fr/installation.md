@@ -161,7 +161,8 @@ sudo docker compose start hlds
   d'autres sites : [pazpop.net](https://pazpop.net) l'affiche. Le jeu est interrogé au plus toutes les 15 secondes.
 - `https://<domaine>/bots.php` : les bots, leur caractère et leur portrait (tirés de
   [server/bots.txt](../../server/bots.txt)). Les images (`stats/img/`) ont été faites avec
-  [PixelLab](https://pixellab.ai) : voir son `CREDITS.txt`.
+  [PixelLab](https://pixellab.ai) : voir son `CREDITS.txt`. Aussi les dernières répliques des bots, tirées de la
+  base du relais de l'IA (son volume, en lecture seule).
 - `http://<domaine>/guide.html` : le guide, affiché à la connexion. Le navigateur du jeu (MOTD) est trop vieux pour
   le HTTPS d'aujourd'hui : en jeu, seules les pages `http://` s'ouvrent.
 - `http://<domaine>/cstrike/…` : le FastDL. Le téléchargement par le jeu (UDP) fait planter le client sur les
@@ -205,7 +206,12 @@ des actions :
   en temps après un kill entre un bot et un humain ; l'un d'eux salue chaque humain qui arrive. Jamais de bot à
   bot. Chaque bot de [server/bots.txt](../../server/bots.txt) a son caractère, le même pour YaPB, le relais et
   la page de stats, et s'affiche `[AI] Zed` dans le tableau des scores. Les bots se souviennent de chaque humain (par
-  SteamID, dans le volume du relais) : depuis quand il joue, comment il s'en sort contre eux.
+  SteamID, dans le volume du relais) : depuis quand il joue, comment il s'en sort contre eux, et le score de chaque
+  bot contre lui. Un bot tué 5 fois par un joueur, plus qu'il ne l'a tué, lui garde rancune : il le taquine, et
+  c'est lui qui l'accueille.
+- **Les questions** : un message avec un `?` reçoit toujours la réponse d'un bot, qui a le guide du mod
+  ([docs/war3ft.md](../war3ft.md)) sous les yeux ; un nouveau reçoit un conseil tiré du guide avec le bonjour. Ces
+  requêtes sont plus longues (le guide fait environ 2 500 tokens), donc un peu plus chères.
 - **Le maître du jeu** : toutes les 10 minutes, il lit le score et peut lancer un événement : une prime sur un
   joueur très en avance, un duel entre deux joueurs, un défi (kills, headshots, kills au couteau ou à la grenade,
   en 2 minutes), un boss (un bot à 500 points de vie, entouré d'un halo rouge), 30 secondes de gravité basse, de

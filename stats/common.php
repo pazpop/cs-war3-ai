@@ -33,10 +33,10 @@ function e(string $text): string
     return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-// Read-only: the pages cannot write anything into the game's database.
-function db(): PDO
+// Read-only: the pages cannot write anything into the game's database (or the AI relay's, /ai/ai.sq3).
+function db(string $path = '/data/war3ft.sq3'): PDO
 {
-    return new PDO('sqlite:/data/war3ft.sq3', null, null, [
+    return new PDO('sqlite:' . $path, null, null, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         Pdo\Sqlite::ATTR_OPEN_FLAGS => Pdo\Sqlite::OPEN_READONLY,

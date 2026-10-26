@@ -73,6 +73,11 @@ services:
       # The bots' list, for stats/bots.php. The folder, not the file: Ansible replaces the file, and a file mounted
       # alone would keep the old one.
       - ./server:/srv/server:ro
+      # The AI relay's database, for the bots' latest lines (stats/bots.php), read-only.
+      - type: volume
+        source: ai
+        target: /ai
+        read_only: true
       - type: volume
         source: hlds
         target: /data

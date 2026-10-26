@@ -4,6 +4,7 @@ import unittest
 
 os.environ["AI_DB"] = ":memory:"
 os.environ.setdefault("AI_BOTS", os.path.join(os.path.dirname(__file__), "..", "server", "bots.txt"))
+os.environ.setdefault("AI_GUIDE", os.path.join(os.path.dirname(__file__), "..", "docs", "war3ft.md"))
 os.environ.pop("ANTHROPIC_API_KEY", None)
 import relay  # noqa: E402
 
@@ -59,10 +60,28 @@ class Relay(unittest.TestCase):
         self.assertIsNone(relay.valid_gm(dict(challenge, challenge="suicide"), PLAYERS))
 
     def test_memory(self):
+        self.assertTrue(relay.is_new("STEAM_0:1:1"))
         relay.remember("STEAM_0:1:1", "bot_kills")
         relay.remember("STEAM_0:1:1", "bot_kills")
-        self.assertIn("killed 2 bots", relay.memory("STEAM_0:1:1", "Pierre"))
-        self.assertIn("newcomer", relay.memory("", "Ann"))
+        self.assertFalse(relay.is_new("STEAM_0:1:1"))
+        self.assertIn("killed 2 bots", relay.memory("STEAM_0:1:1", "Pierre", "Zed"))
+        self.assertIn("newcomer", relay.memory("", "Ann", "Zed"))
+
+    def test_grudge(self):
+        # Pierre killed Rex 5 times and Rex killed him once: Rex holds a grudge, and greets him first.
+        for _ in range(5):
+            relay.rival("[AI] Rex", "STEAM_0:1:2", "human_wins")
+        relay.rival("[AI] Rex", "STEAM_0:1:2", "bot_wins")
+        relay.remember("STEAM_0:1:2")
+        self.assertEqual(relay.score("Rex", "STEAM_0:1:2"), (5, 1))
+        self.assertIn("grudge", relay.memory("STEAM_0:1:2", "Pierre", "Rex"))
+        self.assertNotIn("grudge", relay.memory("STEAM_0:1:2", "Pierre", "Zed"))
+        bots = [{"id": 4, "name": "[AI] Zed"}, {"id": 7, "name": "[AI] Rex"}]
+        self.assertEqual(relay.grudge_bot(bots, "STEAM_0:1:2")["id"], 7)
+        self.assertIsNone(relay.grudge_bot(bots, "STEAM_0:1:3"))
+
+    def test_guide(self):
+        self.assertIn("Undead", relay.GUIDE)
 
     def test_without_key(self):
         # No API key: nothing to say, and the game goes on.
