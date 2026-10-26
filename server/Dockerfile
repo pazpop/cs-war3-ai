@@ -61,8 +61,7 @@ RUN set -eu; cd /tmp; \
 # wc3_start_level 3: a race never played starts at level 3 (3 skills at once); the ultimate is still to earn.
 # yb_difficulty_min 1, max 3: each bot gets a random level from Average to Professional, a mix like real players.
 # YaPB's automatic mode is off: it balances each bot against the others, and pushes them up to Expert.
-# One of YaPB's bot names is a racial slur: removed. War3FT and ReDeathmatch run without AMX Mod X's debug mode
-# (slower). No AMX Mod X ads (scrollmsg, imessage): our own messages are in messages.txt.
+# War3FT and ReDeathmatch run without AMX Mod X's debug mode (slower). No AMX Mod X ads (scrollmsg, imessage): our own messages are in messages.txt.
 # ReDeathmatch's rules (gamemode_deathmatch.json) are made for free-for-all: here, teams (War3 has team skills, at
 # most 2 players apart), 800 of starting money (the War3 shops cost money), and respawns in the team's base
 # (ReDeathmatch only has spawn points for 3 of our maps). Rounds never end ("1"): its "bcdefg" would end one at
@@ -95,8 +94,6 @@ RUN set -eu; cd /opt/mods/cstrike; \
       -e 's/^yb_csdm_mode "0"/yb_csdm_mode "1"/' -e 's/^yb_difficulty_min "-1"/yb_difficulty_min "1"/' \
       -e 's/^yb_difficulty_max "-1"/yb_difficulty_max "3"/' \
       addons/yapb/conf/yapb.cfg; \
-    sed -i '/^Wigger Vampire$/d' addons/yapb/conf/lang/en_names.cfg; \
-    ! grep -qi 'wigger' addons/yapb/conf/lang/en_names.cfg || exit 1; \
     grep -q '^gamedll_linux "addons/metamod/metamod_i386.so"' liblist.gam; \
     grep -q '^sqlite' addons/amxmodx/configs/modules.ini; \
     grep -qx 'csstats_rankbots 1' addons/amxmodx/configs/amxx.cfg; \
@@ -117,6 +114,10 @@ RUN set -eu; cd /opt/mods/cstrike; \
                 'yb_csdm_mode "1"' 'yb_difficulty_min "1"' 'yb_difficulty_max "3"'; do \
       grep -qx "$line" addons/yapb/conf/yapb.cfg; \
     done
+
+# Our bots' names, in place of YaPB's: short and easy to type, to talk to them (and none of YaPB's, one of which is a
+# racial slur).
+COPY bot_names.txt /opt/mods/cstrike/addons/yapb/conf/lang/en_names.cfg
 
 # Our AMX Mod X plugins, compiled with the compiler from the War3FT package.
 COPY plugins/ /opt/mods/cstrike/addons/amxmodx/scripting/cs-war3-ai/

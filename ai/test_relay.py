@@ -22,6 +22,8 @@ class Relay(unittest.TestCase):
         bots = [{"id": 7, "name": "Grim"}, {"id": 8, "name": "Al"}]
         self.assertEqual(relay.named_bot("hey GRIM, nice shot", bots)["id"], 7)
         self.assertIsNone(relay.named_bot("all good", bots))  # "Al" is too short to match
+        self.assertIsNone(relay.named_bot("Grimace is a race", bots))  # a word, not a part of one
+        self.assertEqual(relay.named_bot("@grim: gg", bots)["id"], 7)
 
     def test_valid_gm(self):
         self.assertEqual(relay.valid_gm({"event": "bounty", "target": 3, "target2": 0, "line": "Hunt Pierre!"},

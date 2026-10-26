@@ -8,6 +8,7 @@ import datetime
 import json
 import os
 import random
+import re
 import sqlite3
 import threading
 import time
@@ -107,10 +108,9 @@ def persona(bot_name):
 
 
 def named_bot(text, bots):
-    """The bot whose name the message contains (3 letters at least), or None."""
-    lowered = text.lower()
+    """The bot whose name the message contains as a word (3 letters at least), or None: "leo" is not in "leon"."""
     for bot in bots:
-        if len(bot["name"]) >= 3 and bot["name"].lower() in lowered:
+        if len(bot["name"]) >= 3 and re.search(rf"\b{re.escape(bot['name'])}\b", text, re.IGNORECASE):
             return bot
     return None
 
