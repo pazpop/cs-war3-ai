@@ -18,6 +18,9 @@ class Relay(unittest.TestCase):
     def test_clean(self):
         self.assertEqual(relay.clean('"\x04Hello\x01  there\n"', 100), "Hello there")
         self.assertEqual(relay.clean("one two three", 9), "one two")
+        self.assertEqual(relay.clean("été été été", 11), "été été")  # bytes, not letters: "été" is 5
+        self.assertEqual(relay.clean("été été été", 10), "été")
+        self.assertEqual(relay.clean("abcdefghijkl", 5), "abcde")  # one long word: cut
 
     def test_named_bot(self):
         bots = [{"id": 7, "name": "Grim"}, {"id": 8, "name": "Al"}]

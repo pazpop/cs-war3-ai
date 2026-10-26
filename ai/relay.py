@@ -73,8 +73,8 @@ GM_SYSTEM = (
     "wins the prize.\n"
     "- xp_rain: 100 War3FT XP for every human.\n"
     "- item_gift: a random War3FT shop item for everyone.\n"
-    "The prize of a bounty, a duel, a challenge or a boss: $3000 and 200 War3FT XP.\n"
     "- none: no event; line can be a short comment on the game, or empty.\n"
+    "The prize of a bounty, a duel, a challenge or a boss: $3000 and 200 War3FT XP.\n"
     "Make the game fairer or more fun: bounties on players far ahead, never on someone who struggles. "
     "Vary: do not repeat the last event. target and target2 are player ids from the list, 0 when unused; challenge "
     "is empty and count 0 unless the event is a challenge. "
@@ -131,12 +131,14 @@ def today():
 
 
 def clean(text, limit):
-    """One line the game can show: no control characters (the chat colors are bytes 1 to 4), no quotes around it,
-    cut at a word."""
+    """One line the game can show: no control characters (the chat colors are bytes 1 to 4), no quotes around it, at
+    most limit bytes (the plugin's buffers count bytes, and an accent takes two), cut at a word."""
     text = "".join(c if c.isprintable() else " " for c in text)
     text = " ".join(text.split()).strip('" ')
-    if len(text) > limit:
-        text = text[:limit].rsplit(" ", 1)[0]
+    if len(text.encode()) > limit:
+        # One byte more: a word that ends right at the limit stays. A single word longer than the limit is cut.
+        words = text.encode()[:limit + 1].decode("utf-8", "ignore").rsplit(" ", 1)[0]
+        text = words if len(words.encode()) <= limit else text.encode()[:limit].decode("utf-8", "ignore")
     return text
 
 
@@ -206,7 +208,8 @@ def memory(steamid, name):
     if not row:
         return f"{name}: nothing known yet, maybe a newcomer."
     first, last, kills, deaths = row
-    return f"{name}: plays here since {first}, last seen {last}, has killed {kills} bots, was killed by bots {deaths} times."
+    return (f"{name}: plays here since {first}, last seen {last}, has killed {kills} bots, "
+            f"was killed by bots {deaths} times.")
 
 
 def claude(system, prompt, schema=None, max_tokens=300):

@@ -38,7 +38,7 @@ new const GIFTS[] = { 1, 2, 3, 4, 6, 7, 12, 13, 14, 15 }
 new g_socket[MAX_PENDING]
 new bool:g_sent[MAX_PENDING]
 new Float:g_deadline[MAX_PENDING]
-new g_out[MAX_PENDING][1536]
+new g_out[MAX_PENDING][4096]  // a full server's state (16 players) is about 2 KB
 
 // The event running, one at a time: the bounty, the two duelists, the boss (their userids: a userid, unlike a slot, is
 // never given to the next player), or the challenge (its kind, how many, each player's count).
@@ -52,6 +52,8 @@ public plugin_init()
 	register_clcmd("say", "on_say")
 	register_clcmd("say_team", "on_say")
 	register_event("DeathMsg", "on_death", "a")
+	// A new round: in Respawn mode, only a restart (fresh_start.sma, sv_restart) or a new map.
+	register_event("HLTV", "on_new_round", "a", "1=0", "2=0")
 	set_task(0.1, "poll", _, _, _, "b")
 	set_task(STATE_EVERY, "send_state", _, _, _, "b")
 }
@@ -71,6 +73,12 @@ public client_disconnected(id)
 	// The boss leaves: its glow must not stay on its slot.
 	if (g_boss && get_user_userid(id) == g_boss)
 		end_event()
+}
+
+// Everyone starts again: the event running ends too (a boss would be back at 100 health, still red).
+public on_new_round()
+{
+	end_event()
 }
 
 public send_join(task)
@@ -131,7 +139,7 @@ public poll()
 		}
 		if (!g_sent[i])
 		{
-			// One send is enough: an event is under 1.5 KB, on the local network.
+			// One send is enough: an event is a few KB at most, on the local network.
 			if (socket_is_writable(sock, 0))
 			{
 				if (socket_send(sock, g_out[i], strlen(g_out[i])) <= 0)
@@ -343,8 +351,9 @@ game_master(JSON:gm)
 	}
 	else if (equal(event, "gold_rain"))
 	{
+		// Everyone, the dead too: a player respawning at that moment gets it as well.
 		new players[32], count
-		get_players(players, count, "a")
+		get_players(players, count, "h")
 		for (new i = 0; i < count; i++)
 			give_money(players[i], GOLD)
 	}
