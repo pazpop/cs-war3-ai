@@ -109,7 +109,7 @@
         project_src: "{{ app_dir }}"
         state: present
 
-    - name: Install the backup, heartbeat and collect scripts
+    - name: Install the backup, heartbeat, collect and chat report scripts
       ansible.builtin.copy:
         src: "files/{{ item.src }}"
         dest: "/usr/local/sbin/{{ item.dest }}"
@@ -118,6 +118,7 @@
         - { src: backup.sh, dest: cs-war3-ai-backup }
         - { src: heartbeat.py, dest: cs-war3-ai-heartbeat }
         - { src: collect.py, dest: cs-war3-ai-collect }
+        - { src: chat_report.py, dest: cs-war3-ai-chat-report }
 
     - name: Create the folder of the Healthchecks.io settings
       ansible.builtin.file:
@@ -201,6 +202,26 @@
 
             [Install]
             WantedBy=timers.target
+        # Yesterday's chat (UTC), every night, long before the game's logs are deleted (14 days).
+        - name: cs-war3-ai-chat-report.service
+          content: |
+            [Unit]
+            Description=Write yesterday's chat into /srv/collect/chat
+
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/local/sbin/cs-war3-ai-chat-report
+        - name: cs-war3-ai-chat-report.timer
+          content: |
+            [Unit]
+            Description=Write yesterday's chat into /srv/collect/chat, every night
+
+            [Timer]
+            OnCalendar=*-*-* 00:30:00 UTC
+            Persistent=true
+
+            [Install]
+            WantedBy=timers.target
       loop_control:
         label: "{{ item.name }}"
 
@@ -214,6 +235,7 @@
         - cs-war3-ai-backup.timer
         - cs-war3-ai-heartbeat.timer
         - cs-war3-ai-collect.timer
+        - cs-war3-ai-chat-report.timer
 
   handlers:
     # A restart, not "caddy reload": a reload can leave the old settings running. The site is off for a second or

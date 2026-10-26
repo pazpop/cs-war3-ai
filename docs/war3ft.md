@@ -83,7 +83,7 @@ What each one does: `/itemsinfo` and `/itemsinfo2` in game.
 - **Faster levels**: half the usual XP per level, so your ultimate (level 6) comes twice as fast. A race you have
   never played starts at level 3.
 - **Bots** (YaPB) fill the server up to 10 players. A bot leaves when a human joins. Their level is a mix, from
-  beginner to good, like real players.
+  average to good, like real players.
 - **The AI**: the bots (`[AI] Zed`...) talk back when you write their name in the chat, answer any question with a
   `?`, each with its own character, and remember you: kill one often, and it holds a grudge. A Game Master starts bounties, duels and other surprises.
 - The first human to join a server of bots only restarts the game: everyone starts from zero.

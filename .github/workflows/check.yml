@@ -32,8 +32,9 @@ jobs:
 
       - name: Python
         run: |
-          python3 -m py_compile ansible/files/heartbeat.py ansible/files/collect.py ai/relay.py
+          python3 -m py_compile ansible/files/heartbeat.py ansible/files/collect.py ansible/files/chat_report.py ai/relay.py
           python3 -m unittest discover ai
+          python3 -m unittest discover ansible/files
 
       # The PHP image of compose.yml, which Renovate updates.
       - name: PHP

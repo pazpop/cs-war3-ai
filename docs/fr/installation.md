@@ -199,6 +199,14 @@ sur les joueurs (environ 15 Ko par jour et par serveur). Les serveurs : `collect
 scp -P 2222 deploy@<domaine>:/srv/collect/players.csv .
 ```
 
+## Les rapports du chat
+
+Chaque nuit à 0 h 30 UTC, [ansible/files/chat_report.py](../../ansible/files/chat_report.py) écrit le chat de la
+veille (UTC) dans `/srv/collect/chat/<date>.txt`, à partir des logs du jeu (gardés 14 jours) : les humains (le chat
+d'équipe signalé), les bots, le maître du jeu et le coach, avec les arrivées et les départs. Seulement les noms, ni
+SteamID ni IP ; lisible par root seulement. Un jour sans chat n'écrit rien. Un autre jour, tout de suite :
+`sudo cs-war3-ai-chat-report 2026-10-26`.
+
 ## L'IA (optionnel)
 
 Des bots qui répondent, et un maître du jeu. `ai.sma` envoie les nouvelles de la partie au relais

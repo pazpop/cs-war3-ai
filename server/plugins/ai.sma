@@ -327,9 +327,14 @@ do_actions(const answer[])
 		new text[160]
 		json_object_get_string(coach, "text", text, charsmax(text))
 		new id = find_player("k", json_object_get_number(coach, "id"))
-		// In private: only the player sees it.
+		// In private: only the player sees it (and the game's log, for the daily chat report).
 		if (id && text[0])
+		{
 			client_print_color(id, print_team_default, "^4[Coach]^1 %s", text)
+			new name[32]
+			get_user_name(id, name, charsmax(name))
+			log_message("^"Coach to %s^" say ^"%s^"", name, text)
+		}
 	}
 	free(coach)
 	free(root)
@@ -352,6 +357,10 @@ bot_say(userid, const text[])
 	get_user_name(bot, name, charsmax(name))
 	// "%s": the text is never read as a format; the relay has removed the color bytes from it.
 	client_print_color(0, bot, "^3%s^1 :  %s", name, text)
+	// In the game's log too, as a player's chat line: the daily chat report reads it (ansible/files/chat_report.py).
+	new team[16]
+	get_user_team(bot, team, charsmax(team))
+	log_message("^"%s<%d><BOT><%s>^" say ^"%s^"", name, userid, team, text)
 }
 
 game_master(JSON:gm)
@@ -640,4 +649,5 @@ announce(const text[])
 	client_print_color(0, print_team_default, "^4[Game Master]^1 %s", text)
 	set_hudmessage(255, 80, 0, -1.0, 0.18, 0, 0.0, 5.0, 0.1, 0.5, -1)
 	show_hudmessage(0, "%s", text)
+	log_message("^"Game Master^" say ^"%s^"", text)
 }

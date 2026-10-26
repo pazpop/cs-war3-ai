@@ -28,6 +28,8 @@ anyone who wants to run their own server, and get players to come back and bring
   has a fixed address on the internal `ai` network (no name lookup: it can block the game) and a daily budget
   (`AI_DAILY_USD`). No SteamID or IP goes to the API. No key: silent. The relay's image also holds docs/war3ft.md
   (the bots answer questions from it); the stats page reads its database read-only (the bots' latest lines).
+- A daily chat report (humans, bots, Game Master, coach) goes to `/srv/collect/chat/` (ansible/files/chat_report.py,
+  from the game's logs; ai.sma logs the bots' lines as chat lines).
 - The containers drop every capability (`x-hardening` in `compose.yml`). The vault is ignored by git.
 - Checks run on every push (`.github/workflows/check.yml`); Renovate proposes mod updates (SHA-256 by hand).
 - Every night: Docker cleanup at 3:30 (config.yml), updates at 4:00, backup at 4:32 (`ansible/files/backup.sh`,
