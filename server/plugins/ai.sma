@@ -45,6 +45,7 @@ new const GIFTS[] = { 1, 2, 3, 4, 6, 7, 12, 13, 14, 15 }
 
 new g_socket[MAX_PENDING]
 new bool:g_sent[MAX_PENDING]
+new bool:g_state[MAX_PENDING]  // whether the request is the state of the game: only its answer may start an event
 new Float:g_deadline[MAX_PENDING]
 new g_out[MAX_PENDING][4096]  // a full server's state (16 players) is about 2 KB
 
@@ -54,8 +55,8 @@ new g_bounty, g_duel[2], g_boss
 new g_challenge[16], g_goal, g_progress[33]
 new g_gravity
 
-// For the coach: deaths in a row, and how often each weapon killed the player; whether the map's summary was sent.
-new g_streak[33], g_killed_by[33][CSW_P90 + 1]
+// For the coach: deaths in a row (since the last kill), and how often each weapon killed the player; whether the map's summary was sent.
+new g_deaths_in_row[33], g_killed_by[33][CSW_P90 + 1]
 new bool:g_summary_sent
 new Float:g_next_request[33]  // when each player's next chat line or /coach may go to the relay
 
@@ -82,11 +83,14 @@ public plugin_init()
 public client_putinserver(id)
 {
 	g_progress[id] = 0
-	g_streak[id] = 0
+	g_deaths_in_row[id] = 0
 	g_next_request[id] = 0.0
 	arrayset(g_killed_by[id], 0, sizeof g_killed_by[])
-	if (!is_user_bot(id) && !is_user_hltv(id))
-		set_task(GREET_AFTER, "send_join", TASK_JOIN + id)
+	if (is_user_bot(id) || is_user_hltv(id))
+		return
+	// The name first, at once: an offensive one is replaced before it shows anywhere for long.
+	set_task(1.0, "send_name", TASK_NAME + id)
+	set_task(GREET_AFTER, "send_join", TASK_JOIN + id)
 }
 
 // A human changes their name during the game: the relay checks the new one at once (an offensive one: renamed), not
@@ -174,6 +178,9 @@ send(JSON:event, reserve = 0)
 		new error
 		g_socket[i] = socket_open(RELAY_IP, RELAY_PORT, SOCKET_TCP, error, SOCK_NON_BLOCKING)
 		g_sent[i] = false
+		new type[8]
+		json_object_get_string(event, "type", type, charsmax(type))
+		g_state[i] = bool:equal(type, "state")
 		g_deadline[i] = get_gametime() + TIMEOUT
 		break
 	}
@@ -211,7 +218,7 @@ public poll()
 			new length = socket_recv(sock, answer, charsmax(answer))
 			close_slot(i)
 			if (length > 0)
-				do_actions(answer)
+				do_actions(answer, g_state[i])
 		}
 	}
 }
@@ -346,7 +353,8 @@ public send_state()
 
 // ---- From the relay ----
 
-do_actions(const answer[])
+// from_state: the answer to the state of the game, the only one that may start the Game Master's event.
+do_actions(const answer[], bool:from_state)
 {
 	new JSON:root = json_parse(answer)
 	if (!json_is_object(root))
@@ -371,7 +379,7 @@ do_actions(const answer[])
 	}
 	free(lines)
 	new JSON:gm = json_object_get_value(root, "gm")
-	if (json_is_object(gm) && json_object_has_value(gm, "event", JSONString) && json_object_has_value(gm, "text", JSONString))
+	if (from_state && json_is_object(gm) && json_object_has_value(gm, "event", JSONString) && json_object_has_value(gm, "text", JSONString))
 		game_master(gm)
 	free(gm)
 	new JSON:coach = json_object_get_value(root, "coach")
@@ -642,10 +650,10 @@ ask_coach(id, const question[])
 count_for_coach(killer, victim, const weapon[])
 {
 	if (killer && killer != victim && !is_user_bot(killer))
-		g_streak[killer] = 0
+		g_deaths_in_row[killer] = 0
 	if (is_user_bot(victim))
 		return
-	g_streak[victim]++
+	g_deaths_in_row[victim]++
 	// The death notice says "grenade"; the weapon is called "hegrenade".
 	new full[32]
 	formatex(full, charsmax(full), "weapon_%s", equal(weapon, "grenade") ? "hegrenade" : weapon)
@@ -753,7 +761,7 @@ send_coach(id, const kind[], const question[] = "")
 		get_weaponname(worst, name, charsmax(name))
 		json_object_set_string(event, "killed_by", name[7])
 	}
-	json_object_set_number(event, "streak", g_streak[id])
+	json_object_set_number(event, "streak", g_deaths_in_row[id])
 	// Asked by the player: any place. The summary and the timed tips: the others keep a few.
 	send(event, kind[0] ? COACH_RESERVE : 0)
 }

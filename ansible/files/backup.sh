@@ -41,7 +41,9 @@ relay=$(docker volume inspect -f '{{.Mountpoint}}' cs-war3-ai_ai)
 cp -a "$game" "$work/data"
 # A journal copied during a write would be replayed onto the clean copy below, at restore: never kept.
 rm -f "$work"/data/sqlite3/*-journal "$work"/data/sqlite3/*-wal "$work"/data/sqlite3/*-shm
+# Owned like the volume: a restore must leave the relay (not root) able to write in it.
 mkdir "$work/ai"
+chown --reference="$relay" "$work/ai"
 
 # The two databases again, with SQLite's backup (a plain copy made during a write could be broken), owned as before.
 python3 - "$game/sqlite3/war3ft.sq3" "$work/data/sqlite3/war3ft.sq3" "$relay/ai.sq3" "$work/ai/ai.sq3" <<'EOF'
@@ -50,7 +52,8 @@ import sqlite3
 import sys
 
 for source, copy in zip(sys.argv[1::2], sys.argv[2::2]):
-    if not os.path.exists(source):
+    # A link the game left: not followed (this runs as root).
+    if os.path.islink(source) or not os.path.exists(source):
         continue
     # lexists: a link the game left in its folder is removed too, never followed (this runs as root).
     if os.path.lexists(copy):

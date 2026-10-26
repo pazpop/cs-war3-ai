@@ -13,7 +13,8 @@ public plugin_init()
 
 public client_putinserver(id)
 {
-	if (is_user_bot(id) || is_user_hltv(id) || get_gametime() < MAP_START)
+	// Not in a map's last 10 minutes either: it ends soon, and a restart could start its clock again.
+	if (is_user_bot(id) || is_user_hltv(id) || get_gametime() < MAP_START || get_timeleft() < 600)
 		return
 	new players[32], count
 	get_players(players, count, "ch")  // c: no bots; h: no HLTV

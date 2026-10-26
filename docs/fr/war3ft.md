@@ -68,7 +68,7 @@ bind "F3" "war3menu"
 
 Le détail exact (pourcentages, durées) : `/skillsinfo` en jeu.
 
-Sur ce serveur, tout le monde revient aussitôt : ce qui fait revenir ou garde l'équipement ne sert à rien ici :
+Sur ce serveur, tout le monde revient aussitôt. Ce qui fait revenir ou garde l'équipement ne sert donc à rien :
 l'équipement gardé de l'Orcish Horde, la résurrection du Blood Mage, l'ultime du Warden, l'ankh et le scroll.
 
 ## Les objets
@@ -87,8 +87,8 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2` en jeu.
 - **L'argent** : 800 $ au départ, et plus à chaque kill, pour les objets des boutiques.
 - **Des niveaux plus rapides** : moitié moins d'XP par niveau, l'ultime (niveau 6) arrive deux fois plus vite.
   Une race jamais jouée commence au niveau 3.
-- Des **bots** (YaPB) remplissent le serveur jusqu'à 10 joueurs. Un bot sort quand un humain arrive. Leur adresse
-  est variée, de moyenne à normale. Chaque bot a sa propre race de War3FT, et un niveau War3FT de 1 à 5, nouveau à
+- Des **bots** (YaPB) remplissent le serveur jusqu'à 10 joueurs. Un bot sort quand un humain arrive. Leur niveau
+  varie, de moyen à normal. Chaque bot a sa propre race de War3FT, et un niveau War3FT de 1 à 5, nouveau à
   chaque carte.
 - **L'IA** : les bots (`[AI] Zed`…) répondent quand tu écris leur nom dans le chat, répondent en général à une
   question avec un `?`, chacun avec son caractère, et se souviennent de toi et de la dernière carte jouée ensemble :

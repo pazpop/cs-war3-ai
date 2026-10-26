@@ -10,6 +10,7 @@
 #include "database.inc"
 #include "kills.inc"
 
+new g_month[8]  // the month this map started in, "2026-10" (the VPS's time): its kills count for it, even after midnight
 new g_kills[33]
 new g_deaths[33]
 new g_headshots[33]
@@ -17,6 +18,7 @@ new g_headshots[33]
 public plugin_init()
 {
 	register_plugin("Ranking of the month", "1.0", "cs-war3-ai")
+	get_time("%Y-%m", g_month, charsmax(g_month))
 	register_kills()
 	// The map's end (the intermission).
 	register_event("30", "count_mvp", "a")
@@ -33,8 +35,8 @@ public count_mvp()
 {
 	new best = map_mvp()
 	if (best && g_steamid[best][0] && humans_who_scored() >= 2)
-		run("INSERT INTO cs_war3_ai_mvp VALUES (strftime('%%Y-%%m', 'now', 'localtime'), '%s', 1) \
-			ON CONFLICT (month, steamid) DO UPDATE SET count = count + 1", g_steamid[best])
+		run("INSERT INTO cs_war3_ai_mvp VALUES ('%s', '%s', 1) \
+			ON CONFLICT (month, steamid) DO UPDATE SET count = count + 1", g_month, g_steamid[best])
 }
 
 // The humans in a team who killed on this map.
@@ -79,8 +81,8 @@ public show_top(id)
 	new line[192], name[32], length = formatex(line, charsmax(line), "Top 5 this month:")
 	new Handle:query = SQL_PrepareQuery(g_db, "SELECT COALESCE(n.name, '?'), m.kills - m.deaths \
 		FROM cs_war3_ai_monthly m LEFT JOIN cs_war3_ai_names n ON n.steamid = m.steamid \
-		WHERE m.month = strftime('%%Y-%%m', 'now', 'localtime') \
-		ORDER BY m.kills - m.deaths DESC, m.kills DESC LIMIT 5")
+		WHERE m.month = '%s' \
+		ORDER BY m.kills - m.deaths DESC, m.kills DESC LIMIT 5", g_month)
 	new place = 0
 	if (SQL_Execute(query))
 	{
@@ -114,7 +116,7 @@ public show_top(id)
 			AND (o.kills - o.deaths > m.kills - m.deaths \
 			OR (o.kills - o.deaths = m.kills - m.deaths AND o.kills > m.kills))) + 1, \
 			(SELECT COUNT(*) FROM cs_war3_ai_monthly o WHERE o.month = m.month) FROM cs_war3_ai_monthly m \
-			WHERE m.month = strftime('%%Y-%%m', 'now', 'localtime') AND m.steamid = '%s'", g_steamid[id])
+			WHERE m.month = '%s' AND m.steamid = '%s'", g_month, g_steamid[id])
 		if (SQL_Execute(query) && SQL_MoreResults(query))
 			formatex(line[length], charsmax(line) - length, " | You: #%d of %d", SQL_ReadResult(query, 0),
 				SQL_ReadResult(query, 1))
@@ -139,10 +141,10 @@ save(id)
 {
 	if (!g_steamid[id][0] || g_kills[id] + g_deaths[id] == 0)
 		return
-	run("INSERT INTO cs_war3_ai_monthly VALUES (strftime('%%Y-%%m', 'now', 'localtime'), '%s', %d, %d, %d) ON CONFLICT (month, steamid) \
+	run("INSERT INTO cs_war3_ai_monthly VALUES ('%s', '%s', %d, %d, %d) ON CONFLICT (month, steamid) \
 		DO UPDATE SET kills = kills + excluded.kills, deaths = deaths + excluded.deaths, \
 		headshots = headshots + excluded.headshots",
-		g_steamid[id], g_kills[id], g_deaths[id], g_headshots[id])
+		g_month, g_steamid[id], g_kills[id], g_deaths[id], g_headshots[id])
 	g_kills[id] = 0
 	g_deaths[id] = 0
 	g_headshots[id] = 0

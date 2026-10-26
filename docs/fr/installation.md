@@ -33,13 +33,21 @@ Les voix de l'annonceur sont les seuls fichiers de tiers qu'il contient
 
 ## Tes réglages
 
+Sur ton PC, dans Ubuntu : git et Ansible, puis ce dépôt.
+
+```bash
+sudo apt install git pipx && pipx install --include-deps ansible && pipx ensurepath
+git clone https://github.com/pazpop/cs-war3-ai.git && cd cs-war3-ai
+```
+
 1. Un nom DNS qui pointe vers le VPS : c'est `domain` dans [ansible/inventory.yml](../../ansible/inventory.yml),
    avec tes propres serveurs dans `collect_domains`, et le fuseau horaire du serveur `timezone` (les logs, les classements et
    le journal le suivent). Les messages du chat : [server/messages.txt](../../server/messages.txt).
 2. Une clé SSH pour Ansible (`ansible_ssh_private_key_file` dans l'inventaire), copiée sur le compte de l'hébergeur :
-   `ssh-copy-id -i ~/.ssh/<ta clé>.pub debian@<domaine>`
+   `ssh-keygen -t ed25519 -f ~/.ssh/<ta clé>`, puis `ssh-copy-id -i ~/.ssh/<ta clé>.pub debian@<domaine>`
 3. Copie [ansible/personal.example.yml](../../ansible/personal.example.yml) en `ansible/personal.yml` (ignoré par git)
-   et remplis-le : le compte de l'hébergeur, ton compte, le dossier des sauvegardes, les SteamID des admins.
+   et remplis-le : le compte de l'hébergeur, ton compte et sa clé publique (un autre `ssh-keygen`), le dossier des
+   sauvegardes, les SteamID des admins.
 4. Les collections d'Ansible : `ansible-galaxy collection install -r ansible/requirements.yml`
 5. Le coffre, pour les secrets : chiffré, et ignoré par git (il ne quitte jamais ton PC). Garde une copie du
    fichier et de son mot de passe.
@@ -110,7 +118,8 @@ rate) :
   sauvegarde en fin de manche, qui n'arrive jamais ici.
 - `damage.sma` : les dégâts que le joueur inflige, sous le viseur, à chaque coup.
 - `fresh_start.sma` : quand le premier humain arrive sur un serveur de bots seuls, la partie redémarre
-  (`sv_restart`) : tous les scores à zéro, un départ équitable. L'XP, le classement du mois et les succès restent.
+  (`sv_restart`) : tous les scores à zéro, un départ équitable (pas dans les 10 dernières minutes d'une carte).
+  L'XP, le classement du mois et les succès restent.
 - `help.sma` : `/help` dans le chat, ou `help` dans la console, rouvre le guide.
 - `high_ping.sma` : un ping au-dessus de 300 ms pendant 50 secondes, et un joueur est expulsé.
 - `messages.sma` : un message dans le chat toutes les 5 minutes, à tour de rôle, tiré de
@@ -169,7 +178,7 @@ cd /srv/cs-war3-ai
 sudo docker compose stop hlds ai
 sudo docker run --rm --user 0 --entrypoint sh -v cs-war3-ai_hlds:/data -v cs-war3-ai_ai:/ai cs-war3-ai-hlds -c 'rm -f /data/cstrike/addons/amxmodx/data/sqlite3/*.sq3-* /ai/*.sq3-*'
 sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_hlds:/data -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz -C /data/cstrike/addons/amxmodx data
-sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_ai:/ai -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz -C / ai
+sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_ai:/ai -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz --no-overwrite-dir -C / ai
 sudo docker compose start hlds ai
 ```
 
@@ -229,8 +238,8 @@ scp -P 2222 -i ~/.ssh/<ta clé> deploy@<domaine>:/srv/collect/players.csv .
 Chaque nuit à 0 h 30, [ansible/files/chat_report.py](../../ansible/files/chat_report.py) écrit le chat de la
 veille (à l'heure du VPS, comme les logs du jeu) dans `/srv/collect/chat/<date>.txt`, à partir des logs du jeu (gardés 14 jours) : les humains (le chat
 d'équipe signalé), les bots, le maître du jeu et le coach, avec les arrivées et les départs. Seulement les noms, ni
-SteamID ni IP ; lisible par root seulement, gardé 90 jours. Un jour sans rien de tout ça n'écrit rien. Un autre
-jour, tout de suite :
+SteamID ni IP ; lisible par root seulement, gardé 90 jours. Un jour sans rien de tout ça n'écrit rien. Pour un autre
+jour :
 `sudo cs-war3-ai-chat-report 2026-10-26`.
 
 ## L'IA (optionnel)
@@ -270,11 +279,13 @@ Ce que l'IA peut dire : un prompt système strict, puis un modérateur (une seco
 avant qu'elle s'affiche : pas d'injure, de haine, de contenu sexuel, de menace, d'activité illégale, de
 politique ni d'information personnelle, dans aucune langue, ni un pseudo injurieux répété. Le pseudo de chaque
 humain est vérifié aussi, à l'arrivée et à chaque changement : un pseudo injurieux est renommé « Player » (sans
-réponse, faute de clé ou de budget, un pseudo passe et sera revérifié plus tard). Au moindre doute ou à la moindre
-erreur, aucune réplique ne s'affiche. Un bot répond au même joueur au plus toutes les 10
-secondes, et 30 fois par heure ; un joueur dont les messages font refuser 3 répliques en une heure est ignoré pendant une heure. En jeu,
-l'IA s'affiche `[AI] Zed`, `[AI Game Master]` et `[AI Coach]` : les joueurs savent qu'ils parlent à une IA
-(Anthropic l'exige).
+réponse, faute de clé ou de budget, un pseudo passe et sera revérifié plus tard ; au-delà de 5 nouveaux pseudos
+en une heure, les suivants d'un joueur sont refusés sans demander). Au moindre doute ou à la moindre erreur, aucune
+réplique ne s'affiche. Un bot répond au même joueur au plus toutes les 10 secondes et 30 fois par heure, et parle de
+la mort d'un même joueur au plus toutes les 2 minutes ; un joueur dont les messages font refuser 3 répliques en une
+heure est ignoré pendant une heure. Le maître du jeu ne met une prime que sur le meneur, et ne choisit jamais deux
+fois de suite un humain de ses derniers événements. En jeu, l'IA s'affiche `[AI] Zed`, `[AI Game Master]` et
+`[AI Coach]` : les joueurs savent qu'ils parlent à une IA (Anthropic l'exige).
 
 Mise en place : une clé API de [console.anthropic.com](https://console.anthropic.com) dans le coffre
 (`vault_anthropic_key: sk-ant-...`), puis `deploy.yml`. Sans clé, le relais se tait et le jeu ne change pas. Il
@@ -323,7 +334,7 @@ côté de l'IPv4 > Configure Edge Network Firewall, puis l'activer.
 | 4 | Autoriser | UDP | | 27015 | | Les joueurs |
 | 5 | Autoriser | UDP | 27000-27100 | | | Les réponses de Steam : validation des joueurs, VAC, liste des serveurs |
 | 6 | Autoriser | UDP | 53 | | | Les réponses DNS |
-| 7 | Autoriser | UDP | 123 | | | Les réponses de l'heure (NTP) |
+| 7 | Autoriser | UDP | 123 | | | Les réponses NTP (l'heure) |
 | 8 | Autoriser | ICMP | | | | Le ping et le traceroute |
 | 19 | Refuser | IPv4 | | | | Tout le reste |
 

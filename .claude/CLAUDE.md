@@ -105,7 +105,7 @@ anyone who wants to run their own server, and get players to come back and bring
 - Ansible's `copy` never deletes: a file removed from the repository stays on the VPS. `deploy.yml` deletes
   `server/plugins/` first (a forgotten .sma would be compiled); anywhere else (a page in `stats/`), remove it by hand.
 - War3FT's zip bundles AMX Mod X build 5467: the Dockerfile lays a later 1.10 build's `dlls/`, `modules/` and
-  `data/gamedata/` over it (a crash on a dropped connection, fixed in 5482). Renovate does not see it: check by hand.
+  `data/gamedata/` over it (5487 has the fix for a crash on a dropped connection). Renovate does not see it: check by hand.
 - With `csdm_active 1`, War3FT turns off everything that respawns a player or keeps their gear (`_SHARED_Spawn`,
   `SHARED_CS_Reincarnation`): the Orc's Reincarnation, the Blood Mage's Phoenix, the Warden's Vengeance, the ankh,
   the scroll. The guides say so; War3FT has no setting to hide them.

@@ -12,7 +12,7 @@ os.environ.pop("ANTHROPIC_API_KEY", None)
 import relay  # noqa: E402
 
 PLAYERS = [
-    {"id": 3, "name": "Pierre", "bot": False, "team": "CT", "kills": 25, "deaths": 4},
+    {"id": 3, "name": "Kim", "bot": False, "team": "CT", "kills": 25, "deaths": 4},
     {"id": 7, "name": "Grim", "bot": True, "team": "TERRORIST", "kills": 5, "deaths": 20},
     {"id": 9, "name": "Ann", "bot": False, "team": "CT", "kills": 2, "deaths": 9},
 ]
@@ -46,7 +46,7 @@ class Relay(unittest.TestCase):
         self.assertLess(relay.seen({"steamid": "STEAM_0:1:9", "name": "Ann"}), relay.GREET_AGAIN)
 
     def test_valid_gm(self):
-        self.assertEqual(relay.valid_gm({"event": "bounty", "target": 3, "target2": 0, "line": "Hunt Pierre!"},
+        self.assertEqual(relay.valid_gm({"event": "bounty", "target": 3, "target2": 0, "line": "Hunt Kim!"},
                                         PLAYERS)["target"], 3)
         self.assertIsNone(relay.valid_gm({"event": "bounty", "target": 42, "target2": 0, "line": "x"}, PLAYERS))
         self.assertIsNone(relay.valid_gm({"event": "duel", "target": 3, "target2": 9, "line": "x"}, PLAYERS))
@@ -68,18 +68,18 @@ class Relay(unittest.TestCase):
         relay.remember("STEAM_0:1:1", "bot_kills")
         relay.remember("STEAM_0:1:1", "bot_kills")
         self.assertFalse(relay.is_new("STEAM_0:1:1"))
-        self.assertIn("killed 2 bots", relay.memory("STEAM_0:1:1", "Pierre", "Zed"))
+        self.assertIn("killed 2 bots", relay.memory("STEAM_0:1:1", "Kim", "Zed"))
         self.assertIn("newcomer", relay.memory("", "Ann", "Zed"))
 
     def test_grudge(self):
-        # Pierre killed Rex 5 times and Rex killed him once: Rex holds a grudge, and greets him first.
+        # Kim killed Rex 5 times and Rex killed him once: Rex holds a grudge, and greets him first.
         for _ in range(5):
             relay.rival("[AI] Rex", "STEAM_0:1:2", "human_wins")
         relay.rival("[AI] Rex", "STEAM_0:1:2", "bot_wins")
         relay.remember("STEAM_0:1:2")
         self.assertEqual(relay.score("Rex", "STEAM_0:1:2"), (5, 1))
-        self.assertIn("grudge", relay.memory("STEAM_0:1:2", "Pierre", "Rex"))
-        self.assertNotIn("grudge", relay.memory("STEAM_0:1:2", "Pierre", "Zed"))
+        self.assertIn("grudge", relay.memory("STEAM_0:1:2", "Kim", "Rex"))
+        self.assertNotIn("grudge", relay.memory("STEAM_0:1:2", "Kim", "Zed"))
         bots = [{"id": 4, "name": "[AI] Zed"}, {"id": 7, "name": "[AI] Rex"}]
         self.assertEqual(relay.grudge_bot(bots, "STEAM_0:1:2")["id"], 7)
         self.assertIsNone(relay.grudge_bot(bots, "STEAM_0:1:3"))
@@ -203,6 +203,26 @@ class Relay(unittest.TestCase):
             self.assertEqual(relay.on_coach(event)["coach"]["text"], "The AK-47: 7 kills.")
         self.assertIn('Their question: "my best weapon?"', claude.call_args[0][1])
         self.assertEqual(safe.call_args[0], ("The AK-47: 7 kills.", "my best weapon?", "STEAM_0:1:6"))
+
+    def test_gm_fair(self):
+        # A bounty only on the leader; every event announced; a human just picked is not picked again.
+        relay.recent_targets.clear()
+        bounty = {"event": "bounty", "target": 9, "target2": 0, "line": "Hunt Ann!"}
+        self.assertIsNone(relay.valid_gm(bounty, PLAYERS))
+        self.assertIsNone(relay.valid_gm({**bounty, "target": 3, "line": ""}, PLAYERS))
+        self.assertIsNotNone(relay.valid_gm({**bounty, "target": 3}, PLAYERS))
+        relay.recent_targets.append(3)
+        self.assertIsNone(relay.valid_gm({**bounty, "target": 3}, PLAYERS))
+        relay.recent_targets.clear()
+
+    def test_name_checks_per_player(self):
+        # Past NAME_CHECKS new names in an hour, one player's next new name is refused without asking.
+        with mock.patch.object(relay, "claude", return_value='{"allowed": true}') as claude:
+            for i in range(relay.NAME_CHECKS):
+                self.assertTrue(relay.name_allowed(f"Spam {i}", "STEAM_0:1:12"))
+            self.assertFalse(relay.name_allowed("Spam again", "STEAM_0:1:12"))
+            self.assertTrue(relay.name_allowed("Someone else", "STEAM_0:1:13"))
+        self.assertEqual(claude.call_count, relay.NAME_CHECKS + 1)
 
     def test_coach_on(self):
         # The tip every 5 minutes only after /coach on; the map's summary tells the others about it.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Installed by deploy.yml as /usr/local/sbin/cs-war3-ai-chat-report, run every night by cs-war3-ai-chat-report.timer.
-# Writes a day's chat into /srv/collect/chat/<date>.txt, from the game's logs (kept 14 days; the VPS's time): the
+# Writes a day's chat into /srv/collect/chat/<date>.txt, from the game's logs (the game deletes them after 14 days; the VPS's time): the
 # humans, the bots, the Game Master and the coach, with arrivals and departures. Names only: no SteamID, no IP.
 # Readable by root, kept KEEP_DAYS.
 #   cs-war3-ai-chat-report              yesterday
@@ -44,7 +44,10 @@ def main():
     volume = subprocess.run(["docker", "volume", "inspect", "-f", "{{.Mountpoint}}", "cs-war3-ai_hlds"],
                             capture_output=True, text=True, check=True).stdout.strip()
     lines = []
-    for path in sorted(glob.glob(f"{volume}/cstrike/logs/L*.log"), key=os.path.getmtime):
+    # Only the game's real log files: a link or a pipe it left would make this script (root) read anything, or hang.
+    logs = [path for path in glob.glob(f"{volume}/cstrike/logs/L*.log")
+            if not os.path.islink(path) and os.path.isfile(path)]
+    for path in sorted(logs, key=os.path.getmtime):
         with open(path, encoding="utf-8", errors="replace") as file:
             lines += file
     # The reports' names are dates: older than KEEP_DAYS, they go.

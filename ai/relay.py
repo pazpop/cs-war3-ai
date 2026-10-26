@@ -46,6 +46,7 @@ MUTE = 3600           # seconds: the hour these refusals are counted in, and the
 JOURNAL_LINES = 300   # the day's latest announcements and bot lines the journal is written from
 JOURNALS_KEPT = 30    # the journal's entries kept for the stats page (stats/index.php), one a day
 NAMES_DAYS = 30       # days a name's check is kept
+NAME_CHECKS = 5       # new names checked for one human in an hour: past that, their new names are refused unasked
 EVENTS = ["none", "bounty", "duel", "low_gravity", "gold_rain", "challenge", "boss", "xp_rain", "item_gift"]
 # The challenges, and how many of each a human must reach in 2 minutes (the Game Master picks within these bounds).
 CHALLENGES = {"kills": (3, 6), "headshots": (2, 4), "knife": (1, 2)}
@@ -88,8 +89,8 @@ GM_SYSTEM = (
     "- low_gravity: 30 seconds of low gravity for everyone.\n"
     "- gold_rain: $1500 for everyone.\n"
     "- challenge: a goal for every human, within 2 minutes: challenge is kills, headshots or knife (knife kills), "
-    "count how many (kills 3-6, headshots 2-4, knife 1-2). The first human to reach it wins the prize; nobody has "
-    "to take part.\n"
+    f"count how many ({', '.join(f'{kind} {low}-{high}' for kind, (low, high) in CHALLENGES.items())}). "
+    "The first human to reach it wins the prize; nobody has to take part.\n"
     "- boss: target, a bot on a team that humans fight, becomes a boss: 500 health and a red glow; whoever kills it "
     "wins the prize.\n"
     "- xp_rain: 100 War3FT XP for every human.\n"
@@ -204,7 +205,7 @@ def forget():
                 del times[key]
         for key in [key for key in last_said if key not in last_active]:
             del last_said[key]
-        for store in (refusals, answers):
+        for store in (refusals, answers, name_checks):
             for key in [key for key, times in store.items() if times[-1] < day_ago]:
                 del store[key]
 
@@ -212,11 +213,13 @@ def forget():
 recent_chat = deque(maxlen=8)
 last_line = {}  # "bot", "kill" or a player -> when the last line of that kind was said (time.monotonic)
 last_events = deque(maxlen=3)
+recent_targets = deque(maxlen=6)  # the humans (userids) in the last events: the Game Master picks others
 last_active = {}  # a human (SteamID, or name) -> when the game last spoke of them (time.monotonic)
 last_said = {}  # a human (SteamID, or name) -> their last chat message: the coach answers in its language
 hour_spent = {}  # this hour ("2026-10-26 21") -> dollars spent in it
 refusals = {}  # a human (player_key) -> when the moderator held back a line their messages caused (the last REFUSALS)
 answers = {}  # a human (player_key) -> when the bots answered them (the last PLAYER_HOURLY)
+name_checks = {}  # a human (player_key) -> when a new name of theirs was checked (the last NAME_CHECKS)
 journal_tried = None  # the day whose journal was written or refused: not asked again
 # A tag at the start of an AI line ([INFO], [AI Game Master]...): taken out, the AI never passes for the server.
 TAG = re.compile(r"^\s*\[[^\]]*\]\s*")
@@ -273,7 +276,9 @@ def valid_gm(answer, players):
     event, target, target2 = answer.get("event"), answer.get("target"), answer.get("target2")
     if event not in EVENTS:
         return None
-    if event == "bounty" and target not in ids:
+    # A bounty on the player who leads (kills - deaths), as the prompt says: never on one who struggles.
+    if event == "bounty" and (target not in ids or ids[target]["kills"] - ids[target]["deaths"]
+                              < max(p["kills"] - p["deaths"] for p in players)):
         return None
     # A duel has a human in it; a boss is a bot that humans can kill (no friendly fire: not on all the humans' team).
     if event == "duel" and (target not in ids or target2 not in ids or ids[target]["team"] == ids[target2]["team"]
@@ -289,8 +294,14 @@ def valid_gm(answer, players):
         low, high = CHALLENGES[challenge]
         count = min(max(count, low), high)
     line = clean(str(answer.get("line", "")), 120)
-    if event == "none" and not line:
+    # Every event is announced: none starts unseen.
+    if not line:
         return None
+    # A human in one of the last events is not picked again: nobody is favored or singled out map after map.
+    picked = [t for t in (target, target2) if t in ids and not ids[t]["bot"]]
+    with lock:
+        if any(t in recent_targets for t in picked):
+            return None
     return {"event": event, "target": target, "target2": target2, "challenge": challenge, "count": count, "text": line}
 
 
@@ -447,10 +458,12 @@ def muted(player):
         return bool(times) and len(times) == REFUSALS and time.monotonic() - times[0] < MUTE
 
 
-def name_allowed(name):
+def name_allowed(name, player=None):
     """False when the moderator finds this human's name offensive, or the model refuses to even read it. Checked once
     per name, then kept NAMES_DAYS. No answer (no key, the day's budget spent, an error): allowed this time, and
-    asked again the next. Not held back by the hour's share: a few players chatting cannot get names past it."""
+    asked again the next. Not held back by the hour's share: a few players chatting cannot get names past it.
+    player: the human who wears it: past NAME_CHECKS new names in an hour, refused without asking (name spam would
+    spend the day's budget, after which names pass unchecked)."""
     name = clean(name, 64)
     if not name:
         return True
@@ -458,6 +471,12 @@ def name_allowed(name):
         row = db.execute("SELECT allowed FROM names WHERE name = ?", (name,)).fetchone()
     if row:
         return bool(row[0])
+    if player:
+        with lock:
+            times = name_checks.setdefault(player, deque(maxlen=NAME_CHECKS))
+            if len(times) == NAME_CHECKS and time.monotonic() - times[0] < 3600:
+                return False
+            times.append(time.monotonic())
     answer = claude(NAME_CHECK, f"Name: {quoted(name)}", schema=MODERATION_SCHEMA, max_tokens=50, hourly=False)
     if answer is None:
         return True
@@ -567,7 +586,9 @@ def on_kill(event):
     remember(human.get("steamid"), "bot_deaths" if killer["bot"] else "bot_kills")
     rival(bot["name"], human.get("steamid"), "bot_wins" if killer["bot"] else "human_wins")
     seen(human)
-    if random.random() >= TAUNT or not gaps_passed(("kill", KILL_LINE_GAP), ("bot", BOT_LINE_GAP)):
+    # One line about the same human every 2 minutes at most: a beginner the bots kill often is not mocked each time.
+    if random.random() >= TAUNT or not gaps_passed(("kill", KILL_LINE_GAP), ("bot", BOT_LINE_GAP),
+                                                    ("kill:" + player_key(human), 120)):
         return {}
     how = f"with {event.get('weapon', 'a weapon')}" + (", a headshot" if event.get("headshot") else "")
     if killer["bot"]:
@@ -583,7 +604,7 @@ def on_join(event):
     answer = {}
     since = seen(event)
     # An offensive name: no hello, and the plugin renames the player.
-    if not name_allowed(name):
+    if not name_allowed(name, player_key(event)):
         remember(steamid, game_map=event.get("map"))
         return {"rename": [event["id"]]}
     # A map change puts every player in the game again: only a real arrival gets a hello.
@@ -622,7 +643,8 @@ def coach_numbers(event):
 def coaching(steamid):
     """True when this human typed /coach on (and not /coach off since)."""
     with lock:
-        return bool(steamid) and db.execute("SELECT 1 FROM coach_on WHERE steamid = ?", (steamid,)).fetchone() is not None
+        return bool(steamid) and db.execute("SELECT 1 FROM coach_on WHERE steamid = ?", (steamid,)).fetchone() \
+            is not None
 
 
 def on_coach_mode(event):
@@ -678,7 +700,7 @@ def on_state(event):
     if not any(not p["bot"] for p in players):
         return {}
     # Offensive names: the plugin renames these players, and the Game Master never sees their names.
-    renamed = [p["id"] for p in players if not p["bot"] and not name_allowed(p["name"])]
+    renamed = [p["id"] for p in players if not p["bot"] and not name_allowed(p["name"], player_key(p))]
     result = {"rename": renamed} if renamed else {}
     table = "\n".join(f"id {p['id']} | {quoted('Player' if p['id'] in renamed else p['name'])} | "
                       f"{'bot' if p['bot'] else 'human'} | team {p['team']} | {p['kills']} kills, {p['deaths']} deaths"
@@ -697,12 +719,13 @@ def on_state(event):
         return result
     with lock:
         last_events.append(answer["event"])
+        recent_targets.extend(t for t in (answer["target"], answer["target2"]) if t)
     return {**result, "gm": answer}
 
 
 def on_name(event):
     """A human changed their name during the game: checked at once, not only at the next arrival or look."""
-    return {} if name_allowed(event["name"]) else {"rename": [event["id"]]}
+    return {} if name_allowed(event["name"], player_key(event)) else {"rename": [event["id"]]}
 
 
 def on_news(event):

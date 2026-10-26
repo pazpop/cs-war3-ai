@@ -4,7 +4,7 @@
 // - ach_list: the achievements below, written at each map start, so the web page has the same list;
 // - ach_progress: each human's counters, added up over every map;
 // - ach_unlocked: what each human unlocked, and when.
-// Humans only (by SteamID): bots are not counted.
+// Humans only (by SteamID): bots are not counted. (The ach_ tables are ours too, despite their names.)
 #include <amxmodx>
 #include <engine>  // entity_get_int()
 #include <sqlx>

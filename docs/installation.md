@@ -31,13 +31,21 @@ The announcer's voices are the only third-party files in it ([CREDITS.txt](../se
 
 ## Your settings
 
+On your PC, in Ubuntu: git and Ansible, then this repository.
+
+```bash
+sudo apt install git pipx && pipx install --include-deps ansible && pipx ensurepath
+git clone https://github.com/pazpop/cs-war3-ai.git && cd cs-war3-ai
+```
+
 1. A DNS name pointing to the VPS: set it as `domain` in [ansible/inventory.yml](../ansible/inventory.yml), with
    your own servers in `collect_domains`, and the server's `timezone` (the logs, the rankings and the journal follow it).
    The chat messages: [server/messages.txt](../server/messages.txt).
 2. An SSH key for Ansible (`ansible_ssh_private_key_file` in the inventory), copied to the provider's account:
-   `ssh-copy-id -i ~/.ssh/<your key>.pub debian@<domain>`
+   `ssh-keygen -t ed25519 -f ~/.ssh/<your key>`, then `ssh-copy-id -i ~/.ssh/<your key>.pub debian@<domain>`
 3. Copy [ansible/personal.example.yml](../ansible/personal.example.yml) to `ansible/personal.yml` (ignored by git)
-   and fill it in: the provider's account, your account, the backup folder, the admins' SteamIDs.
+   and fill it in: the provider's account, your account and its public key (another `ssh-keygen`), the backup
+   folder, the admins' SteamIDs.
 4. The Ansible collections: `ansible-galaxy collection install -r ansible/requirements.yml`
 5. The vault, for the secrets: encrypted, and ignored by git (it never leaves your PC). Keep a copy of it, and of
    its password.
@@ -104,7 +112,8 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
   respawns. Saves everyone's XP every 5 minutes too: War3FT saves at a round's end, which never comes here.
 - `damage.sma`: the damage the player deals, under the crosshair, at each hit.
 - `fresh_start.sma`: when the first human joins a server of bots only, the game restarts (`sv_restart`): every
-  score back to zero, a fair start. XP, the ranking of the month and the achievements stay.
+  score back to zero, a fair start (not in a map's last 10 minutes). XP, the ranking of the month and the
+  achievements stay.
 - `help.sma`: `/help` in chat, or `help` in the console, opens the guide again.
 - `high_ping.sma`: a ping over 300 ms for 50 seconds, and a player is kicked.
 - `messages.sma`: a message in the chat every 5 minutes, in turn, from [server/messages.txt](../server/messages.txt):
@@ -159,7 +168,7 @@ cd /srv/cs-war3-ai
 sudo docker compose stop hlds ai
 sudo docker run --rm --user 0 --entrypoint sh -v cs-war3-ai_hlds:/data -v cs-war3-ai_ai:/ai cs-war3-ai-hlds -c 'rm -f /data/cstrike/addons/amxmodx/data/sqlite3/*.sq3-* /ai/*.sq3-*'
 sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_hlds:/data -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz -C /data/cstrike/addons/amxmodx data
-sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_ai:/ai -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz -C / ai
+sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_ai:/ai -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz --no-overwrite-dir -C / ai
 sudo docker compose start hlds ai
 ```
 
@@ -215,8 +224,8 @@ scp -P 2222 -i ~/.ssh/<your key> deploy@<domain>:/srv/collect/players.csv .
 Every night at 0:30, [ansible/files/chat_report.py](../ansible/files/chat_report.py) writes the day before's
 chat (the VPS's time, like the game's logs) into `/srv/collect/chat/<date>.txt`, from the game's logs (kept 14
 days): the humans (team chat marked), the bots, the Game Master and the coach, with arrivals and departures. Names
-only, no SteamID or IP; readable by root only, kept 90 days. A day without any of these writes nothing. Another
-day, at once: `sudo cs-war3-ai-chat-report 2026-10-26`.
+only, no SteamID or IP; readable by root only, kept 90 days. A day without any of these writes nothing. For another
+day: `sudo cs-war3-ai-chat-report 2026-10-26`.
 
 ## The AI (optional)
 
@@ -251,10 +260,12 @@ What the AI may say: a strict system prompt, then a moderator (a second request)
 shown: no slurs, hate, sexual content, threats, illegal activity, politics or personal information, in any
 language, nor an offensive player name repeated. Each human's name is checked too, on arrival and on each change:
 an offensive one is renamed "Player" (without an answer, no key or no budget left, a name passes and is checked
-again later). On any doubt or error, no line is shown. A bot answers the same player at most
-every 10 seconds, and 30 times an hour; a player whose messages get 3 lines held back within an hour is ignored for an hour. In the game,
-the AI shows as `[AI] Zed`, `[AI Game Master]` and `[AI Coach]`: players know they talk to an AI (Anthropic requires
-it).
+again later; past 5 new names in an hour, a player's next ones are refused unasked). On any doubt or error, no
+line is shown. A bot answers the same player at most every 10 seconds and 30 times an hour, and talks about the same
+player's death at most every 2 minutes; a player whose messages get 3 lines held back within an hour is ignored for
+an hour. The Game Master puts a bounty only on the leader, and never picks a human of its last events again. In the
+game, the AI shows as `[AI] Zed`, `[AI Game Master]` and `[AI Coach]`: players know they talk to an AI (Anthropic
+requires it).
 
 Setup: an API key from [console.anthropic.com](https://console.anthropic.com) in the vault
 (`vault_anthropic_key: sk-ant-...`), then `deploy.yml`. Without a key, the relay stays silent and the game is

@@ -113,7 +113,7 @@
       changed_when: false
 
     # --pull: a fresh Debian base, so the image gets its security updates. Unchanged layers come from the cache.
-    - name: Build the game image
+    - name: Build the images (the game, the AI relay)
       ansible.builtin.command:
         cmd: docker compose build --pull
         chdir: "{{ app_dir }}"
