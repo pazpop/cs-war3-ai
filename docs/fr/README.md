@@ -31,7 +31,8 @@ répondent, et un maître du jeu. Et le code pour monter le tien.
   tout de suite.
 - Les classements sur [cs.pazpop.net](https://cs.pazpop.net) : celui du mois (repart de zéro le 1er), l'XP par
   race, le combat, et une page par joueur (`/mystats` donne la tienne).
-- Tu arrives sur un serveur de bots seuls : la partie redémarre, tout le monde repart de zéro.
+- Tu arrives sur un serveur de bots seuls : la partie redémarre, les scores de la carte repartent de
+  zéro (l'XP et les classements restent).
 - Serveur à 1000 FPS, Amérique du Nord (est).
 
 Comment marche le mod : [war3ft.md](war3ft.md).

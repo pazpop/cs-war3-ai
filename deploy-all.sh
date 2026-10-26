@@ -45,21 +45,14 @@ fi
 read -rp "Push and deploy ${todo[*]}? [y/N] " answer
 [ "$answer" = y ] || exit 1
 
-# The same as vault.sh, for this run only; the one from vault.sh, if this terminal still has it.
-if [ -n "${VAULT_PASSWORD:-}" ] && [ "$(date +%s)" -lt "${VAULT_PASSWORD_EXPIRY:-0}" ]; then
-  todo_vault=()
-else
-  todo_vault=("${todo[@]}")
+# The vault password, to deploy cs-war3-ai, as vault.sh asks it: unless this terminal still has the one from vault.sh.
+if [[ " ${todo[*]} " == *" cs-war3-ai "* ]] &&
+   { [ -z "${VAULT_PASSWORD:-}" ] || [ "$(date +%s)" -ge "${VAULT_PASSWORD_EXPIRY:-0}" ]; }; then
+  read -rsp "Vault password: " VAULT_PASSWORD
+  echo
+  export VAULT_PASSWORD
+  export VAULT_PASSWORD_EXPIRY=$(( $(date +%s) + 7200 ))
 fi
-for project in "${todo_vault[@]}"; do
-  if [ -f "$project/ansible/deploy.yml" ]; then
-    read -rsp "Vault password: " VAULT_PASSWORD
-    echo
-    export VAULT_PASSWORD
-    export VAULT_PASSWORD_EXPIRY=$(( $(date +%s) + 7200 ))
-    break
-  fi
-done
 
 failed=()
 for project in "${todo[@]}"; do

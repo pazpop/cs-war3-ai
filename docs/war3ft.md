@@ -83,10 +83,12 @@ What each one does: `/itemsinfo` and `/itemsinfo2` in game.
 - **Faster levels**: half the usual XP per level, so your ultimate (level 6) comes twice as fast. A race you have
   never played starts at level 3.
 - **Bots** (YaPB) fill the server up to 10 players. A bot leaves when a human joins. Their skill is a mix, from
-  average to good, like real players. Each bot has its own War3FT race, and is War3FT level 1 to 5, new at each map.
-- **The AI**: the bots (`[AI] Zed`...) talk back when you write their name in the chat, answer any question with a
-  `?`, each with its own character, and remember you: kill one often, and it holds a grudge. A Game Master starts bounties, duels and other surprises.
-- The first human to join a server of bots only restarts the game: everyone starts from zero.
+  average to normal. Each bot has its own War3FT race, and is War3FT level 1 to 5, new at each map.
+- **The AI**: the bots (`[AI] Zed`...) talk back when you write their name in the chat, usually answer a question
+  with a `?`, each with its own character, and remember you: kill one often, and it holds a grudge. A Game Master
+  starts bounties, duels and other surprises.
+- The first human to join a server of bots only restarts the game: every score of the map starts from zero (XP and
+  rankings stay).
 - Every 30 minutes, a vote picks the next map.
 - An announcer for first blood, multi-kills and kill streaks, up to GODLIKE.
 - Away for **60 seconds** (no key, no mouse move): you become a spectator. A ping over **300 ms** for 50 seconds

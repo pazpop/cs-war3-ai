@@ -148,12 +148,13 @@ Pour en faire une tout de suite et la rapatrier sur ton PC (dans `backup_dir`, `
 ansible-playbook -i ansible/inventory.yml ansible/backup.yml
 ```
 
-Pour restaurer une archive, sur le VPS (le jeu et l'IA s'arrêtent pendant ce temps) : les données du jeu, puis la
-mémoire de l'IA.
+Pour restaurer une archive, sur le VPS (le jeu et l'IA s'arrêtent pendant ce temps) : d'abord les journaux SQLite laissés par un
+plantage (SQLite les rejouerait sur la base restaurée), puis les données du jeu et la mémoire de l'IA.
 
 ```bash
 cd /srv/cs-war3-ai
 sudo docker compose stop hlds ai
+sudo docker run --rm --user 0 --entrypoint sh -v cs-war3-ai_hlds:/data -v cs-war3-ai_ai:/ai cs-war3-ai-hlds -c 'rm -f /data/cstrike/addons/amxmodx/data/sqlite3/*.sq3-* /ai/*.sq3-*'
 sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_hlds:/data -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz -C /data/cstrike/addons/amxmodx data
 sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_ai:/ai -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz -C / ai
 sudo docker compose start hlds ai
@@ -190,8 +191,8 @@ sudo docker compose start hlds ai
   pull request, remplace l'empreinte SHA-256 de la version dans [server/Dockerfile](../../server/Dockerfile) :
   `curl -sL <adresse de l'archive> | sha256sum`. D'ici là, la vérification ci-dessous échoue, exprès.
 - **Les vérifications** : chaque push lance [.github/workflows/check.yml](../../.github/workflows/check.yml) :
-  `ansible-lint`, `shellcheck`, la syntaxe Python et PHP, et le build de l'image du jeu (qui vérifie les SHA-256 et
-  compile nos plugins).
+  `ansible-lint`, `shellcheck`, la syntaxe Python et PHP, les tests Python, et le build des deux images (celle du jeu
+  vérifie les SHA-256 et compile nos plugins).
 
 ## Le nombre de joueurs
 

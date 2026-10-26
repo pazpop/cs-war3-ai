@@ -114,6 +114,16 @@ class Relay(unittest.TestCase):
     def test_clean_bot_line(self):
         self.assertEqual(relay.clean("buy with **G** now", 100), "buy with G now")
 
+    def test_forget_memory(self):
+        # A player gone for two days: the relay drops what it held about them; one seen now stays.
+        relay.last_active["gone"] = relay.time.monotonic() - 2 * 24 * 3600
+        relay.last_said["gone"] = "hi"
+        relay.last_active["here"] = relay.time.monotonic()
+        relay.forget()
+        self.assertNotIn("gone", relay.last_said)
+        self.assertNotIn("gone", relay.last_active)
+        self.assertIn("here", relay.last_active)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -28,7 +28,8 @@ Game Master. And the code to run your own.
 - 10 classic maps (de_dust2, de_inferno, cs_office...); a vote picks the next one, and `rtv` asks for a vote now.
 - Rankings at [cs.pazpop.net](https://cs.pazpop.net): the month's (from zero on the 1st), XP per race,
   combat, and a page per player (`/mystats` gives yours).
-- Join a server of bots only, and the game restarts: everyone starts from zero.
+- Join a server of bots only, and the game restarts: every score of the map starts from zero
+  (XP and rankings stay).
 - 1000 FPS server, North America (east).
 
 How the mod works: [docs/war3ft.md](docs/war3ft.md).

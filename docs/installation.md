@@ -138,11 +138,13 @@ To make one now and download it to your PC (into `backup_dir`, `ansible/personal
 ansible-playbook -i ansible/inventory.yml ansible/backup.yml
 ```
 
-To restore an archive, on the VPS (the game and the AI stop meanwhile): the game's data, then the AI's memory.
+To restore an archive, on the VPS (the game and the AI stop meanwhile): first any SQLite journal left by a crash
+(SQLite would replay it onto the restored database), then the game's data and the AI's memory.
 
 ```bash
 cd /srv/cs-war3-ai
 sudo docker compose stop hlds ai
+sudo docker run --rm --user 0 --entrypoint sh -v cs-war3-ai_hlds:/data -v cs-war3-ai_ai:/ai cs-war3-ai-hlds -c 'rm -f /data/cstrike/addons/amxmodx/data/sqlite3/*.sq3-* /ai/*.sq3-*'
 sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_hlds:/data -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz -C /data/cstrike/addons/amxmodx data
 sudo docker run --rm --user 0 --entrypoint tar -v cs-war3-ai_ai:/ai -v /srv/backups/cs-war3-ai:/in:ro cs-war3-ai-hlds -xzf /in/<archive>.tgz -C / ai
 sudo docker compose start hlds ai
@@ -177,7 +179,8 @@ sudo docker compose start hlds ai
   replace the version's SHA-256 in [server/Dockerfile](../server/Dockerfile): `curl -sL <archive URL> | sha256sum`.
   Until then, the check below fails, on purpose.
 - **Checks**: every push runs [.github/workflows/check.yml](../.github/workflows/check.yml): `ansible-lint`,
-  `shellcheck`, the Python and PHP syntax, and the game image build (which checks the SHA-256 and compiles our plugins).
+  `shellcheck`, the Python and PHP syntax, the Python tests, and both image builds (the game's checks the SHA-256 and
+  compiles our plugins).
 
 ## Player counts
 
