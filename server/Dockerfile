@@ -65,7 +65,9 @@ RUN set -eu; cd /tmp; \
 # ReDeathmatch's rules (gamemode_deathmatch.json) are made for free-for-all: here, teams (War3 has team skills, at
 # most 2 players apart), 800 of starting money (the War3 shops cost money), and respawns in the team's base
 # (ReDeathmatch only has spawn points for 3 of our maps). Rounds never end ("1"): its "bcdefg" would end one at
-# each mp_roundtime (5 minutes). The bots play team deathmatch (yb_csdm_mode 1).
+# each mp_roundtime (5 minutes). The bots play team deathmatch (yb_csdm_mode 1), never camp, and get the weapons
+# players use (AK-47 or M4A1; Deagle, USP or Glock), not ReDeathmatch's (Famas, Galil, P228, Elite). Their names
+# start with "[AI] ": the AI shows in the scoreboard.
 # Spawn protection (ReGameDLL's game.cfg): 3 seconds without damage after a respawn, lost at the first shot (not when
 # moving: "2"). ReDeathmatch tints the protected players in their team's color. game.cfg's lines end with \r.
 # CS's ranking (/rank, /top15) counts the fights with bots, most of the fights here. All bots share one row in it
@@ -85,6 +87,7 @@ RUN set -eu; cd /opt/mods/cstrike; \
       -e 's/"mp_limitteams": "0"/"mp_limitteams": "2"/' \
       -e 's/"mp_round_infinite": "bcdefg"/"mp_round_infinite": "1"/' \
       -e 's/"redm_randomspawn": "1"/"redm_randomspawn": "0"/' \
+      -e '/"botEquip": {/,/^        }/{s/"weapon_famas"/"weapon_ak47"/; s/"weapon_galil"/"weapon_m4a1"/; s/"weapon_p228"/"weapon_usp"/; s/"weapon_elite"/"weapon_glock18"/}' \
       addons/amxmodx/configs/redm/gamemode_deathmatch.json; \
     sed -i 's/^wc3_save_xp\t*0/wc3_save_xp\t\t1/' addons/amxmodx/configs/war3ft/war3FT.cfg; \
     sed -i 's/^wc3_xp_multiplier\t*1\.0/wc3_xp_multiplier\t0.5/' addons/amxmodx/configs/war3ft/war3FT.cfg; \
@@ -93,6 +96,7 @@ RUN set -eu; cd /opt/mods/cstrike; \
       -e 's/^yb_chat "1"/yb_chat "0"/' -e 's/^yb_radio_mode "2"/yb_radio_mode "0"/' \
       -e 's/^yb_csdm_mode "0"/yb_csdm_mode "1"/' -e 's/^yb_difficulty_min "-1"/yb_difficulty_min "1"/' \
       -e 's/^yb_difficulty_max "-1"/yb_difficulty_max "3"/' \
+      -e 's/^yb_camping_allowed "1"/yb_camping_allowed "0"/' -e 's/^yb_name_prefix ""/yb_name_prefix "[AI] "/' \
       addons/yapb/conf/yapb.cfg; \
     grep -q '^gamedll_linux "addons/metamod/metamod_i386.so"' liblist.gam; \
     grep -q '^sqlite' addons/amxmodx/configs/modules.ini; \
@@ -107,12 +111,16 @@ RUN set -eu; cd /opt/mods/cstrike; \
                 '"mp_round_infinite": "1"' '"redm_randomspawn": "0"'; do \
       grep -qF "$line" addons/amxmodx/configs/redm/gamemode_deathmatch.json; \
     done; \
+    grep -A9 '"botEquip"' addons/amxmodx/configs/redm/gamemode_deathmatch.json > /tmp/bot_equip; \
+    for weapon in ak47 m4a1 deagle usp glock18; do grep -q "\"weapon_$weapon\"" /tmp/bot_equip; done; \
+    ! grep -qE 'famas|galil|p228|elite' /tmp/bot_equip || exit 1; \
     grep -qP '^wc3_save_xp\t+1' addons/amxmodx/configs/war3ft/war3FT.cfg; \
     grep -qP '^wc3_xp_multiplier\t+0\.5' addons/amxmodx/configs/war3ft/war3FT.cfg; \
     grep -qP '^wc3_start_level\t+3\t' addons/amxmodx/configs/war3ft/war3FT.cfg; \
     for line in 'yb_quota "10"' 'yb_quota_mode "fill"' 'yb_chat "0"' 'yb_radio_mode "0"' \
-                'yb_csdm_mode "1"' 'yb_difficulty_min "1"' 'yb_difficulty_max "3"'; do \
-      grep -qx "$line" addons/yapb/conf/yapb.cfg; \
+                'yb_csdm_mode "1"' 'yb_difficulty_min "1"' 'yb_difficulty_max "3"' 'yb_camping_allowed "0"' \
+                'yb_name_prefix "[AI] "'; do \
+      grep -qxF "$line" addons/yapb/conf/yapb.cfg; \
     done
 
 # Our bots' names, in place of YaPB's: short and easy to type, to talk to them (and none of YaPB's, one of which is a

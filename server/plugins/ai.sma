@@ -18,6 +18,8 @@
 #define REWARD 3000           // a bounty or a duel's prize, in dollars
 #define GOLD 1500             // gold_rain: for everyone
 #define LOW_GRAVITY 300       // sv_gravity during low_gravity (the game's own is 800)
+#define GREET_AFTER 10.0      // seconds after a human enters, before a bot says hello
+#define TASK_JOIN 100         // + the player's slot (task 1: the end of low_gravity)
 
 new g_socket[MAX_PENDING]
 new bool:g_sent[MAX_PENDING]
@@ -37,6 +39,30 @@ public plugin_init()
 	register_event("DeathMsg", "on_death", "a")
 	set_task(0.1, "poll", _, _, _, "b")
 	set_task(STATE_EVERY, "send_state", _, _, _, "b")
+}
+
+// A human arrives (or comes back with the next map: the relay greets only real arrivals). A few seconds later, when
+// they see the game.
+public client_putinserver(id)
+{
+	if (!is_user_bot(id) && !is_user_hltv(id))
+		set_task(GREET_AFTER, "send_join", TASK_JOIN + id)
+}
+
+public client_disconnected(id)
+{
+	remove_task(TASK_JOIN + id)
+}
+
+public send_join(task)
+{
+	new id = task - TASK_JOIN
+	if (!is_user_connected(id))
+		return
+	new JSON:event = player(id)
+	json_object_set_string(event, "type", "join")
+	add_bots(event)
+	send(event)
 }
 
 public plugin_end()
@@ -145,6 +171,17 @@ public on_say(id)
 	if (!message[0] || message[0] == '/' || message[0] == '!')
 		return PLUGIN_CONTINUE
 
+	new JSON:event = player(id)
+	json_object_set_string(event, "type", "chat")
+	json_object_set_string(event, "text", message)
+	add_bots(event)
+	send(event)
+	return PLUGIN_CONTINUE
+}
+
+// The bots in the game: the ones who can answer.
+add_bots(JSON:event)
+{
 	new JSON:bots = json_init_array()
 	new players[32], count
 	get_players(players, count, "d")
@@ -154,18 +191,8 @@ public on_say(id)
 		json_array_append_value(bots, bot)
 		json_free(bot)
 	}
-	if (!count)
-	{
-		json_free(bots)
-		return PLUGIN_CONTINUE
-	}
-	new JSON:event = player(id)
-	json_object_set_string(event, "type", "chat")
-	json_object_set_string(event, "text", message)
 	json_object_set_value(event, "bots", bots)
 	json_free(bots)
-	send(event)
-	return PLUGIN_CONTINUE
 }
 
 public on_death()

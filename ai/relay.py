@@ -28,18 +28,33 @@ BOT_LINE_GAP = 4      # seconds between two bot lines, at least: the chat stays 
 KILL_LINE_GAP = 15    # seconds between two lines about a kill
 BUTT_IN = 0.10        # chance that a bot answers a message that names no bot
 TAUNT = 0.25          # chance that a bot talks after a kill between a bot and a human
+GREET_AGAIN = 900     # seconds without news of a human before a bot greets them again: not at every map change
 EVENTS = ["none", "bounty", "duel", "low_gravity", "gold_rain"]
 
-PERSONAS = [
-    "a loud braggart who thinks he is the best player alive",
-    "a paranoid camper who sees cheaters everywhere",
-    "a grumpy veteran who has played since 1999 and hates new players' habits",
-    "an overly polite gentleman, even when he loses",
-    "a dramatic actor who turns every death into a tragedy",
-    "a calm philosopher who quotes made-up proverbs",
-    "a hyperactive kid who types fast and loves the game",
-    "a sarcastic bot who knows it is a bot and jokes about it",
-]
+# One character per name of server/bot_names.txt: the same bot is the same person, map after map.
+PERSONAS = {
+    "Zed": "a gloomy Undead fanatic who talks about death and coming back from it",
+    "Kai": "a laid-back surfer for whom everything is chill, even dying",
+    "Bob": "a friendly average guy who loves terrible dad jokes",
+    "Leo": "a proud lion who calls himself the king of every map",
+    "Ivy": "sweet on the surface, venomous underneath: polite words, poisoned compliments",
+    "Rex": "a simple brute who loves smashing things and speaks in very short sentences",
+    "Tom": "a paranoid player who suspects everyone of cheating, especially when he loses",
+    "Sam": "an overly polite gentleman, even when he loses badly",
+    "Mia": "a competitive esports hopeful obsessed with her stats and her aim",
+    "Jax": "a cocky trash-talking punk, never mean about real life",
+    "Ned": "a nervous newbie who apologizes for everything and is amazed by everything",
+    "Gus": "a cook who describes every fight with food and recipes",
+    "Lou": "a lazy player who would rather nap and complains about running",
+    "Pip": "a hyperactive kid who types fast and finds everything awesome",
+    "Rudy": "a dramatic actor who turns every death into a Shakespearean tragedy",
+    "Otto": "a grumpy veteran who has played since 1999 and finds today's players soft",
+    "Hugo": "a calm philosopher who answers with made-up ancient proverbs",
+    "Nina": "a Night Elf role-player who speaks like an elf from an old legend",
+    "Vic": "a drill sergeant who barks orders and calls everyone recruit",
+    "Zoe": "a sarcastic bot who knows she is a bot and jokes about it",
+}
+PREFIX = re.compile(r"^\[AI\]\s*")  # yb_name_prefix (server/Dockerfile)
 
 RULES = (
     "Write ONE chat line of at most 100 characters, in the language of the player's last message (English if unsure). "
@@ -86,6 +101,7 @@ CREATE TABLE IF NOT EXISTS spend (day TEXT PRIMARY KEY, usd REAL);
 recent_chat = deque(maxlen=8)
 last_line = {"bot": 0.0, "kill": 0.0}
 last_events = deque(maxlen=3)
+last_active = {}  # a human (SteamID, or name) -> when the game last spoke of them (time.monotonic)
 
 
 def today():
@@ -102,15 +118,22 @@ def clean(text, limit):
     return text
 
 
+def short(bot_name):
+    """The bot's name without "[AI] ": what players write, and the key of PERSONAS."""
+    return PREFIX.sub("", bot_name)
+
+
 def persona(bot_name):
-    # The same name always gets the same character, from one map to the next.
-    return PERSONAS[zlib.crc32(bot_name.encode()) % len(PERSONAS)]
+    # A name not in the list (YaPB's own, a renamed bot) still always gets the same character.
+    name = short(bot_name)
+    return PERSONAS.get(name) or list(PERSONAS.values())[zlib.crc32(name.encode()) % len(PERSONAS)]
 
 
 def named_bot(text, bots):
     """The bot whose name the message contains as a word (3 letters at least), or None: "leo" is not in "leon"."""
     for bot in bots:
-        if len(bot["name"]) >= 3 and re.search(rf"\b{re.escape(bot['name'])}\b", text, re.IGNORECASE):
+        name = short(bot["name"])
+        if len(name) >= 3 and re.search(rf"\b{re.escape(name)}\b", text, re.IGNORECASE):
             return bot
     return None
 
@@ -194,13 +217,29 @@ def claude(system, prompt, schema=None, max_tokens=300):
 
 
 def bot_line(bot, situation, steamid, name):
-    system = f"You are {bot['name']}, a bot player in a Counter-Strike 1.6 War3FT game. Your character: " \
-             f"{persona(bot['name'])}. {RULES}"
-    chat = "\n".join(recent_chat) or "(empty)"
+    me = short(bot["name"])
+    system = f"You are {me}, a bot player in a Counter-Strike 1.6 War3FT game. Your character: " \
+             f"{persona(me)}. {RULES}"
+    with lock:
+        chat = "\n".join(recent_chat) or "(empty)"
     prompt = f"Recent chat:\n{chat}\n\nWhat you know: {memory(steamid, name)}\n\n{situation}\nYour line:"
-    text = claude(system, prompt, max_tokens=120)
-    text = clean(text or "", 100)
-    return {"say": [{"id": bot["id"], "text": text}]} if text else {}
+    text = clean(claude(system, prompt, max_tokens=120) or "", 100)
+    if not text:
+        return {}
+    # The bots' own lines too: the next answer follows the conversation.
+    with lock:
+        recent_chat.append(f"{me}: {text}")
+    return {"say": [{"id": bot["id"], "text": text}]}
+
+
+def seen(human):
+    """Notes that the game spoke of this human now; returns how many seconds since the last time (None: never)."""
+    key = human.get("steamid") or "name:" + human.get("name", "")
+    now = time.monotonic()
+    with lock:
+        before = last_active.get(key)
+        last_active[key] = now
+    return None if before is None else now - before
 
 
 def gap_passed(kind, gap):
@@ -215,6 +254,7 @@ def gap_passed(kind, gap):
 def on_chat(event):
     name, text, bots = event["name"], clean(event["text"], 190), event.get("bots", [])
     remember(event.get("steamid"))
+    seen(event)
     with lock:
         recent_chat.append(f"{name}: {text}")
     bot = named_bot(text, bots)
@@ -229,6 +269,7 @@ def on_kill(event):
     killer, victim = event["killer"], event["victim"]
     human, bot = (victim, killer) if killer["bot"] else (killer, victim)
     remember(human.get("steamid"), "bot_deaths" if killer["bot"] else "bot_kills")
+    seen(human)
     if random.random() >= TAUNT or not gap_passed("kill", KILL_LINE_GAP) or not gap_passed("bot", BOT_LINE_GAP):
         return {}
     how = f"with {event.get('weapon', 'a weapon')}" + (", a headshot" if event.get("headshot") else "")
@@ -239,8 +280,25 @@ def on_kill(event):
     return bot_line(bot, situation, human.get("steamid"), human["name"])
 
 
+def on_join(event):
+    """A human arrives: one bot, at random, says hello, with what the bots remember of them. Always."""
+    bots = event.get("bots", [])
+    answer = {}
+    since = seen(event)
+    # A map change puts every player in the game again: only a real arrival gets a hello.
+    if bots and (since is None or since > GREET_AGAIN):
+        answer = bot_line(random.choice(bots), f"{event['name']} just joined the server. Greet them, in English.",
+                          event.get("steamid"), event["name"])
+    # After the greeting: before, "last seen" would already be today.
+    remember(event.get("steamid"))
+    return answer
+
+
 def on_state(event):
     players = event.get("players", [])
+    for p in players:
+        if not p["bot"]:
+            seen(p)
     if not any(not p["bot"] for p in players):
         return {}
     table = "\n".join(f"id {p['id']} | {p['name']} | {'bot' if p['bot'] else 'human'} | team {p['team']} | "
@@ -259,7 +317,7 @@ def on_state(event):
     return {"gm": answer}
 
 
-HANDLERS = {"chat": on_chat, "kill": on_kill, "state": on_state}
+HANDLERS = {"chat": on_chat, "kill": on_kill, "state": on_state, "join": on_join}
 
 
 def handle(line):

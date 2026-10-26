@@ -25,6 +25,17 @@ class Relay(unittest.TestCase):
         self.assertIsNone(relay.named_bot("Grimace is a race", bots))  # a word, not a part of one
         self.assertEqual(relay.named_bot("@grim: gg", bots)["id"], 7)
 
+    def test_names(self):
+        bots = [{"id": 4, "name": "[AI] Zed"}]
+        self.assertEqual(relay.named_bot("zed, where are you?", bots)["id"], 4)  # players write it without [AI]
+        self.assertIn("Undead", relay.persona("[AI] Zed"))
+        self.assertEqual(relay.persona("Someone"), relay.persona("[AI] Someone"))  # not in the list: still stable
+
+    def test_seen(self):
+        # The first time: never seen; then a few seconds: a map change, not an arrival.
+        self.assertIsNone(relay.seen({"steamid": "STEAM_0:1:9", "name": "Ann"}))
+        self.assertLess(relay.seen({"steamid": "STEAM_0:1:9", "name": "Ann"}), relay.GREET_AGAIN)
+
     def test_valid_gm(self):
         self.assertEqual(relay.valid_gm({"event": "bounty", "target": 3, "target2": 0, "line": "Hunt Pierre!"},
                                         PLAYERS)["target"], 3)

@@ -196,8 +196,10 @@ Des bots qui répondent, et un maître du jeu. `ai.sma` envoie les nouvelles de 
 des actions :
 
 - **Les bots parlent** : un bot répond quand un joueur le nomme dans le chat (parfois même sans ça), et de temps
-  en temps après un kill entre un bot et un humain. Chaque nom de bot a son caractère. Les bots se souviennent de
-  chaque humain (par SteamID, dans le volume du relais) : depuis quand il joue, comment il s'en sort contre eux.
+  en temps après un kill entre un bot et un humain ; l'un d'eux salue chaque humain qui arrive. Jamais de bot à
+  bot. Chaque nom de [server/bot_names.txt](../../server/bot_names.txt) a son caractère (`PERSONAS` dans le
+  relais), et s'affiche `[AI] Zed` dans le tableau des scores. Les bots se souviennent de chaque humain (par
+  SteamID, dans le volume du relais) : depuis quand il joue, comment il s'en sort contre eux.
 - **Le maître du jeu** : toutes les 4 minutes, il lit le score et peut lancer un événement : une prime sur un
   joueur très en avance, un duel entre deux joueurs, 30 secondes de gravité basse, de l'argent pour tous. Il ne
   choisit que dans cette liste : le plugin vérifie chaque événement et le lance lui-même.

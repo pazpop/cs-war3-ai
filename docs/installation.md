@@ -185,8 +185,10 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
 ([ai/relay.py](../ai/relay.py), its own container), which asks Claude (Claude Haiku 5.5) and answers with actions:
 
 - **The bots talk**: a bot answers when a player names it in the chat (sometimes even when no one does), and
-  after a kill between a bot and a human, now and then. Each bot name has its own character. The bots remember
-  each human (by SteamID, in the relay's volume): since when they play, how they fare against bots.
+  after a kill between a bot and a human, now and then; one of them greets each human who arrives. Never bot to
+  bot. Each name of [server/bot_names.txt](../server/bot_names.txt) has its own character (`PERSONAS` in the
+  relay), and shows as `[AI] Zed` in the scoreboard. The bots remember each human (by SteamID, in the relay's
+  volume): since when they play, how they fare against bots.
 - **The Game Master**: every 4 minutes, it reads the score and may start an event: a bounty on a player far ahead,
   a duel between two players, 30 seconds of low gravity, money for everyone. It can only pick from this list: the
   plugin checks each event and runs it itself.
