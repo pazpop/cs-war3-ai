@@ -101,7 +101,20 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2` en jeu.
   zéro (l'XP et les classements restent).
 - Toutes les 30 minutes, un vote choisit la carte suivante.
 - Un annonceur pour le premier kill, les multi-kills et les séries, jusqu'à GODLIKE.
-- Absent **60 secondes** (aucune touche, souris immobile) : tu passes en spectateur. Un ping au-dessus de
-  **300 ms** pendant 50 secondes te fait expulser.
 - Les classements (du mois, XP et combat) et une page par joueur : [cs.pazpop.net](https://cs.pazpop.net).
 - Bien régler son jeu : [client.md](client.md).
+
+## Le règlement
+
+- **13 ans ou plus**, comme sur Steam.
+- **Le respect** : chambrer sur le jeu, oui. Insultes, menaces et harcèlement, non.
+- **Pas de haine** : ni racisme, ni sexisme, ni homophobie, ni insulte de ce genre, dans aucune langue, ni dans le
+  chat ni dans ton pseudo.
+- **Rien de sexuel ni d'illégal**, et aucune information personnelle, ni la tienne ni celle d'un autre.
+- **Pas de triche** : ni hack, ni script, ni bug utilisé exprès.
+- **Pas de spam**, ni de pub pour d'autres serveurs.
+- Absent **60 secondes** (aucune touche, souris immobile) : tu passes en spectateur. Un ping au-dessus de
+  **300 ms** pendant 50 secondes te fait expulser.
+
+Les mêmes règles valent dans le chat d'équipe. Si tu les enfreins, les joueurs peuvent t'expulser 10 minutes
+(`/votekick`), ou un admin peut t'expulser ou te bannir.

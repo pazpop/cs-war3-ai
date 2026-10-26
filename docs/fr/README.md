@@ -47,8 +47,8 @@ Il faut Counter-Strike 1.6 sur Steam. Puis, au choix :
 - Dans la console du jeu (la touche sous Échap), tape `connect cs.pazpop.net:27015`.
 
 En jeu : `/help` affiche le guide, `rtv` demande une nouvelle carte, `votekick` lance un vote pour expulser un
-joueur. Absent 60 secondes, tu passes en spectateur ; un ping au-dessus de 300 ms pendant 50 secondes te fait
-expulser. Pour un jeu fluide : [client.md](client.md).
+joueur. Le règlement (13 ans ou plus, le respect, pas de haine, pas de triche) :
+[war3ft.md](war3ft.md#le-règlement). Pour un jeu fluide : [client.md](client.md).
 
 ## Monter ton propre serveur
 

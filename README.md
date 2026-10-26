@@ -44,7 +44,7 @@ You need Counter-Strike 1.6 on Steam. Then any of these:
 - In the game console (the key under Esc), type `connect cs.pazpop.net:27015`.
 
 In game: `/help` shows the guide, `rtv` asks for a new map, `votekick` starts a vote to kick a player.
-Away for 60 seconds, you become a spectator; a ping over 300 ms for 50 seconds gets you kicked.
+The rules (13 or older, respect, no hate, no cheating): [docs/war3ft.md](docs/war3ft.md#rules).
 For a smooth game: [docs/client.md](docs/client.md).
 
 ## Run your own server

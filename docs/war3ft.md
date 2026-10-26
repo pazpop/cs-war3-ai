@@ -98,7 +98,19 @@ What each one does: `/itemsinfo` and `/itemsinfo2` in game.
   rankings stay).
 - Every 30 minutes, a vote picks the next map.
 - An announcer for first blood, multi-kills and kill streaks, up to GODLIKE.
-- Away for **60 seconds** (no key, no mouse move): you become a spectator. A ping over **300 ms** for 50 seconds
-  gets you kicked.
 - Rankings (of the month, XP and combat) and a page per player: [cs.pazpop.net](https://cs.pazpop.net).
 - Client settings: [client.md](client.md).
+
+## Rules
+
+- **13 or older**, as on Steam.
+- **Respect**: trash talk about the game is fine. Insults, threats and harassment are not.
+- **No hate**: no racism, sexism, homophobia or slurs, in any language, in the chat or in your name.
+- **Nothing sexual or illegal**, and no personal information, yours or anyone else's.
+- **No cheating**: no hacks, scripts, or bugs used on purpose.
+- **No spam**, and no ads for other servers.
+- Away for **60 seconds** (no key, no mouse move): you become a spectator. A ping over **300 ms** for 50 seconds
+  gets you kicked.
+
+The same rules hold in the team chat. Break them, and the players can kick you for 10 minutes (`/votekick`), or an
+admin can kick or ban you.
