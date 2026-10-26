@@ -39,7 +39,10 @@ services:
   # not published. Without ANTHROPIC_API_KEY, it stays silent.
   ai:
     <<: *hardening
-    build: ai
+    # From the repository's root, for the bots' list (server/bots.txt): see .dockerignore.
+    build:
+      context: .
+      dockerfile: ai/Dockerfile
     image: cs-war3-ai-ai
     restart: unless-stopped
     environment:
@@ -67,6 +70,9 @@ services:
     depends_on: [hlds]
     volumes:
       - ./stats:/srv/stats:ro
+      # The bots' list, for stats/bots.php. The folder, not the file: Ansible replaces the file, and a file mounted
+      # alone would keep the old one.
+      - ./server:/srv/server:ro
       - type: volume
         source: hlds
         target: /data

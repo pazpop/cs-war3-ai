@@ -95,6 +95,8 @@ share):
 - `csdm_active.sma`: turns on War3FT's deathmatch mode (a new session at every respawn); ReDeathmatch does the
   respawns.
 - `damage.sma`: the damage the player deals, under the crosshair, at each hit.
+- `fresh_start.sma`: when the first human joins a server of bots only, the game restarts (`sv_restart`): every
+  score back to zero, a fair start. XP, the ranking of the month and the achievements stay.
 - `help.sma`: `/help` in chat, or `help` in the console, opens the guide again.
 - `high_ping.sma`: a ping over 300 ms for 50 seconds, and a player is kicked.
 - `messages.sma`: a message in the chat every 2 minutes, in turn, from [server/messages.txt](../server/messages.txt):
@@ -150,6 +152,8 @@ sudo docker compose start hlds
   reads the database read-only.
 - `https://<domain>/status.php`: the server's state right now in JSON (humans, bots, map, slots), for other sites:
   [pazpop.net](https://pazpop.net) shows it. Asked to the game at most every 15 seconds.
+- `https://<domain>/bots.php`: the bots, their character and portrait (from [server/bots.txt](../server/bots.txt)).
+  The images (`stats/img/`) were made with [PixelLab](https://pixellab.ai): see its `CREDITS.txt`.
 - `http://<domain>/guide.html`: the guide, shown on connect. The in-game browser (MOTD) is too old for today's
   HTTPS: in game, only `http://` pages open.
 - `http://<domain>/cstrike/…`: FastDL. The game's own download (UDP) crashes the client on War3FT's files.
@@ -188,8 +192,8 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
 
 - **The bots talk**: a bot answers when a player names it in the chat (sometimes even when no one does), and
   after a kill between a bot and a human, now and then; one of them greets each human who arrives. Never bot to
-  bot. Each name of [server/bot_names.txt](../server/bot_names.txt) has its own character (`PERSONAS` in the
-  relay), and shows as `[AI] Zed` in the scoreboard. The bots remember each human (by SteamID, in the relay's
+  bot. Each bot of [server/bots.txt](../server/bots.txt) has its own character, the same for YaPB, the
+  relay and the stats page, and shows as `[AI] Zed` in the scoreboard. The bots remember each human (by SteamID, in the relay's
   volume): since when they play, how they fare against bots.
 - **The Game Master**: every 4 minutes, it reads the score and may start an event: a bounty on a player far ahead,
   a duel between two players, 30 seconds of low gravity, money for everyone. It can only pick from this list: the

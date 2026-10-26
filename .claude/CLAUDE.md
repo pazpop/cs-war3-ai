@@ -74,7 +74,11 @@ anyone who wants to run their own server, and get players to come back and bring
 - Caddy does not reread its Caddyfile: `deploy.yml` reloads it when it changes.
 - YaPB's `yb_difficulty_auto` balances each bot against the others and pushes them up to Expert: keep it off,
   use `yb_difficulty_min`/`max`.
-- YaPB's English bot names include a racial slur: our own list (`server/bot_names.txt`) replaces it.
+- YaPB's English bot names include a racial slur: our own list replaces it. `server/bots.txt` is the one list of
+  the bots (name | character): YaPB's names (Dockerfile), the relay's characters (its image is built from the
+  repository's root, `.dockerignore` lets only its files through), the stats page (`stats/bots.php`).
+- YaPB's avatars are real Steam accounts' (`avatars.cfg`): off (`yb_show_avatars 0`).
+- The site's images (`stats/img/`) come from PixelLab, outside the MIT license (`stats/img/CREDITS.txt`).
 - `yb_name_prefix "[AI] "` is checked with `grep -F` in the Dockerfile: in a regular expression, `[AI]` is a set of
   letters.
 - PHP runs as uid 1000: without capabilities, php-fpm could not switch to its own user. Caddy needs

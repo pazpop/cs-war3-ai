@@ -103,7 +103,7 @@ page_start($player ? 'War3FT: ' . $player['name'] : 'War3FT: player');
     // One skill point per level: the points spent (a player may keep some unspent).
     $points = array_sum(array_map(fn ($skill) => $levels[$skill] ?? 0, array_keys($skills)));
 ?>
-<h3><?= e(RACES[$race_id] ?? '?') ?> · <?= $points ?> skill points spent · <?= number_format((int) $row['race_xp']) ?> XP</h3>
+<h3><?= race_icon($race_id) ?><?= e(RACES[$race_id] ?? '?') ?> · <?= $points ?> skill points spent · <?= number_format((int) $row['race_xp']) ?> XP</h3>
 <?php if ($skills): ?>
 <table>
 <?php foreach ($skills as $skill => $name): ?>

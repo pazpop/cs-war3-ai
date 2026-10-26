@@ -1,10 +1,12 @@
 # The AI relay (relay.py): only Python's standard library, nothing installed.
+# Built from the repository's root (compose.yml), for the bots' list: .dockerignore sends only these two files.
 FROM python:3.13-alpine
 
 # Its memory (the players' history, the day's spending) is in /data: the folder exists, owned by the relay's user, so
 # Docker copies it into the new volume with that owner.
 RUN adduser -D -u 1000 ai && mkdir /data && chown ai:ai /data
-COPY relay.py /app/relay.py
+COPY ai/relay.py /app/relay.py
+COPY server/bots.txt /app/bots.txt
 USER ai
 VOLUME /data
 EXPOSE 27100

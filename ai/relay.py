@@ -31,29 +31,19 @@ TAUNT = 0.25          # chance that a bot talks after a kill between a bot and a
 GREET_AGAIN = 900     # seconds without news of a human before a bot greets them again: not at every map change
 EVENTS = ["none", "bounty", "duel", "low_gravity", "gold_rain"]
 
-# One character per name of server/bot_names.txt: the same bot is the same person, map after map.
-PERSONAS = {
-    "Zed": "a gloomy Undead fanatic who talks about death and coming back from it",
-    "Kai": "a laid-back surfer for whom everything is chill, even dying",
-    "Bob": "a friendly average guy who loves terrible dad jokes",
-    "Leo": "a proud lion who calls himself the king of every map",
-    "Ivy": "sweet on the surface, venomous underneath: polite words, poisoned compliments",
-    "Rex": "a simple brute who loves smashing things and speaks in very short sentences",
-    "Tom": "a paranoid player who suspects everyone of cheating, especially when he loses",
-    "Sam": "an overly polite gentleman, even when he loses badly",
-    "Mia": "a competitive esports hopeful obsessed with her stats and her aim",
-    "Jax": "a cocky trash-talking punk, never mean about real life",
-    "Ned": "a nervous newbie who apologizes for everything and is amazed by everything",
-    "Gus": "a cook who describes every fight with food and recipes",
-    "Lou": "a lazy player who would rather nap and complains about running",
-    "Pip": "a hyperactive kid who types fast and finds everything awesome",
-    "Rudy": "a dramatic actor who turns every death into a Shakespearean tragedy",
-    "Otto": "a grumpy veteran who has played since 1999 and finds today's players soft",
-    "Hugo": "a calm philosopher who answers with made-up ancient proverbs",
-    "Nina": "a Night Elf role-player who speaks like an elf from an old legend",
-    "Vic": "a drill sergeant who barks orders and calls everyone recruit",
-    "Zoe": "a sarcastic bot who knows she is a bot and jokes about it",
-}
+def load_personas(path):
+    """The bots' characters, from server/bots.txt: one "name | character" per line, ";" starts a comment."""
+    personas = {}
+    with open(path, encoding="utf-8") as file:
+        for line in file:
+            name, _, character = line.partition("|")
+            if line.strip() and not line.startswith(";"):
+                personas[name.strip()] = character.strip()
+    return personas
+
+
+# The same bot is the same person, map after map.
+PERSONAS = load_personas(os.environ.get("AI_BOTS", "/app/bots.txt"))
 PREFIX = re.compile(r"^\[AI\]\s*")  # yb_name_prefix (server/Dockerfile)
 
 RULES = (

@@ -25,6 +25,7 @@ Game Master. And the code to run your own.
 - 10 classic maps (de_dust2, de_inferno, cs_office...); a vote picks the next one, and `rtv` asks for a vote now.
 - Rankings at [cs.pazpop.net](https://cs.pazpop.net): the month's (from zero on the 1st), XP per race,
   combat, and a page per player (`/mystats` gives yours).
+- Join a server of bots only, and the game restarts: everyone starts from zero.
 - 1000 FPS server, North America (east).
 
 How the mod works: [docs/war3ft.md](docs/war3ft.md).
@@ -48,4 +49,5 @@ The server runs in Docker on a VPS, deployed with Ansible: [docs/installation.md
 
 Our code is under the [MIT license](LICENSE). The components it downloads keep their own licenses (see the
 installation guide). The announcer's voices are by Antti Saari and TripleSnail, under CC-BY 3.0
-([server/sound/announcer/CREDITS.txt](server/sound/announcer/CREDITS.txt)).
+([server/sound/announcer/CREDITS.txt](server/sound/announcer/CREDITS.txt)). The stats site's images were made with
+PixelLab ([stats/img/CREDITS.txt](stats/img/CREDITS.txt)).

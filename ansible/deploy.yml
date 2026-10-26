@@ -62,6 +62,7 @@
         mode: "0644"
       loop:
         - { src: ../compose.yml, dest: compose.yml }
+        - { src: ../.dockerignore, dest: .dockerignore }
         - { src: ../server/, dest: server/ }
         - { src: ../ai/, dest: ai/ }
         - { src: ../stats/, dest: stats/ }

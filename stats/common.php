@@ -52,6 +52,63 @@ function failed(PDOException $exception): bool
     return true;
 }
 
+// The game's state right now, asked like the server browser does (A2S_INFO), at most every 15 seconds: the answer is
+// kept in a file, so that nobody can flood the game through the pages. ['online' => false] when it does not answer.
+const STATUS_CACHE = '/tmp/status.json';
+
+function server_status(): array
+{
+    if (is_file(STATUS_CACHE) && filemtime(STATUS_CACHE) > time() - 15) {
+        return json_decode((string) file_get_contents(STATUS_CACHE), true) ?: ['online' => false];
+    }
+    // While this request asks the game (up to 4 seconds if it is down), the others get the last answer.
+    if (is_file(STATUS_CACHE)) {
+        touch(STATUS_CACHE);
+    }
+    $status = ask_game();
+    // Written next to it, then renamed: a request at the same moment never reads a half-written file.
+    file_put_contents(STATUS_CACHE . '.tmp', json_encode($status, JSON_INVALID_UTF8_SUBSTITUTE));
+    rename(STATUS_CACHE . '.tmp', STATUS_CACHE);
+    return $status;
+}
+
+function ask_game(): array
+{
+    // Through the host's published port: the game is on its own network (compose.yml).
+    $udp = @fsockopen('udp://host.docker.internal', 27015, $errno, $error, 2);
+    if (!$udp) {
+        return ['online' => false];
+    }
+    stream_set_timeout($udp, 2);
+    $query = "\xff\xff\xff\xffTSource Engine Query\0";
+    fwrite($udp, $query);
+    $reply = (string) fread($udp, 1400);
+    // The server may first answer with a challenge ("A" and 4 bytes) to send back.
+    if (substr($reply, 4, 1) === 'A') {
+        fwrite($udp, $query . substr($reply, 5, 4));
+        $reply = (string) fread($udp, 1400);
+    }
+    fclose($udp);
+
+    // "I", the protocol, 4 texts ended by a zero byte (name, map, folder, game), the game's number (2 bytes), then
+    // players, slots, bots.
+    if (substr($reply, 4, 1) !== 'I') {
+        return ['online' => false];
+    }
+    $texts = explode("\0", substr($reply, 6), 5);
+    if (count($texts) < 5 || strlen($texts[4]) < 5) {
+        return ['online' => false];
+    }
+    [$players, $slots, $bots] = [ord($texts[4][2]), ord($texts[4][3]), ord($texts[4][4])];
+    return [
+        'online' => true,
+        'humans' => max(0, $players - $bots),
+        'bots' => $bots,
+        'slots' => $slots,
+        'map' => $texts[1],
+    ];
+}
+
 // steam://connect: one click starts the game and joins the server (the address comes from the request's host).
 function join_link(): string
 {
@@ -66,8 +123,16 @@ function percent(int $part, int $total): string
     return $total > 0 ? number_format(100 * $part / $total, 1) . ' %' : '-';
 }
 
+// A race's icon (img/races/<id>.png), before its name.
+function race_icon(int $race): string
+{
+    return '<img class="icon" src="/img/races/' . $race . '.png" alt="" width="24" height="24">';
+}
+
+// The top of every page: the menu, then who plays right now and the join button.
 function page_start(string $title): void
 {
+    $status = server_status();
     ?>
 <!doctype html>
 <html lang="en">
@@ -78,8 +143,20 @@ function page_start(string $title): void
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+<header class="top">
+<a class="brand" href="/index.php"><img src="/img/logo.png" alt="" width="40" height="40">War3FT <span>AI</span></a>
+<nav class="menu"><a href="/index.php">Rankings</a> <a href="/bots.php">The bots</a> <a href="/guide.html">Guide</a></nav>
+</header>
+<div class="live">
+<?php if ($status['online']): ?>
+<span class="dot on"></span> <?= (int) $status['humans'] ?> players and <?= (int) $status['bots'] ?> bots on
+<b><?= e((string) $status['map']) ?></b>
+<?php else: ?>
+<span class="dot"></span> The server does not answer right now.
+<?php endif; ?>
+<span class="join-box"><?= join_link() ?></span>
+</div>
 <main>
-<p><?= join_link() ?></p>
 <?php
 }
 
@@ -88,6 +165,7 @@ function page_end(): void
     ?>
 <footer>
 <a href="/index.php">Rankings</a> ·
+<a href="/bots.php">The bots</a> ·
 <a href="/guide.html">The mod guide</a> ·
 <a href="https://github.com/pazpop/cs-war3-ai/blob/main/docs/client.md">Optimized client config</a> ·
 <a href="https://github.com/pazpop/cs-war3-ai">Server source code</a>

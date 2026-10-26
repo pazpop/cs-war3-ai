@@ -85,6 +85,7 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2` en jeu.
   est varié, de moyen à fort, comme de vrais joueurs.
 - **L'IA** : les bots (`[AI] Zed`…) répondent quand tu écris leur nom dans le chat, chacun avec son caractère, et
   se souviennent de toi. Un maître du jeu lance des primes, des duels et d'autres surprises.
+- Le premier humain qui arrive sur un serveur de bots seuls relance la partie : tout le monde repart de zéro.
 - Toutes les 30 minutes, un vote choisit la carte suivante.
 - Un annonceur pour le premier kill, les multi-kills et les séries, jusqu'à GODLIKE.
 - Absent **60 secondes** (aucune touche, souris immobile) : tu passes en spectateur. Un ping au-dessus de

@@ -50,4 +50,4 @@ jobs:
         run: docker build server
 
       - name: Build the AI relay's image
-        run: docker build ai
+        run: docker build -f ai/Dockerfile .

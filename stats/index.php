@@ -91,8 +91,9 @@ function player_link(array $row): string
 
 page_start('War3FT: rankings');
 ?>
+<img class="banner" src="/img/banner.png" alt="" width="400" height="160">
 <h1>War3FT: rankings</h1>
-<p>A Counter-Strike 1.6 server with Warcraft 3 races and spells, and bots that talk back.</p>
+<p>A Counter-Strike 1.6 server with Warcraft 3 races and spells, and <a href="/bots.php">bots that talk back</a>.</p>
 
 <?php if ($failed): ?>
 <p>Rankings are not available right now. Try again in a minute.</p>
@@ -127,7 +128,7 @@ Kills minus deaths, updated when a player leaves and at each map change.</p>
 <?php if (!$hall): ?>
 <p>The first champions are crowned on the 1st of next month.</p>
 <?php else: ?>
-<table class="ranking">
+<table>
 <thead><tr><th>Month</th><th>1st</th><th>2nd</th><th>3rd</th></tr></thead>
 <tbody>
 <?php foreach ($hall as $month => $podium): ?>
@@ -143,10 +144,10 @@ Kills minus deaths, updated when a player leaves and at each map change.</p>
 <?php endif; ?>
 
 <h2>XP</h2>
-<nav>
+<nav class="races">
 <a href="/index.php"<?= $race === null ? ' class="active"' : '' ?>>All</a>
 <?php foreach (RACES as $id => $name): ?>
-<a href="/index.php?race=<?= $id ?>"<?= $race === $id ? ' class="active"' : '' ?>><?= e($name) ?></a>
+<a href="/index.php?race=<?= $id ?>"<?= $race === $id ? ' class="active"' : '' ?>><?= race_icon($id) ?><?= e($name) ?></a>
 <?php endforeach; ?>
 </nav>
 <?php if (!$xp): ?>
@@ -159,7 +160,7 @@ Kills minus deaths, updated when a player leaves and at each map change.</p>
 <tr>
 <td><?= $position + 1 ?></td>
 <td><?= player_link($row) ?></td>
-<td><?= e(RACES[(int) $row['race_id']] ?? '?') ?></td>
+<td><?= race_icon((int) $row['race_id']) ?><?= e(RACES[(int) $row['race_id']] ?? '?') ?></td>
 <td><?= number_format((int) $row['race_xp']) ?></td>
 </tr>
 <?php endforeach; ?>

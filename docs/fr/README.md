@@ -29,6 +29,7 @@ répondent, et un maître du jeu. Et le code pour monter le tien.
   tout de suite.
 - Les classements sur [cs.pazpop.net](https://cs.pazpop.net) : celui du mois (repart de zéro le 1er), l'XP par
   race, le combat, et une page par joueur (`/mystats` donne la tienne).
+- Tu arrives sur un serveur de bots seuls : la partie redémarre, tout le monde repart de zéro.
 - Serveur à 1000 FPS, Amérique du Nord (est).
 
 Comment marche le mod : [war3ft.md](war3ft.md).
@@ -52,4 +53,5 @@ Le serveur tourne dans Docker sur un VPS, déployé avec Ansible : [installation
 
 Notre code est sous [licence MIT](../../LICENSE). Les briques qu'il télécharge gardent leurs propres licences (voir
 le guide d'installation). Les voix de l'annonceur sont d'Antti Saari et TripleSnail, sous CC-BY 3.0
-([server/sound/announcer/CREDITS.txt](../../server/sound/announcer/CREDITS.txt)).
+([server/sound/announcer/CREDITS.txt](../../server/sound/announcer/CREDITS.txt)). Les images du site de stats ont
+été faites avec PixelLab ([stats/img/CREDITS.txt](../../stats/img/CREDITS.txt)).

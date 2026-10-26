@@ -1,8 +1,9 @@
-# The relay's checks, without the API: python3 -m unittest discover ai
+# The relay's checks, without the API: python3 -m unittest discover ai (from the repository's root)
 import os
 import unittest
 
 os.environ["AI_DB"] = ":memory:"
+os.environ.setdefault("AI_BOTS", os.path.join(os.path.dirname(__file__), "..", "server", "bots.txt"))
 os.environ.pop("ANTHROPIC_API_KEY", None)
 import relay  # noqa: E402
 

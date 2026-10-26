@@ -67,7 +67,7 @@ RUN set -eu; cd /tmp; \
 # (ReDeathmatch only has spawn points for 3 of our maps). Rounds never end ("1"): its "bcdefg" would end one at
 # each mp_roundtime (5 minutes). The bots play team deathmatch (yb_csdm_mode 1), never camp, and get the weapons
 # players use (AK-47 or M4A1; Deagle, USP or Glock), not ReDeathmatch's (Famas, Galil, P228, Elite). Their names
-# start with "[AI] ": the AI shows in the scoreboard.
+# start with "[AI] ": the AI shows in the scoreboard. No avatars: YaPB borrows them from real Steam accounts.
 # Spawn protection (ReGameDLL's game.cfg): 3 seconds without damage after a respawn, lost at the first shot (not when
 # moving: "2"). ReDeathmatch tints the protected players in their team's color. game.cfg's lines end with \r.
 # CS's ranking (/rank, /top15) counts the fights with bots, most of the fights here. All bots share one row in it
@@ -97,6 +97,7 @@ RUN set -eu; cd /opt/mods/cstrike; \
       -e 's/^yb_csdm_mode "0"/yb_csdm_mode "1"/' -e 's/^yb_difficulty_min "-1"/yb_difficulty_min "1"/' \
       -e 's/^yb_difficulty_max "-1"/yb_difficulty_max "3"/' \
       -e 's/^yb_camping_allowed "1"/yb_camping_allowed "0"/' -e 's/^yb_name_prefix ""/yb_name_prefix "[AI] "/' \
+      -e 's/^yb_show_avatars "1"/yb_show_avatars "0"/' \
       addons/yapb/conf/yapb.cfg; \
     grep -q '^gamedll_linux "addons/metamod/metamod_i386.so"' liblist.gam; \
     grep -q '^sqlite' addons/amxmodx/configs/modules.ini; \
@@ -119,12 +120,17 @@ RUN set -eu; cd /opt/mods/cstrike; \
     grep -qP '^wc3_start_level\t+3\t' addons/amxmodx/configs/war3ft/war3FT.cfg; \
     for line in 'yb_quota "10"' 'yb_quota_mode "fill"' 'yb_chat "0"' 'yb_radio_mode "0"' \
                 'yb_csdm_mode "1"' 'yb_difficulty_min "1"' 'yb_difficulty_max "3"' 'yb_camping_allowed "0"' \
-                'yb_name_prefix "[AI] "'; do \
+                'yb_name_prefix "[AI] "' 'yb_show_avatars "0"'; do \
       grep -qxF "$line" addons/yapb/conf/yapb.cfg; \
     done
 
-# Our bots' names, in place of YaPB's: short and easy to type, to talk to them (YaPB's list also has a racial slur).
-COPY bot_names.txt /opt/mods/cstrike/addons/yapb/conf/lang/en_names.cfg
+# Our bots' names (bots.txt, before the "|"), in place of YaPB's: short and easy to type, to talk to them (YaPB's list
+# also has a racial slur).
+COPY bots.txt /tmp/bots.txt
+RUN set -eu; names=/opt/mods/cstrike/addons/yapb/conf/lang/en_names.cfg; \
+    grep -v '^;' /tmp/bots.txt | cut -d'|' -f1 | sed 's/ *$//' | grep . > "$names"; \
+    [ "$(wc -l < "$names")" -ge 10 ]; \
+    rm /tmp/bots.txt
 
 # Our AMX Mod X plugins, compiled with the compiler from the War3FT package.
 COPY plugins/ /opt/mods/cstrike/addons/amxmodx/scripting/cs-war3-ai/

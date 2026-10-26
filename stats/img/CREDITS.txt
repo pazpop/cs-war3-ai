@@ -1,0 +1,3 @@
+The images in this folder (banner, logo, the races' icons, the bots' portraits) were made for this project with
+PixelLab (https://pixellab.ai), an AI pixel-art generator. PixelLab's terms let their author use them, for a website
+too; they say nothing about a license, so they are not covered by this repository's MIT license.

@@ -85,6 +85,7 @@ What each one does: `/itemsinfo` and `/itemsinfo2` in game.
   average to strong, like real players.
 - **The AI**: the bots (`[AI] Zed`...) talk back when you write their name in the chat, each with its own
   character, and remember you. A Game Master starts bounties, duels and other surprises.
+- The first human to join a server of bots only restarts the game: everyone starts from zero.
 - Every 30 minutes, a vote picks the next map.
 - An announcer for first blood, multi-kills and kill streaks, up to GODLIKE.
 - Away for **60 seconds** (no key, no mouse move): you become a spectator. A ping over **300 ms** for 50 seconds

@@ -100,6 +100,8 @@ plusieurs partagent) :
 - `csdm_active.sma` : active le mode deathmatch de War3FT (une nouvelle session à chaque réapparition) ;
   ReDeathmatch fait réapparaître les joueurs.
 - `damage.sma` : les dégâts que le joueur inflige, sous le viseur, à chaque coup.
+- `fresh_start.sma` : quand le premier humain arrive sur un serveur de bots seuls, la partie redémarre
+  (`sv_restart`) : tous les scores à zéro, un départ équitable. L'XP, le classement du mois et les succès restent.
 - `help.sma` : `/help` dans le chat, ou `help` dans la console, rouvre le guide.
 - `high_ping.sma` : un ping au-dessus de 300 ms pendant 50 secondes, et un joueur est expulsé.
 - `messages.sma` : un message dans le chat toutes les 2 minutes, à tour de rôle, tiré de
@@ -157,6 +159,9 @@ sudo docker compose start hlds
   succès, stats de combat. PHP lit la base en lecture seule.
 - `https://<domaine>/status.php` : l'état du serveur en ce moment, en JSON (humains, bots, carte, places), pour
   d'autres sites : [pazpop.net](https://pazpop.net) l'affiche. Le jeu est interrogé au plus toutes les 15 secondes.
+- `https://<domaine>/bots.php` : les bots, leur caractère et leur portrait (tirés de
+  [server/bots.txt](../../server/bots.txt)). Les images (`stats/img/`) ont été faites avec
+  [PixelLab](https://pixellab.ai) : voir son `CREDITS.txt`.
 - `http://<domaine>/guide.html` : le guide, affiché à la connexion. Le navigateur du jeu (MOTD) est trop vieux pour
   le HTTPS d'aujourd'hui : en jeu, seules les pages `http://` s'ouvrent.
 - `http://<domaine>/cstrike/…` : le FastDL. Le téléchargement par le jeu (UDP) fait planter le client sur les
@@ -198,8 +203,8 @@ des actions :
 
 - **Les bots parlent** : un bot répond quand un joueur le nomme dans le chat (parfois même sans ça), et de temps
   en temps après un kill entre un bot et un humain ; l'un d'eux salue chaque humain qui arrive. Jamais de bot à
-  bot. Chaque nom de [server/bot_names.txt](../../server/bot_names.txt) a son caractère (`PERSONAS` dans le
-  relais), et s'affiche `[AI] Zed` dans le tableau des scores. Les bots se souviennent de chaque humain (par
+  bot. Chaque bot de [server/bots.txt](../../server/bots.txt) a son caractère, le même pour YaPB, le relais et
+  la page de stats, et s'affiche `[AI] Zed` dans le tableau des scores. Les bots se souviennent de chaque humain (par
   SteamID, dans le volume du relais) : depuis quand il joue, comment il s'en sort contre eux.
 - **Le maître du jeu** : toutes les 4 minutes, il lit le score et peut lancer un événement : une prime sur un
   joueur très en avance, un duel entre deux joueurs, 30 secondes de gravité basse, de l'argent pour tous. Il ne
