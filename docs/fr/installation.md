@@ -54,6 +54,10 @@ Les voix de l'annonceur sont les seuls fichiers de tiers qu'il contient
 
 Depuis la racine du dépôt, après `source vault.sh` :
 
+`init.yml` se connecte sur le port 22 : si l'[Edge Network Firewall](#ledge-network-firewall-dovhcloud-optionnel)
+est actif, ajoute d'abord une règle temporaire (priorité 9, Autoriser, TCP, port de destination 22), et supprime-la
+après `config.yml`.
+
 ```bash
 ansible-playbook -i ansible/inventory.yml ansible/init.yml    # une fois : comptes, SSH sur 2222
 ansible-playbook -i ansible/inventory.yml ansible/config.yml  # le système : pare-feu, Docker, mises à jour

@@ -51,6 +51,9 @@ The announcer's voices are the only third-party files in it ([CREDITS.txt](../se
 
 From the repository root, after `source vault.sh`:
 
+`init.yml` connects on port 22: if the [Edge Network Firewall](#ovhcloud-edge-network-firewall-optional) is on,
+add a temporary rule first (priority 9, Accept, TCP, destination port 22), and delete it after `config.yml`.
+
 ```bash
 ansible-playbook -i ansible/inventory.yml ansible/init.yml    # once: accounts, SSH on 2222
 ansible-playbook -i ansible/inventory.yml ansible/config.yml  # the system: firewall, Docker, updates
