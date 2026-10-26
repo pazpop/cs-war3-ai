@@ -5,7 +5,7 @@ Français : [fr/war3ft.md](fr/war3ft.md)
 Counter-Strike 1.6 with the races and spells of Warcraft 3: Frozen Throne. An AMX Mod X plugin
 ([wc3mods/war3ft](https://github.com/wc3mods/war3ft)).
 
-In game, the same guide shows up when you connect (the MOTD): [cs.pazpop.net/guide.html](https://cs.pazpop.net/guide.html).
+In game, a short guide shows up when you connect (the MOTD): [cs.pazpop.net/guide.html](https://cs.pazpop.net/guide.html).
 
 ## The basics
 
@@ -37,6 +37,7 @@ Every command works with a `/` in front.
 | `/ach` | Your achievements: 14 goals, from your first kill to 10,000 |
 | `/mystats` | The link to your page on the stats site |
 | `/coach` | A tip from the AI coach, from your numbers on this map, in private |
+| `/goal` | The goal of the week, the same for everyone, and your count |
 | `/statsme`, `/rankstats` | Your stats on this map, your overall stats |
 | `/nextmap`, `/timeleft` | The next map, time left on this one |
 
@@ -47,9 +48,10 @@ bind "mouse3" "ultimate"
 bind "alt" "ability"
 bind "-" "shopmenu"
 bind "=" "shopmenu2"
+bind "F3" "war3menu"
 ```
 
-`ability` is for the Shadow Hunter's Serpent Ward.
+`ability` is for the Shadow Hunter's Serpent Ward. To keep these keys at every launch: [client.md](client.md).
 
 ## Races
 
@@ -65,6 +67,9 @@ bind "=" "shopmenu2"
 | Crypt Lord | Impale, spiked carapace, beetles | Locust swarm |
 
 Exact numbers (percentages, durations): `/skillsinfo` in game.
+
+On this server everyone comes back at once, so what brings you back or keeps your gear does nothing here: the
+Orcish Horde's equipment, the Blood Mage's revive, the Warden's ultimate, and the ankh and the scroll.
 
 ## Items
 
@@ -85,8 +90,10 @@ What each one does: `/itemsinfo` and `/itemsinfo2` in game.
 - **Bots** (YaPB) fill the server up to 10 players. A bot leaves when a human joins. Their skill is a mix, from
   average to normal. Each bot has its own War3FT race, and is War3FT level 1 to 5, new at each map.
 - **The AI**: the bots (`[AI] Zed`...) talk back when you write their name in the chat, usually answer a question
-  with a `?`, each with its own character, and remember you: kill one often, and it holds a grudge. A Game Master
-  starts bounties, duels and other surprises.
+  with a `?`, each with its own character, and remember you, and the last map you played together: kill one often,
+  and it holds a grudge. A Game Master starts bounties, duels and other surprises, names each map's MVP at its end,
+  and writes the server's journal each night on [cs.pazpop.net](https://cs.pazpop.net).
+- **Goal of the week**: the same for everyone, a new one every Monday (`/goal`), with its board on the stats site.
 - The first human to join a server of bots only restarts the game: every score of the map starts from zero (XP and
   rankings stay).
 - Every 30 minutes, a vote picks the next map.

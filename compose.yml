@@ -4,10 +4,12 @@
 # HLDS's console: docker attach cs-war3-ai-hlds-1 (leave with Ctrl+P then Ctrl+Q; Ctrl+C stops the server
 # cleanly, and Docker starts it again).
 
-# Every container: no Linux capabilities (unless listed), and no way to gain more (setuid).
+# Every container: no Linux capabilities (unless listed), no way to gain more (setuid), and a cap on processes (a
+# fork bomb stays inside).
 x-hardening: &hardening
   cap_drop: [ALL]
   security_opt: [no-new-privileges:true]
+  pids_limit: 256
 
 services:
   hlds:
@@ -33,7 +35,8 @@ services:
     tty: true
     volumes:
       - hlds:/hlds
-      # The VPS's time zone (a container is in UTC otherwise), like every container here: logs, /thetime, the month.
+      # The VPS's time zone (a container is in UTC otherwise), like the AI relay and the stats page: logs, /thetime,
+      # the month.
       - /etc/localtime:/etc/localtime:ro
 
   # The AI relay (ai/relay.py): the game's plugin (server/plugins/ai.sma) asks it, it asks Claude. Only the game
@@ -47,6 +50,9 @@ services:
       dockerfile: ai/Dockerfile
     image: cs-war3-ai-ai
     restart: unless-stopped
+    # Nothing to write but its database (a volume) and SQLite's temporary files.
+    read_only: true
+    tmpfs: [/tmp]
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # The most it spends in a day, in dollars; then it is silent until midnight (the VPS's time). 0: the AI is off.
@@ -69,6 +75,10 @@ services:
     restart: unless-stopped
     # As the game's user, from the start: without capabilities, PHP could not switch to its own user.
     user: "1000:1000"
+    # No access log: the image's own writes every visitor's IP address into Docker's logs.
+    configs:
+      - source: php-no-access-log
+        target: /usr/local/etc/php-fpm.d/zz-no-access-log.conf
     environment:
       # The VPS's time zone, by name: PHP does not read /etc/localtime. In .env, written by Ansible.
       TIMEZONE: ${TIMEZONE:-UTC}
@@ -128,6 +138,13 @@ volumes:
   hlds:
   caddy:
   ai:
+
+configs:
+  # Read after the image's own PHP-FPM settings (zz-: last in alphabetical order), so it wins.
+  php-no-access-log:
+    content: |
+      [www]
+      access.log = /dev/null
 
 networks:
   # The game alone, and its AI relay.

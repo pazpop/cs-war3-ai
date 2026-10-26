@@ -3,3 +3,4 @@
 Like this server? Add it to your favorites, address {domain}:27015
 Your XP race by race, and the ranking of the month (from zero on the 1st): https://{domain}
 Type /help for the guide, /rank for your place, /ach for your achievements.
+A new goal every Monday, the same for everyone: /goal. And /coach for a tip from the AI coach.

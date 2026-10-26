@@ -31,7 +31,8 @@ The announcer's voices are the only third-party files in it ([CREDITS.txt](../se
 ## Your settings
 
 1. A DNS name pointing to the VPS: set it as `domain` in [ansible/inventory.yml](../ansible/inventory.yml), with
-   your own servers in `collect_domains`. The chat messages: [server/messages.txt](../server/messages.txt).
+   your own servers in `collect_domains`, and your `timezone` (the logs, the rankings and the journal follow it).
+   The chat messages: [server/messages.txt](../server/messages.txt).
 2. An SSH key for Ansible (`ansible_ssh_private_key_file` in the inventory), copied to the provider's account:
    `ssh-copy-id -i ~/.ssh/<your key>.pub debian@<domain>`
 3. Copy [ansible/personal.example.yml](../ansible/personal.example.yml) to `ansible/personal.yml` (ignored by git)
@@ -67,7 +68,7 @@ needs it: run it when nobody plays.
 
 | Action | Command, on the VPS (in `/srv/cs-war3-ai`) |
 |---|---|
-| Log | `sudo docker logs -f cs-war3-ai-hlds-1` |
+| Console output | `sudo docker logs -f cs-war3-ai-hlds-1` (the game's log, with the IPs and the team chat, stays in the volume's `cstrike/logs/`, 14 days) |
 | Console | `sudo docker attach cs-war3-ai-hlds-1` (leave with `Ctrl+P` then `Ctrl+Q`; `Ctrl+C` restarts the server) |
 | Update CS 1.6 | `sudo UPDATE=1 docker compose up -d`, then `sudo docker compose up -d` once it runs (otherwise every restart updates again) |
 | Server FPS back to Valve's default | `sudo TICRATE=100 docker compose up -d` (until the next `deploy.yml`) |
@@ -87,15 +88,17 @@ share):
 - `achievements.sma`: 14 achievements (`/ach`), saved in War3FT's database; the player pages show them. At each map, the
   closest one; a word to the player when 10 % is left.
 - `afk.sma`: 60 seconds without a key or a mouse move, and a player goes to spectator.
-- `ai.sma`: sends the chat, the kills between bots and humans, every 10 minutes the state of the game, and a
-  player's numbers for the coach to the AI relay, and does what it answers (see [The AI](#the-ai-optional)).
+- `ai.sma`: sends the chat, the kills between bots and humans, every 10 minutes the state of the game, a player's
+  numbers for the coach, and the Game Master's announcements to the AI relay, and does what it answers (see
+  [The AI](#the-ai-optional)). At each map's end, the Game Master names the MVP: the top of the scoreboard.
 - `announcer.sma`: the voices and messages for first blood, multi-kills and kill streaks. Players download the voices
   over HTTP (FastDL).
 - `block_test.sma`: blocks War3FT's debug commands `test` and `test2`, open to every player (they fill the logs).
 - `bots.sma`: each bot of [server/bots.txt](../server/bots.txt) most often plays its own War3FT race, wears its own
   skin on each team, and has a level of 1 to 5 at each map (its XP never adds up: no stronger than the humans).
+  A human's name loses `[AI]` and `Game Master`: only the AI wears them.
 - `csdm_active.sma`: turns on War3FT's deathmatch mode (a new session at every respawn); ReDeathmatch does the
-  respawns.
+  respawns. Saves everyone's XP every 5 minutes too: War3FT saves at a round's end, which never comes here.
 - `damage.sma`: the damage the player deals, under the crosshair, at each hit.
 - `fresh_start.sma`: when the first human joins a server of bots only, the game restarts (`sv_restart`): every
   score back to zero, a fair start. XP, the ranking of the month and the achievements stay.
@@ -116,9 +119,13 @@ share):
 - `web_stats.sma`: for the stats page, stores each human's name (in SQLite, War3FT only keeps the SteamID), and
   copies the top 100 of CS's combat ranking (`/rank`, `/top15`) at each map start. `/mystats`: the link to the
   player's page.
+- `weekly.sma`: the goal of the week, the same for everyone, a new one every Monday (`/goal`); its board is on the
+  stats page. No prize.
 
 ReDeathmatch: teams, instant respawn in the team's base, no rounds, weapons with **G**, $800 to start (the War3
 shops cost money). 3 seconds of spawn protection, lost at the first shot (ReGameDLL's `mp_respawn_immunity*`).
+In this mode, War3FT turns off what brings a player back or keeps their gear: the Orcish Horde's equipment, the
+Blood Mage's revive, the Warden's ultimate, the ankh and the scroll (the guides say so).
 Mapchooser runs a map vote at the end of each map (every 30 minutes).
 AMX Mod X's `antiflood` blocks chat floods (one message every 0.75 s at most: `amx_flood_time`).
 
@@ -152,8 +159,8 @@ sudo docker compose start hlds ai
 
 ## Web
 
-- `https://<domain>` (and `http://`, for the in-game browser): the rankings (of the month, XP and combat),
-  the number of players (since launch, last 30 and 90 days) ([stats/index.php](../stats/index.php)), and a page per
+- `https://<domain>` (and `http://`): the Game Master's journal, the rankings (of the month, the goal of the week,
+  XP and combat), the number of players (since launch, last 30 and 90 days) ([stats/index.php](../stats/index.php)), and a page per
   player ([stats/player.php](../stats/player.php)): XP and skill levels per race, combat stats, achievements. PHP
   reads the database read-only.
 - `https://<domain>/status.php`: the server's state right now in JSON (humans, bots, map, slots), for other sites:
@@ -171,9 +178,10 @@ sudo docker compose start hlds ai
 
 - **The system** updates itself every night at 4:00, and reboots at 5:00 if an update needs it.
 - **CS 1.6**: see [The game server](#the-game-server).
-- **Caddy, PHP and the Debian base**: run `deploy.yml` about once a month: it rebuilds the image on a fresh Debian
-  base and pulls the latest Caddy and PHP patches.
-- **The mods** (ReHLDS, ReGameDLL, Metamod-R, ReAPI, War3FT, ReDeathmatch, YaPB):
+- **Caddy, PHP, Python and the Debian base**: run `deploy.yml` about once a month: it rebuilds both images on fresh
+  bases and pulls the latest Caddy and PHP patches.
+- **AMX Mod X**: a later 1.10 build than War3FT's, checked by hand (see [server/Dockerfile](../server/Dockerfile)).
+- **The mods and the images** (ReHLDS, ReGameDLL, Metamod-R, ReAPI, War3FT, ReDeathmatch, YaPB, Caddy, PHP, Python):
   [Renovate](https://docs.renovatebot.com) opens a pull request when a new version is out (enable the free Renovate
   app on the repository). In that pull request,
   replace the version's SHA-256 in [server/Dockerfile](../server/Dockerfile): `curl -sL <archive URL> | sha256sum`.
@@ -190,7 +198,7 @@ players (about 15 KB a day per server). The servers: `collect_domains` in [ansib
 To download it:
 
 ```bash
-scp -P 2222 deploy@<domain>:/srv/collect/players.csv .
+scp -P 2222 -i ~/.ssh/<your key> deploy@<domain>:/srv/collect/players.csv .
 ```
 
 ## Chat reports
@@ -208,8 +216,9 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
 - **The bots talk**: a bot answers when a player names it in the chat (sometimes even when no one does), and
   after a kill between a bot and a human, now and then; one of them greets each human who arrives. Never bot to
   bot. Each bot of [server/bots.txt](../server/bots.txt) has its own race and character, the same for
-  YaPB, the game, the relay and the stats page, and shows as `[AI] Zed` in the scoreboard. The bots remember each human (by SteamID, in
-  the relay's volume): since when they play, how they fare against bots, and each bot's score against them. A bot
+  YaPB, the game, the relay and the stats page, and shows as `[AI] Zed` in the scoreboard. The bots remember each
+  human (by SteamID, in the relay's volume): since when they play, the last map played together, how they fare
+  against bots, and each bot's score against them. A bot
   killed 5 times by a player, more than it killed them, holds a grudge: it teases them, and greets them first.
 - **Questions**: a message with a `?` usually gets an answer from a bot, which has the mod's guide
   ([docs/war3ft.md](war3ft.md)) at hand; a newcomer gets a tip from it with the hello. These requests are longer
@@ -222,22 +231,27 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
   a duel between two players, a challenge (kills, headshots, knife or grenade kills, in 2 minutes), a boss (a bot
   with 500 health and a red glow), 30 seconds of low gravity, money for everyone, 100 War3FT XP for every human
   (`changexp`), a War3FT shop item for everyone (`wc3_giveitem`). Each prize is $3000 and 200 XP, and nobody has to
-  take part. It can only pick from this list: the plugin checks each event and runs it itself.
+  take part. It can only pick from this list: the plugin checks each event and runs it itself, and never the same
+  event twice in a row.
+- **The journal**: each night, the relay writes the day before's entry (3 to 5 sentences) from the Game Master's
+  announcements and the bots' lines, never from what players write; the home page shows the last 3 days.
 
 What the AI may say: a strict system prompt, then a moderator (a second request) checks every line before it is
 shown: no slurs, hate, sexual content, threats, illegal activity, politics or personal information, in any
 language, nor an offensive player name repeated. On any doubt or error, nothing is shown. A bot answers the same
-player at most every 10 seconds, and the bots never talk to each other.
+player at most every 10 seconds. In the game, the AI shows as `[AI] Zed`, `[AI Game Master]` and `[AI Coach]`:
+players know they talk to an AI (Anthropic requires it).
 
 Setup: an API key from [console.anthropic.com](https://console.anthropic.com) in the vault
 (`vault_anthropic_key: sk-ant-...`), then `deploy.yml`. Without a key, the relay stays silent and the game is
-unchanged. It spends at most `AI_DAILY_USD` a day (1 $ by default, in `compose.yml`; `0` turns the AI off), then
-stays silent until midnight (the VPS's time); set a monthly limit in the Anthropic console too.
+unchanged. It spends at most `AI_DAILY_USD` a day (1 $ by default, in `compose.yml`; `0` turns the AI off), and at
+most 1/8 of it in an hour, then stays silent; set a monthly limit in the Anthropic console too.
 
 What leaves the VPS: the public chat messages (never the team chat), the names, the score, each human's history
-against the bots (since when they play, kills and deaths against them), each player's numbers for the coach. Never
-the SteamIDs or the IPs. The bots' memory (by SteamID, in the relay's volume) forgets a player not seen for 180 days.
-The guide tells the players.
+against the bots (since when they play, the last map, kills and deaths against them), each player's numbers for the
+coach, and for the journal the day's announcements and bot lines. Never the SteamIDs or the IPs. The bots' memory
+(by SteamID, in the relay's volume) forgets a player not seen for 180 days; the day's story goes 2 days later, the
+journal keeps 30 days. The guide tells the players.
 
 Its logs, on the VPS: `cd /srv/cs-war3-ai && sudo docker compose logs ai`.
 

@@ -1,13 +1,24 @@
 <?php
-// The rankings: the month's (server/plugins/monthly.sma), War3FT's XP (per race), CS's combat (/rank, /top15), and
-// the latest achievements (server/plugins/achievements.sma).
+// The home page: the Game Master's journal (ai/relay.py), the rankings: the month's (server/plugins/monthly.sma), the
+// goal of the week's (server/plugins/weekly.sma), War3FT's XP (per race), CS's combat (/rank, /top15), and the latest
+// achievements (server/plugins/achievements.sma).
 require __DIR__ . '/common.php';
+
+// The AI relay's journal, the last 3 days. None yet: no section.
+$journal = [];
+try {
+    $journal = db('/ai/ai.sq3')->query('SELECT day, text FROM journal ORDER BY day DESC LIMIT 3')->fetchAll();
+} catch (PDOException $exception) {
+    error_log('journal: ' . $exception->getMessage());
+}
 
 $race = filter_input(INPUT_GET, 'race', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 8]]);
 $race = is_int($race) ? $race : null;
 
 $players = ['total' => 0, 'month' => 0, 'quarter' => 0];
 $monthly = [];
+$goal = false;
+$weekly = [];
 $hall = [];
 $xp = [];
 $combat = [];
@@ -49,6 +60,17 @@ try {
     foreach ($champions as $row) {
         $hall[$row['month']][] = $row;
     }
+
+    // This week's goal (written by the week's first map) and the 10 closest to it. The week as the plugin counts it.
+    $week = "strftime('%Y-%W', 'now', 'localtime')";
+    $goal = $db->query("SELECT goal, target FROM cs_war3_ai_weekly_goal WHERE week = $week")->fetch();
+    $weekly = $db->query(
+        "SELECT w.count, p.player_id, COALESCE(n.name, '?') AS name
+         FROM cs_war3_ai_weekly w
+         LEFT JOIN wc3_player p ON p.player_steamid = w.steamid
+         LEFT JOIN cs_war3_ai_names n ON n.steamid = w.steamid
+         WHERE w.week = $week ORDER BY w.count DESC LIMIT 10"
+    )->fetchAll();
 
     // Only real SteamIDs count (STEAM_X:Y:digits): not the bots ("BOT"), nor STEAM_ID_PENDING or STEAM_ID_LAN, which
     // many players share.
@@ -95,6 +117,15 @@ page_start('War3FT: rankings');
 <h1>War3FT: rankings</h1>
 <p>A Counter-Strike 1.6 server with Warcraft 3 races and spells, and <a href="/bots.php">bots that talk back</a>.</p>
 
+<?php if ($journal): ?>
+<h2>The Game Master's journal</h2>
+<?php foreach ($journal as $entry): ?>
+<p><b><?= e(date('l, F j', (int) strtotime((string) $entry['day']))) ?>:</b> <?= e((string) $entry['text']) ?></p>
+<?php endforeach; ?>
+<p class="note">Written each night by the AI Game Master (Claude, by Anthropic), from the day's announcements and bot
+lines.</p>
+<?php endif; ?>
+
 <?php if ($failed): ?>
 <p>Rankings are not available right now. Try again in a minute.</p>
 <?php else: ?>
@@ -121,6 +152,28 @@ Kills minus deaths, updated when a player leaves and at each map change.</p>
 <?php endforeach; ?>
 </tbody>
 </table>
+<?php endif; ?>
+
+<?php if ($goal): ?>
+<h2>Goal of the week: <?= e((string) $goal['goal']) ?></h2>
+<p>The same for everyone, a new one every Monday. <code>/goal</code> in game shows your count. Updated when a player
+leaves and at each map change.</p>
+<?php if (!$weekly): ?>
+<p>Nobody has started it yet: be the first.</p>
+<?php else: ?>
+<table class="ranking">
+<thead><tr><th>#</th><th>Player</th><th>Progress</th></tr></thead>
+<tbody>
+<?php foreach ($weekly as $position => $row): ?>
+<tr>
+<td><?= $position + 1 ?></td>
+<td><?= player_link($row) ?></td>
+<td><?= min((int) $row['count'], (int) $goal['target']) ?> / <?= (int) $goal['target'] ?><?= (int) $row['count'] >= (int) $goal['target'] ? ' <b>done!</b>' : '' ?></td>
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
+<?php endif; ?>
 <?php endif; ?>
 
 <h2>Hall of fame</h2>

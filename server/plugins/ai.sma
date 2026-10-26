@@ -1,7 +1,8 @@
 // The AI: bots that talk back, a Game Master, and a coach. This plugin sends the chat, the kills between bots and
-// humans, every few minutes the state of the game, and a player's numbers for the coach to the AI relay
-// (ai/relay.py), which asks Claude. The relay answers with actions; this plugin checks each one (the players must
-// still be here) and does only what it knows. Relay down, or no API key: no answer, and the game is unchanged.
+// humans, every few minutes the state of the game, a player's numbers for the coach, and the Game Master's
+// announcements (for the nightly journal) to the AI relay (ai/relay.py), which asks Claude. The relay answers with
+// actions; this plugin checks each one (the players must still be here) and does only what it knows. Relay down, or no
+// API key: no answer, and the game is unchanged. At each map's end, the Game Master names the map's MVP.
 #include <amxmodx>
 #include <cstrike>
 #include <csx>  // get_user_wstats(): each player's numbers on this map, for the coach
@@ -62,6 +63,8 @@ public plugin_init()
 	register_event("DeathMsg", "on_death", "a")
 	// A new round: in Respawn mode, only a restart (fresh_start.sma, sv_restart) or a new map.
 	register_event("HLTV", "on_new_round", "a", "1=0", "2=0")
+	// The map's end (the intermission: the scores show for a few seconds).
+	register_event("30", "announce_mvp", "a")
 	register_clcmd("say /coach", "cmd_coach")
 	register_clcmd("say_team /coach", "cmd_coach")
 	set_task(0.1, "poll", _, _, _, "b")
@@ -81,12 +84,18 @@ public client_putinserver(id)
 		set_task(GREET_AFTER, "send_join", TASK_JOIN + id)
 }
 
-public client_disconnected(id)
+// drop: the player left or was kicked (YaPB kicks a bot to make room for a human); not a map's end.
+public client_disconnected(id, bool:drop)
 {
 	remove_task(TASK_JOIN + id)
-	// The boss leaves: its glow must not stay on its slot.
-	if (g_boss && get_user_userid(id) == g_boss)
+	// A player in the event running leaves: it ends with them (and the boss's glow must not stay on its slot).
+	new userid = get_user_userid(id)
+	if (userid && (userid == g_boss || userid == g_bounty || userid == g_duel[0] || userid == g_duel[1]))
+	{
+		if (drop)
+			announce("The event is over: a player in it left.")
 		end_event()
+	}
 }
 
 // Everyone starts again: the event running ends too (a boss would be back at 100 health, still red).
@@ -102,6 +111,10 @@ public send_join(task)
 		return
 	new JSON:event = player(id)
 	json_object_set_string(event, "type", "join")
+	// The bots remember the last map they played with each human.
+	new map[32]
+	get_mapname(map, charsmax(map))
+	json_object_set_string(event, "map", map)
 	add_bots(event)
 	send(event)
 }
@@ -111,10 +124,9 @@ public plugin_end()
 	for (new i = 0; i < MAX_PENDING; i++)
 		if (g_socket[i] > 0)
 			socket_close(g_socket[i])
-	// The gravity and a bot's glow stay from one map to the next: never leave them.
+	// The gravity stays from one map to the next: never leave it low. (The event ended when its players left.)
 	if (g_gravity)
 		set_cvar_num("sv_gravity", g_gravity)
-	end_event()
 }
 
 // ---- To the relay ----
@@ -330,7 +342,7 @@ do_actions(const answer[])
 		// In private: only the player sees it (and the game's log, for the daily chat report).
 		if (id && text[0])
 		{
-			client_print_color(id, print_team_default, "^4[Coach]^1 %s", text)
+			client_print_color(id, print_team_default, "^4[AI Coach]^1 %s", text)
 			new name[32]
 			get_user_name(id, name, charsmax(name))
 			log_message("^"Coach to %s^" say ^"%s^"", name, text)
@@ -546,7 +558,7 @@ win(winner, victim, const what[])
 // /coach: a tip in private, from the player's numbers on this map. The relay allows one a minute.
 public cmd_coach(id)
 {
-	client_print_color(id, print_team_default, "^4[Coach]^1 Looking at your game...")
+	client_print_color(id, print_team_default, "^4[AI Coach]^1 Looking at your game...")
 	send_coach(id, "")
 	return PLUGIN_HANDLED
 }
@@ -662,10 +674,53 @@ bool:in_team(id)
 	return team == CS_TEAM_T || team == CS_TEAM_CT
 }
 
+// The map's MVP: the top of the scoreboard (kills, then fewer deaths), bot or human; and the best human, if a bot is
+// on top. Only when a human played this map.
+public announce_mvp()
+{
+	new players[32], count, best, best_human
+	get_players(players, count, "h")
+	for (new i = 0; i < count; i++)
+	{
+		new id = players[i]
+		if (!in_team(id) || get_user_frags(id) <= 0)
+			continue
+		if (!best || ahead(id, best))
+			best = id
+		if (!is_user_bot(id) && (!best_human || ahead(id, best_human)))
+			best_human = id
+	}
+	if (!best_human)
+		return
+	new map[32], name[32], text[192]
+	get_mapname(map, charsmax(map))
+	get_user_name(best, name, charsmax(name))
+	formatex(text, charsmax(text), "MVP of %s: %s, %d kills, %d deaths!", map, name, get_user_frags(best),
+		get_user_deaths(best))
+	if (best != best_human)
+	{
+		get_user_name(best_human, name, charsmax(name))
+		format(text, charsmax(text), "%s Best human: %s, %d kills.", text, name, get_user_frags(best_human))
+	}
+	announce(text)
+}
+
+// Ahead on the scoreboard: more kills, or as many with fewer deaths.
+bool:ahead(id, other)
+{
+	new kills = get_user_frags(id), other_kills = get_user_frags(other)
+	return kills > other_kills || kills == other_kills && get_user_deaths(id) < get_user_deaths(other)
+}
+
 announce(const text[])
 {
-	client_print_color(0, print_team_default, "^4[Game Master]^1 %s", text)
+	client_print_color(0, print_team_default, "^4[AI Game Master]^1 %s", text)
 	set_hudmessage(255, 80, 0, -1.0, 0.18, 0, 0.0, 5.0, 0.1, 0.5, -1)
 	show_hudmessage(0, "%s", text)
 	log_message("^"Game Master^" say ^"%s^"", text)
+	// For the server's journal, written each night by the relay.
+	new JSON:event = json_init_object()
+	json_object_set_string(event, "type", "news")
+	json_object_set_string(event, "text", text)
+	send(event)
 }

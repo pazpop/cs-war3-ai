@@ -5,7 +5,7 @@ English (official): [../war3ft.md](../war3ft.md)
 Counter-Strike 1.6, avec les races et les sorts de Warcraft 3 : Frozen Throne. Un plugin AMX Mod X
 ([wc3mods/war3ft](https://github.com/wc3mods/war3ft)).
 
-En jeu, le guide s'affiche à la connexion (le MOTD) : [cs.pazpop.net/guide.html](https://cs.pazpop.net/guide.html).
+En jeu, un guide court s'affiche à la connexion (le MOTD) : [cs.pazpop.net/guide.html](https://cs.pazpop.net/guide.html).
 
 ## Le principe
 
@@ -37,6 +37,7 @@ Toutes les commandes marchent avec un `/` devant.
 | `/ach` | Tes succès : 14 objectifs, de ton premier kill jusqu'à 10 000 |
 | `/mystats` | Le lien vers ta page sur le site de stats |
 | `/coach` | Un conseil du coach IA, tiré de tes chiffres sur cette carte, en privé |
+| `/goal` | L'objectif de la semaine, le même pour tous, et ton compte |
 | `/statsme`, `/rankstats` | Tes stats sur cette carte, tes stats au total |
 | `/nextmap`, `/timeleft` | La carte suivante, le temps restant |
 
@@ -47,9 +48,10 @@ bind "mouse3" "ultimate"
 bind "alt" "ability"
 bind "-" "shopmenu"
 bind "=" "shopmenu2"
+bind "F3" "war3menu"
 ```
 
-`ability` sert au Serpent Ward du Shadow Hunter.
+`ability` sert au Serpent Ward du Shadow Hunter. Pour garder ces touches à chaque lancement : [client.md](client.md).
 
 ## Les races
 
@@ -65,6 +67,9 @@ bind "=" "shopmenu2"
 | Crypt Lord | Empale, carapace à épines, scarabées | Nuée de criquets |
 
 Le détail exact (pourcentages, durées) : `/skillsinfo` en jeu.
+
+Sur ce serveur, tout le monde revient aussitôt : ce qui fait revenir ou garde l'équipement ne sert à rien ici :
+l'équipement gardé de l'Orcish Horde, la résurrection du Blood Mage, l'ultime du Warden, l'ankh et le scroll.
 
 ## Les objets
 
@@ -86,8 +91,12 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2` en jeu.
   est variée, de moyenne à normale. Chaque bot a sa propre race de War3FT, et un niveau War3FT de 1 à 5, nouveau à
   chaque carte.
 - **L'IA** : les bots (`[AI] Zed`…) répondent quand tu écris leur nom dans le chat, répondent en général à une
-  question avec un `?`, chacun avec son caractère, et se souviennent de toi : tue-en un souvent, et il te garde
-  rancune. Un maître du jeu lance des primes, des duels et d'autres surprises.
+  question avec un `?`, chacun avec son caractère, et se souviennent de toi et de la dernière carte jouée ensemble :
+  tue-en un souvent, et il te garde rancune. Un maître du jeu lance des primes, des duels et d'autres surprises,
+  nomme le MVP de chaque carte à sa fin, et écrit chaque nuit le journal du serveur sur
+  [cs.pazpop.net](https://cs.pazpop.net).
+- **L'objectif de la semaine** : le même pour tous, un nouveau chaque lundi (`/goal`), avec son tableau sur le site
+  de stats.
 - Le premier humain qui arrive sur un serveur de bots seuls relance la partie : les scores de la carte repartent de
   zéro (l'XP et les classements restent).
 - Toutes les 30 minutes, un vote choisit la carte suivante.

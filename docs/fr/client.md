@@ -2,7 +2,7 @@
 
 English (official): [../client.md](../client.md)
 
-Pour jouer sur `cs.pazpop.net` sans lag ni saccade.
+Pour jouer sur `cs.pazpop.net` sans lag ni saccade, avec les touches de War3FT sous la main.
 
 ## La config
 
@@ -20,9 +20,16 @@ gl_vsync 0
 fps_max 100
 m_rawinput 1
 m_filter 0
+// War3FT : ton ultime, le Serpent Ward (Shadow Hunter), les deux boutiques, le menu War3FT.
+bind "mouse3" "ultimate"
+bind "alt" "ability"
+bind "-" "shopmenu"
+bind "=" "shopmenu2"
+bind "F3" "war3menu"
 ```
 
-Le jeu le lit à chaque lancement, après `config.cfg`. Pour revenir en arrière : supprime le fichier.
+Le jeu le lit à chaque lancement, après `config.cfg`. Pour revenir en arrière : supprime le fichier. Une touche que
+tu utilises déjà pour autre chose : change-la dans le fichier. Sur un serveur sans War3FT, ces touches ne font rien.
 
 Joue en **plein écran** (Options → Vidéo). En fenêtré, Windows ajoute sa propre synchronisation et le jeu saccade.
 
@@ -39,6 +46,7 @@ Joue en **plein écran** (Options → Vidéo). En fenêtré, Windows ajoute sa p
 | `fps_max` | 100 | Le moteur a été pensé pour 100 FPS. Au-dessus, les déplacements changent un peu. |
 | `m_rawinput` | 1 | La souris ignore l'accélération de Windows. |
 | `m_filter` | 0 | Pas de lissage de la souris. |
+| `bind` | War3FT | Les mêmes touches que dans le [guide du mod](war3ft.md). Le menu War3FT change aussi ta race et tes compétences. |
 
 Avec une connexion faible (ping élevé, pertes) : `cl_updaterate 60`.
 

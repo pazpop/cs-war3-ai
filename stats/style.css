@@ -42,10 +42,12 @@ header.top {
 
 /* Who plays right now, and the join button. */
 .live {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  display: flex; flex-wrap: wrap; align-items: center;
   max-width: 888px; margin: 12px auto 0; padding: 10px 16px;
   background: #1f2219; border: 1px solid #363c2a; border-radius: 6px;
 }
+/* Margins, not "gap": the game's old browser knows no gap in a flex row. */
+.live > * { margin: 4px 12px 4px 0; }
 .join-box { margin-left: auto; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #a33; }
 .dot.on { background: #4cd964; box-shadow: 0 0 8px #4cd964; animation: pulse 2s infinite; }
@@ -67,8 +69,8 @@ a.join:hover { background: #ffc633; }
 .icon { width: 24px; height: 24px; vertical-align: middle; margin-right: 6px; }
 
 /* The race filter above the XP ranking. */
-nav.races { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
-nav.races a { padding: 4px 10px; border: 1px solid #363c2a; border-radius: 4px; background: #1f2219;
+nav.races { display: flex; flex-wrap: wrap; margin: 14px 0; }
+nav.races a { margin: 0 6px 6px 0; padding: 4px 10px; border: 1px solid #363c2a; border-radius: 4px; background: #1f2219;
   color: #e8e3cf; text-decoration: none; font-size: 0.9em; }
 nav.races a.active, nav.races a:hover { border-color: #ffb000; color: #ffb000; }
 

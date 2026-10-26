@@ -26,8 +26,12 @@ anyone who wants to run their own server, and get players to come back and bring
   answers with actions the plugin checks and runs itself (a fixed list of events, never free commands). A second
   request (the moderator) checks every line before it is shown; on any doubt or error, nothing is shown. The relay
   has a fixed address on the internal `ai` network (no name lookup: it can block the game) and a daily budget
-  (`AI_DAILY_USD`). No SteamID or IP goes to the API. No key: silent. The relay's image also holds docs/war3ft.md
-  (the bots answer questions from it); the stats page reads its database read-only (the bots' latest lines).
+  (`AI_DAILY_USD`, 1/8 of it at most per hour). No SteamID or IP goes to the API. No key: silent. The relay's image
+  also holds docs/war3ft.md (the bots answer questions from it); the stats page reads its database read-only (the
+  bots' latest lines, the journal it writes each night from the Game Master's announcements and the bots' lines).
+  In the game the AI shows as `[AI] <bot>`, `[AI Game Master]`, `[AI Coach]` (Anthropic requires the disclosure).
+- The goal of the week (`server/plugins/weekly.sma`): picked by the week's number, written to the database for the
+  stats page by the week's first map; no prize.
 - A daily chat report (humans, bots, Game Master, coach) goes to `/srv/collect/chat/` (ansible/files/chat_report.py,
   from the game's logs; ai.sma logs the bots' lines as chat lines).
 - The containers drop every capability (`x-hardening` in `compose.yml`). The vault is ignored by git.
@@ -92,3 +96,17 @@ anyone who wants to run their own server, and get players to come back and bring
 - No ReChecker: its cheat list dates from 2020 and modern cheats inject in memory, so it would catch almost nothing.
 - Ansible's `copy` never deletes: a file removed from the repository stays on the VPS. `deploy.yml` deletes
   `server/plugins/` first (a forgotten .sma would be compiled); anywhere else (a page in `stats/`), remove it by hand.
+- War3FT's zip bundles AMX Mod X build 5467: the Dockerfile lays a later 1.10 build's `dlls/`, `modules/` and
+  `data/gamedata/` over it (a crash on a dropped connection, fixed in 5482). Renovate does not see it: check by hand.
+- With `csdm_active 1`, War3FT turns off everything that respawns a player or keeps their gear (`_SHARED_Spawn`,
+  `SHARED_CS_Reincarnation`): the Orc's Reincarnation, the Blood Mage's Phoenix, the Warden's Vengeance, the ankh,
+  the scroll. The guides say so; War3FT has no setting to hide them.
+- After a start, AMX Mod X's `nextmap` does not find the start map and picks the cycle's first one: `de_dust2` (the
+  start map, `entrypoint.sh`) is the last line of `mapcycle.txt`, so the cycle goes on in order.
+- The game's log is echoed to the console by `mp_logecho` (off: IPs and team chat would land in Docker's logs).
+  `sv_logecho` does not exist here.
+- `client_disconnected(id, drop)`: `drop` is false at a map's end, true when a player leaves or is kicked.
+- The relay's prompts quote players' words with `quoted()` (`ensure_ascii=False`): with escape codes, the moderator
+  would read codes instead of words in other alphabets.
+- PHP-FPM's image logs every request with the visitor's IP: `compose.yml` turns its access log off. A `configs`
+  `content` cannot go into a read-only container: `stats` is not read-only.

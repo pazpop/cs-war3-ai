@@ -55,6 +55,8 @@ public cmd_rtv(id)
 		client_print(id, print_chat, "[RTV] A map vote already ran on this map.")
 		return PLUGIN_HANDLED
 	}
+	// Typed again: counted again (players may have left), but told to everyone only the first time.
+	new bool:already = g_wants_rtv[id]
 	g_wants_rtv[id] = true
 
 	new players[32], count, votes
@@ -65,9 +67,12 @@ public cmd_rtv(id)
 
 	// The share of humans, rounded up: with 5 humans and 60 %, 3.
 	new needed = floatround(SHARE * float(count), floatround_ceil)
-	new name[32]
-	get_user_name(id, name, charsmax(name))
-	client_print(0, print_chat, "[RTV] %s wants a new map (%d/%d). Type rtv in chat to agree.", name, votes, needed)
+	if (!already)
+	{
+		new name[32]
+		get_user_name(id, name, charsmax(name))
+		client_print(0, print_chat, "[RTV] %s wants a new map (%d/%d). Type rtv in chat to agree.", name, votes, needed)
+	}
 	if (votes >= needed)
 		start_map_vote()
 	return PLUGIN_CONTINUE

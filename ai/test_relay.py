@@ -1,7 +1,9 @@
 # The relay's checks, without the API: python3 -m unittest discover ai (from the repository's root)
 import json
 import os
+import time
 import unittest
+from unittest import mock
 
 os.environ["AI_DB"] = ":memory:"
 os.environ.setdefault("AI_BOTS", os.path.join(os.path.dirname(__file__), "..", "server", "bots.txt"))
@@ -124,6 +126,60 @@ class Relay(unittest.TestCase):
         self.assertNotIn("gone", relay.last_said)
         self.assertNotIn("gone", relay.last_active)
         self.assertIn("here", relay.last_active)
+
+    def test_quoted(self):
+        # The moderator reads the words, in any alphabet, not \u codes.
+        self.assertEqual(relay.quoted('été "gg" хорошо'), '"été \\"gg\\" хорошо"')
+
+    def test_last_map(self):
+        relay.remember("STEAM_0:1:5", game_map="de_nuke")
+        self.assertIn("last played together on de_nuke", relay.memory("STEAM_0:1:5", "Ann", "Zed"))
+
+    def test_moderator_answer(self):
+        # Only a real true shows a line: "true" as text, no answer or a broken one keep it hidden.
+        for answer, allowed in (('{"allowed": true}', True), ('{"allowed": "true"}', False), ("{}", False),
+                                ("not json", False), (None, False)):
+            with mock.patch.object(relay, "claude", return_value=answer):
+                self.assertIs(relay.safe("gg"), allowed)
+
+    def test_budget(self):
+        # The hour's share or the day's budget spent: no request at all.
+        no_request = mock.patch.object(relay.urllib.request, "urlopen", side_effect=AssertionError("a request"))
+        with mock.patch.object(relay, "API_KEY", "test"), no_request:
+            relay.hour_spent.clear()
+            relay.hour_spent[time.strftime("%Y-%m-%d %H")] = relay.DAILY_USD / relay.HOUR_SHARE
+            self.assertIsNone(relay.claude("system", "prompt"))
+            relay.hour_spent.clear()
+            relay.db.execute("INSERT OR REPLACE INTO spend VALUES (?, ?)", (relay.today(), relay.DAILY_USD))
+            self.assertIsNone(relay.claude("system", "prompt"))
+        relay.db.execute("DELETE FROM spend")
+
+    def test_news(self):
+        self.assertEqual(relay.handle(b'{"type": "news", "text": "MVP of de_nuke: Ann, 9 kills!"}'), {})
+        lines = relay.db.execute("SELECT line FROM story WHERE day = ?", (relay.today(),)).fetchall()
+        self.assertIn(("Game Master: MVP of de_nuke: Ann, 9 kills!",), lines)
+
+    def test_journal(self):
+        # Yesterday's story becomes one entry, checked by the moderator, written once.
+        day = relay.yesterday()
+        relay.db.execute("INSERT INTO story VALUES (?, 1, 'Game Master: MVP of de_dust2: Ann, 25 kills!')", (day,))
+        with mock.patch.object(relay, "claude", return_value="Ann ruled de_dust2.") as claude, \
+                mock.patch.object(relay, "safe", return_value=True):
+            relay.write_journal()
+            relay.write_journal()
+        self.assertEqual(claude.call_count, 1)
+        self.assertIn("MVP of de_dust2", claude.call_args[0][1])
+        entry = relay.db.execute("SELECT text FROM journal WHERE day = ?", (day,)).fetchone()
+        self.assertEqual(entry, ("Ann ruled de_dust2.",))
+
+    def test_gm_no_repeat(self):
+        # The same event twice in a row: the second is dropped.
+        rain = json.dumps({"event": "xp_rain", "target": 0, "target2": 0, "challenge": "", "count": 0,
+                           "line": "XP for everyone!"})
+        relay.last_events.clear()
+        with mock.patch.object(relay, "claude", return_value=rain), mock.patch.object(relay, "safe", return_value=True):
+            self.assertEqual(relay.on_state({"players": PLAYERS})["gm"]["event"], "xp_rain")
+            self.assertEqual(relay.on_state({"players": PLAYERS}), {})
 
 
 if __name__ == "__main__":

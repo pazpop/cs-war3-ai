@@ -27,6 +27,12 @@ ARG REAPI_SHA256=f33a7435540bea8706db3fa948e51a85b511f5b18c383b97402a204dc541919
 # renovate: depName=wc3mods/war3ft
 ARG WAR3FT=v3.0.1
 ARG WAR3FT_SHA256=5b1da0e8c1a44666b971c216f73f2761ee18aa0cf8ee91de37e2e9062f1f60f0
+# War3FT comes with AMX Mod X 1.10 build 5467: its core and modules are replaced by a later build of the same 1.10,
+# for its fixes (one: a crash when a player's connection drops). Not on GitHub: new builds are listed on
+# https://www.amxmodx.org/downloads-new.php?branch=master
+ARG AMXX=5487
+ARG AMXX_BASE_SHA256=d82d1d65c907f358c48bdebc07e20084e7e8c4f4d0e95af275e8b43f32815c7e
+ARG AMXX_CSTRIKE_SHA256=6a7541a213ef71c47c1348b3457722e95669c0135c60102d5cb5a876341aa808
 # renovate: depName=ReDeathmatch/ReDeathmatch_AMXX
 ARG REDM=1.0.0-b11
 ARG REDM_SHA256=2b6a2c5abee9198500c6a6362fcc0e55784dd4fc387365565ab82d8ecaa49abe
@@ -43,11 +49,15 @@ RUN set -eu; cd /tmp; \
     download metamod.zip https://github.com/rehlds/Metamod-R/releases/download/$METAMOD/metamod-bin-$METAMOD.zip $METAMOD_SHA256; \
     download reapi.zip https://github.com/rehlds/ReAPI/releases/download/$REAPI/reapi-bin-$REAPI.zip $REAPI_SHA256; \
     download war3ft.zip https://github.com/wc3mods/war3ft/releases/download/$WAR3FT/war3ft-$WAR3FT-cstrike-amxmodx-1.10.0-git5467.zip $WAR3FT_SHA256; \
+    download amxx.tar.gz https://www.amxmodx.org/amxxdrop/1.10/amxmodx-1.10.0-git$AMXX-base-linux.tar.gz $AMXX_BASE_SHA256; \
+    download amxx-cstrike.tar.gz https://www.amxmodx.org/amxxdrop/1.10/amxmodx-1.10.0-git$AMXX-cstrike-linux.tar.gz $AMXX_CSTRIKE_SHA256; \
     download redm.zip https://github.com/ReDeathmatch/ReDeathmatch_AMXX/releases/download/$REDM/ReDeathmatch-$REDM.zip $REDM_SHA256; \
     download yapb.tar.xz https://github.com/yapb/yapb/releases/download/$YAPB/yapb-$YAPB-linux.tar.xz $YAPB_SHA256; \
     mkdir -p /opt/mods/cstrike; \
     unzip -q rehlds.zip 'bin/linux32/*' -d rehlds && cp -R rehlds/bin/linux32/. /opt/mods/; \
     unzip -q war3ft.zip -d /opt/mods/cstrike; \
+    tar -xzf amxx.tar.gz -C /opt/mods/cstrike addons/amxmodx/dlls addons/amxmodx/modules addons/amxmodx/data/gamedata; \
+    tar -xzf amxx-cstrike.tar.gz -C /opt/mods/cstrike addons/amxmodx/modules; \
     unzip -qo metamod.zip 'addons/*' -d /opt/mods/cstrike; \
     unzip -q regamedll.zip 'bin/linux32/*' -d regamedll && cp -R regamedll/bin/linux32/cstrike/. /opt/mods/cstrike/; \
     unzip -qo reapi.zip 'addons/amxmodx/modules/*.so' 'addons/amxmodx/scripting/include/*' -d /opt/mods/cstrike; \
@@ -68,7 +78,9 @@ RUN set -eu; cd /tmp; \
 # each mp_roundtime (5 minutes). The bots play team deathmatch (yb_csdm_mode 1), never camp, and get the weapons
 # players use (AK-47 or M4A1; Deagle, USP or Glock), not ReDeathmatch's (Famas, Galil, P228, Elite). Their names
 # start with "[AI] ": the AI shows in the scoreboard. No avatars: YaPB borrows them from real Steam accounts. No sprays
-# (no_spray.sma for the humans).
+# (no_spray.sma for the humans). No graph download nor upload: our maps all have their graph, and YaPB would fetch a
+# missing one over plain HTTP.
+# Metamod-R on Linux reads only the "linux" lines of its plugins.ini: the "win32" ones would be reported as malformed.
 # Spawn protection (ReGameDLL's game.cfg): 3 seconds without damage after a respawn, lost at the first shot (not when
 # moving: "2"). ReDeathmatch tints the protected players in their team's color. A map lasts 30 minutes: game.cfg is
 # read after server.cfg at each map, so its mp_timelimit (20) is the one that counts. game.cfg's lines end with \r.
@@ -77,6 +89,7 @@ RUN set -eu; cd /tmp; \
 RUN set -eu; cd /opt/mods/cstrike; \
     sed -i 's|^gamedll_linux .*|gamedll_linux "addons/metamod/metamod_i386.so"|' liblist.gam; \
     printf '\nlinux addons/yapb/bin/yapb.so\n' >> addons/metamod/plugins.ini; \
+    sed -i '/^win32 /d' addons/metamod/plugins.ini; \
     sed -i 's/^;sqlite/sqlite/' addons/amxmodx/configs/modules.ini; \
     sed -i 's/^csstats_rankbots 0$/csstats_rankbots 1/' addons/amxmodx/configs/amxx.cfg; \
     sed -i -e 's/^mp_respawn_immunitytime "0"\r$/mp_respawn_immunitytime "3"/' \
@@ -103,8 +116,12 @@ RUN set -eu; cd /opt/mods/cstrike; \
       -e 's/^yb_difficulty_max "-1"/yb_difficulty_max "2"/' -e 's/^yb_difficulty "3"/yb_difficulty "2"/' \
       -e 's/^yb_camping_allowed "1"/yb_camping_allowed "0"/' -e 's/^yb_name_prefix ""/yb_name_prefix "[AI] "/' \
       -e 's/^yb_show_avatars "1"/yb_show_avatars "0"/' -e 's/^yb_spraypaints "1"/yb_spraypaints "0"/' \
+      -e 's/^yb_graph_url "yapb.jeefo.net"/yb_graph_url ""/' \
+      -e 's|^yb_graph_url_upload "yapb.jeefo.net/upload"|yb_graph_url_upload ""|' \
       addons/yapb/conf/yapb.cfg; \
     grep -q '^gamedll_linux "addons/metamod/metamod_i386.so"' liblist.gam; \
+    ! grep -q '^win32' addons/metamod/plugins.ini || exit 1; \
+    grep -qa "1.10.0.$AMXX" addons/amxmodx/dlls/amxmodx_mm_i386.so; \
     grep -q '^sqlite' addons/amxmodx/configs/modules.ini; \
     grep -qx 'csstats_rankbots 1' addons/amxmodx/configs/amxx.cfg; \
     grep -qx 'mp_respawn_immunitytime "3"' game.cfg; \
@@ -128,7 +145,8 @@ RUN set -eu; cd /opt/mods/cstrike; \
     grep -qP '^wc3_psychostats\t+0\t' addons/amxmodx/configs/war3ft/war3FT.cfg; \
     for line in 'yb_quota "10"' 'yb_quota_mode "fill"' 'yb_chat "0"' 'yb_radio_mode "0"' \
                 'yb_csdm_mode "1"' 'yb_difficulty_min "1"' 'yb_difficulty_max "2"' 'yb_difficulty "2"' 'yb_camping_allowed "0"' \
-                'yb_name_prefix "[AI] "' 'yb_show_avatars "0"' 'yb_spraypaints "0"'; do \
+                'yb_name_prefix "[AI] "' 'yb_show_avatars "0"' 'yb_spraypaints "0"' 'yb_graph_url ""' \
+                'yb_graph_url_upload ""'; do \
       grep -qxF "$line" addons/yapb/conf/yapb.cfg; \
     done
 

@@ -2,7 +2,7 @@
 
 Français : [fr/client.md](fr/client.md)
 
-How to play on `cs.pazpop.net` without lag or stutter.
+How to play on `cs.pazpop.net` without lag or stutter, with War3FT's keys at hand.
 
 ## The config
 
@@ -20,9 +20,16 @@ gl_vsync 0
 fps_max 100
 m_rawinput 1
 m_filter 0
+// War3FT: your ultimate, the Serpent Ward (Shadow Hunter), the two shops, the War3FT menu.
+bind "mouse3" "ultimate"
+bind "alt" "ability"
+bind "-" "shopmenu"
+bind "=" "shopmenu2"
+bind "F3" "war3menu"
 ```
 
-The game reads it at every launch, after `config.cfg`. To undo: delete the file.
+The game reads it at every launch, after `config.cfg`. To undo: delete the file. A key you already use for
+something else: change it in the file. On a server without War3FT, these keys do nothing.
 
 Play in **fullscreen** (Options → Video). In windowed mode, Windows adds its own sync and the game stutters.
 
@@ -39,6 +46,7 @@ Play in **fullscreen** (Options → Video). In windowed mode, Windows adds its o
 | `fps_max` | 100 | The engine was built around 100 FPS. Above that, movement changes slightly. |
 | `m_rawinput` | 1 | The mouse ignores Windows acceleration. |
 | `m_filter` | 0 | No mouse smoothing. |
+| `bind` | War3FT | The same keys as in the [mod's guide](war3ft.md). The War3FT menu also changes your race and skills. |
 
 On a weak connection (high ping, packet loss): `cl_updaterate 60`.
 

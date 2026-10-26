@@ -45,13 +45,11 @@ fi
 read -rp "Push and deploy ${todo[*]}? [y/N] " answer
 [ "$answer" = y ] || exit 1
 
-# The vault password, to deploy cs-war3-ai, as vault.sh asks it: unless this terminal still has the one from vault.sh.
+# The vault password, to deploy cs-war3-ai: vault.sh asks it, unless this terminal still has it.
 if [[ " ${todo[*]} " == *" cs-war3-ai "* ]] &&
    { [ -z "${VAULT_PASSWORD:-}" ] || [ "$(date +%s)" -ge "${VAULT_PASSWORD_EXPIRY:-0}" ]; }; then
-  read -rsp "Vault password: " VAULT_PASSWORD
-  echo
-  export VAULT_PASSWORD
-  export VAULT_PASSWORD_EXPIRY=$(( $(date +%s) + 7200 ))
+  # shellcheck source=vault.sh
+  source cs-war3-ai/vault.sh
 fi
 
 failed=()

@@ -19,8 +19,10 @@ répondent, et un maître du jeu. Et le code pour monter le tien.
 - Les niveaux viennent deux fois plus vite que d'habitude, et une race jamais jouée commence au niveau 3 : ton
   ultime (niveau 6) arrive vite.
 - Des bots remplissent le serveur quand il y a peu de monde. Un s'en va pour chaque humain qui arrive. Ils
-  répondent : nomme-en un dans le chat, ou pose une question avec un `?`. Tue-en un souvent, et il te garde
-  rancune. Et un maître du jeu (une IA) lance des primes, des duels et d'autres surprises.
+  répondent : nomme-en un dans le chat, ou pose une question avec un `?`. Ils se souviennent de toi et de votre
+  dernière carte ensemble ; tue-en un souvent, et il te garde rancune. Et un maître du jeu (une IA) lance des primes,
+  des duels et d'autres surprises, nomme le MVP de chaque carte, et écrit chaque nuit le journal du serveur.
+- Un objectif de la semaine, le même pour tous (`/goal`), avec son tableau sur le site de stats.
 - `/coach` : un coach IA regarde tes chiffres sur cette carte et te donne un conseil, en privé. Un bilan vers la
   fin de chaque carte.
 - Un annonceur pour le premier kill, les multi-kills et les séries, jusqu'à GODLIKE. Tes dégâts s'affichent sous

@@ -1,6 +1,6 @@
-// Our bots' identity, from server/bots.txt: each one plays its own War3FT race (most often: War3FT still gives a bot
-// a random race now and then, for one life), wears its own skin on each team, and gets a level of 1 to 5 at each
-// map, so that its XP never makes it stronger than the humans.
+// Our bots' identity, from server/bots.txt: each one plays its own War3FT race (War3FT still gives a bot a random race
+// at about one respawn in five; back to its own at the next), wears its own skin on each team, and gets a level of 1
+// to 5 at each map, so that its XP never makes it stronger than the humans. And only the bots wear "[AI]".
 #include <amxmodx>
 #include <amxmisc>
 #include <cstrike>
@@ -14,6 +14,7 @@
 // War3FT's races, in its order (race 1 to 8), as written in bots.txt.
 new const RACES[][] = { "Undead Scourge", "Human Alliance", "Orcish Horde", "Night Elves", "Blood Mage",
 	"Shadow Hunter", "Warden", "Crypt Lord" }
+new const AI_WORDS[][] = { "[AI]", "Game Master" }
 new const T_SKINS[][] = { "terror", "leet", "arctic", "guerilla" }
 new const CT_SKINS[][] = { "urban", "gsg9", "sas", "gign" }
 
@@ -62,7 +63,10 @@ public client_putinserver(id)
 {
 	g_bot[id] = -1
 	if (!is_user_bot(id))
+	{
+		keep_ai_words_off(id)
 		return
+	}
 	new name[32]
 	get_user_name(id, name, charsmax(name))
 	// YaPB adds "[AI] " (yb_name_prefix).
@@ -78,6 +82,30 @@ public client_disconnected(id)
 {
 	remove_task(id)
 	g_bot[id] = -1
+}
+
+// A human changes their name: the new one too.
+public client_infochanged(id)
+{
+	if (is_user_connected(id) && !is_user_bot(id))
+		keep_ai_words_off(id)
+}
+
+// Only the AI wears these words: a human's name loses them, so nobody can pass for a bot or the Game Master in the
+// chat (or in the daily chat report).
+keep_ai_words_off(id)
+{
+	new name[32], bool:changed
+	get_user_info(id, "name", name, charsmax(name))
+	for (new i = 0; i < sizeof AI_WORDS; i++)
+		if (replace_string(name, charsmax(name), AI_WORDS[i], "", false))
+			changed = true
+	if (!changed)
+		return
+	trim(name)
+	if (!name[0])
+		copy(name, charsmax(name), "Player")
+	set_user_info(id, "name", name)
 }
 
 public on_spawn(id)

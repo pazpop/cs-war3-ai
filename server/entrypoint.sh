@@ -55,14 +55,21 @@ for id in ${ADMINS:-}; do
   printf '"%s" "" "abcdefghijklmnopqrstuv" "ce"\n' "$id" >> addons/amxmodx/configs/users.ini
 done
 
-# HLDS and AMX Mod X write a log file per map: keep two weeks.
-find logs addons/amxmodx/logs -name '*.log' -mtime +14 -delete 2>/dev/null || true
-# War3FT's log of admin commands: bots.sma sets each bot's level through one at every spawn, and War3FT never trims it.
-rm -f addons/amxmodx/configs/war3ft/wc3_admin.log
+# Now and every day while the server runs: HLDS and AMX Mod X write a log file per map, kept two weeks; War3FT's log
+# of admin commands (bots.sma sets each bot's level through one at every spawn) is never trimmed by War3FT: emptied.
+(
+  while :; do
+    find logs addons/amxmodx/logs -name '*.log' -mtime +14 -delete 2>/dev/null || true
+    rm -f addons/amxmodx/configs/war3ft/wc3_admin.log
+    sleep 86400
+  done
+) &
 
 # stats_domain: the stats site, for /mystats (server/plugins/web_stats.sma); set before the plugins load. The domain
 # only: on this line, the game would read the // of https:// as the start of a comment.
 # The port must match compose.yml. sys_ticrate: game updates per second (the server's "FPS"; Valve's default is 100).
+# de_dust2 is the last map of mapcycle.txt: after a start, AMX Mod X's nextmap picks the cycle's first map (de_inferno),
+# the one after it, instead of playing de_dust2 twice.
 set -- -game cstrike -console +ip 0.0.0.0 +port 27015 +maxplayers 16 \
   +sys_ticrate "${TICRATE:-1000}" +localinfo stats_domain "$DOMAIN" +map de_dust2 +sv_lan 0
 # Without a password, the remote console (rcon) stays closed.

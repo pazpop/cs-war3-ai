@@ -1,6 +1,6 @@
 <?php
-// The bots: their names, races and characters, from server/bots.txt (the same list the AI relay reads), with a portrait each
-// (img/bots/<name>.png).
+// The bots: their names, races and characters, from server/bots.txt (the same list the AI relay reads), with a
+// portrait each (img/bots/<name>.png).
 require __DIR__ . '/common.php';
 
 $bots = [];
@@ -51,6 +51,6 @@ hold a grudge.</p>
 </div>
 <?php endforeach; ?>
 </div>
-<p class="note">The bots' lines come from Claude, Anthropic's AI, and a second check refuses anything offensive before
-it is shown, in the game and here.</p>
+<p class="note">The bots' lines come from Claude, Anthropic's AI. Before a line is shown, in the game and here, a second
+AI check holds back what it finds offensive.</p>
 <?php page_end(); ?>
