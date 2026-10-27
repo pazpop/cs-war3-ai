@@ -20,7 +20,7 @@
 #define TIMEOUT 30.0          // seconds to wait for an answer: a few requests to Claude (names, a line, its check)
 #define MAX_PENDING 20        // requests waiting at once: the map's summaries go together (16 humans, 4 places left)
 #define COACH_RESERVE 4       // places the coach's summaries and timed tips leave free for the other events
-#define STATE_AT 600.0        // seconds into the map when the Game Master looks at the game: once, halfway
+#define STATE_AT 600          // seconds left when the Game Master looks at the game: once, halfway
 #define EVENT_TIME 180.0      // seconds a bounty, a duel or a boss lasts
 #define CHALLENGE_TIME 120.0  // seconds to meet a challenge
 // The events' numbers: ai/relay.py's GM_SYSTEM tells the Game Master the same ones (change both).
@@ -59,7 +59,7 @@ new g_gravity
 
 // For the coach: deaths in a row (since the last kill), and how often each weapon killed the player; whether the map's summary was sent.
 new g_deaths_in_row[33], g_killed_by[33][CSW_P90 + 1]
-new bool:g_summary_sent
+new bool:g_summary_sent, bool:g_state_sent
 new Float:g_next_request[33]  // when each player's next chat line or /coach may go to the relay
 
 public plugin_init()
@@ -75,7 +75,6 @@ public plugin_init()
 	register_clcmd("say /coach", "cmd_coach")
 	register_clcmd("say_team /coach", "cmd_coach")
 	set_task(0.1, "poll", _, _, _, "b")
-	set_task(STATE_AT, "send_state")
 	set_task(10.0, "check_summary", _, _, _, "b")
 	set_task(COACH_EVERY, "coach_every", _, _, _, "b")
 }
@@ -694,10 +693,16 @@ public coach_every()
 	coach_all("every")
 }
 
+// Halfway, by the time left (a restart, fresh_start.sma, starts the clock again), the Game Master looks at the game.
 // Near the map's end, each human who played gets their summary: one strength, one thing to work on.
 public check_summary()
 {
 	new left = get_timeleft()
+	if (!g_state_sent && left > 0 && left <= STATE_AT)
+	{
+		g_state_sent = true
+		send_state()
+	}
 	if (g_summary_sent || left <= 0 || left > SUMMARY_AT)
 		return
 	g_summary_sent = true
@@ -819,7 +824,8 @@ announce(const text[])
 {
 	client_print_color(0, print_team_default, "^4[AI Game Master]^1 %s", text)
 	set_hudmessage(255, 80, 0, -1.0, 0.18, 0, 0.0, 5.0, 0.1, 0.5, -1)
-	show_hudmessage(0, "%s", text)
+	// Named on screen too: the AI never passes for an admin's message.
+	show_hudmessage(0, "AI Game Master: %s", text)
 	log_say("Game Master", text)
 	journal(text)
 }

@@ -47,8 +47,10 @@ Puis ouvre un nouveau terminal (pour les commandes d'Ansible), et `cd cs-war3-ai
 
 1. Un nom DNS qui pointe vers le VPS : c'est `domain` dans [ansible/inventory.yml](../../ansible/inventory.yml),
    avec le fuseau horaire du serveur `timezone` (les logs, les classements et le journal le suivent). Les messages
-   du chat : [server/messages.txt](../../server/messages.txt). Fais un commit de tes changements : `deploy.yml`
-   s'arrête s'ils ne sont pas commités.
+   du chat : [server/messages.txt](../../server/messages.txt). Pour ton propre serveur : aussi les liens et le
+   contact de [stats/guide.html](../../stats/guide.html) et [stats/common.php](../../stats/common.php), et
+   `sv_region` dans [server/server.cfg](../../server/server.cfg). Commite ces changements : `deploy.yml` s'arrête
+   tant qu'un fichier qu'il copie n'est pas commité.
 2. Une clé SSH pour Ansible (indique-la dans `ansible_ssh_private_key_file`, dans l'inventaire), copiée sur le compte
    de l'hébergeur :
    `ssh-keygen -t ed25519 -f ~/.ssh/<ta clé>`, puis `ssh-copy-id -i ~/.ssh/<ta clé>.pub debian@<domaine>` (port
@@ -319,13 +321,13 @@ si le VPS est tombé.
 
 1. Crée deux vérifications : **backup** (période 1 jour, délai de grâce 1 heure) et **server** (période 5 minutes,
    délai de grâce 10 minutes).
-2. Mets leurs adresses de ping dans le coffre : `ansible-vault edit ansible/vault.yml`, puis
+2. Mets leurs adresses de ping dans le coffre : `EDITOR=nano ansible-vault edit ansible/vault.yml`, puis
    `vault_hc_backup: https://hc-ping.com/<uuid>` et `vault_hc_server: https://hc-ping.com/<uuid>`.
 3. Lance `deploy.yml`.
 
 - **backup** : [ansible/files/backup.sh](../../ansible/files/backup.sh) pingue quand il réussit, `/fail` quand il rate.
 - **server** : toutes les 5 minutes, [ansible/files/heartbeat.py](../../ansible/files/heartbeat.py) vérifie que le jeu
-  répond et que la page de stats s'affiche, puis pingue (`/fail` avec la raison si quelque chose ne va pas).
+  répond, que la page de stats s'affiche et que le disque est rempli à moins de 90 %, puis envoie un ping (`/fail` avec la raison si quelque chose ne va pas).
 
 Sans ces adresses, rien n'est envoyé.
 

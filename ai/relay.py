@@ -3,7 +3,7 @@ Game Master's announcements, one JSON line per connection; it asks Claude for th
 Master's events, and answers with one JSON line of actions. The plugin checks every action before doing anything; a
 moderator (a second request) checks every line before it is shown. Every night, it writes the server's journal for
 the stats page, from the day's announcements and bot lines.
-No API key, or the day's budget spent: it answers {} and the game is unchanged.
+No API key, or the day's budget spent: no AI line at all, and the game is unchanged.
 Only the standard library: no package to install."""
 import asyncio
 import datetime
@@ -204,7 +204,7 @@ def forget():
         db.execute("DELETE FROM quotes WHERE time < ?", (int(time.time()) - QUOTES_DAYS * 86400,))
         # A name's check: a mistake does not last, and an offensive name is checked again.
         oldest = (datetime.date.today() - datetime.timedelta(days=NAMES_DAYS)).isoformat()
-        db.execute("DELETE FROM names WHERE checked IS NULL OR checked < ?", (oldest,))
+        db.execute("DELETE FROM names WHERE checked < ?", (oldest,))
         db.commit()
         for times in (last_line, last_active):
             for key in [key for key, when in times.items() if when < day_ago]:
@@ -227,6 +227,7 @@ refusals = {}  # a human (player_key) -> when the moderator held back a line the
 answers = {}  # a human (player_key) -> when the bots answered them (the last PLAYER_HOURLY)
 name_checks = {}  # a human (player_key) -> when a new name of theirs was checked (the last NAME_CHECKS)
 journal_tried = None  # the day whose journal was written or refused: not asked again
+journal_draft = None  # (day, text): an entry written, its check not answered yet
 # A tag at the start of an AI line ([INFO], [AI Game Master]...): taken out, the AI never passes for the server.
 TAG = re.compile(r"^(\s*\[[^\]]*\]\s*)+")
 
@@ -299,7 +300,7 @@ def valid_gm(answer, players):
             return None
         low, high = CHALLENGES[challenge]
         count = min(max(count, low), high)
-    line = clean(str(answer.get("line", "")), 120)
+    line = TAG.sub("", clean(str(answer.get("line", "")), 120))
     # Every event is announced: none starts unseen.
     if not line:
         return None
@@ -468,8 +469,13 @@ def muted(player):
     """True when this human's messages made the moderator hold back REFUSALS lines within MUTE seconds: the AI ignores
     them until the oldest of these is MUTE seconds old. A player fishing for a bad line cannot try forever."""
     with lock:
-        times = refusals.get(player)
-        return bool(times) and len(times) == REFUSALS and time.monotonic() - times[0] < MUTE
+        return full(refusals.get(player), MUTE)
+
+
+def full(times, window):
+    """True when times (a deque of time.monotonic() values, with its maxlen) is full and its oldest is not window
+    seconds old yet: the limit is reached. Called with the lock held."""
+    return bool(times) and len(times) == times.maxlen and time.monotonic() - times[0] < window
 
 
 def name_allowed(name, player=None):
@@ -488,7 +494,7 @@ def name_allowed(name, player=None):
     if player:
         with lock:
             times = name_checks.setdefault(player, deque(maxlen=NAME_CHECKS))
-            if len(times) == NAME_CHECKS and time.monotonic() - times[0] < 3600:
+            if full(times, 3600):
                 return False
             times.append(time.monotonic())
     answer = claude(NAME_CHECK, f"Name: {quoted(name)}", schema=MODERATION_SCHEMA, max_tokens=50, hourly=False)
@@ -521,7 +527,7 @@ def bot_line(bot, situation, steamid, name, guide=False, player=None):
     prompt = f"Recent chat:\n{chat}\n\n{news}What you know: {memory(steamid, name, me)}\n\n{situation}\nYour line:"
     text = clean(claude(system, prompt, max_tokens=200) or "", limit)
     # The game already shows the bot's name before its line.
-    text = TAG.sub("", re.sub(rf"^{re.escape(me)}\s*:\s*", "", text, flags=re.IGNORECASE))
+    text = re.sub(rf"^{re.escape(me)}\s*:\s*", "", TAG.sub("", text), flags=re.IGNORECASE)
     # The moderator sees what the bot saw: a "yes" can answer a question asked a few lines earlier.
     if not text or not safe(text, f"Recent chat:\n{chat}\n\n{situation}", player):
         return {}
@@ -593,7 +599,7 @@ def on_chat(event):
         return {}
     with lock:
         times = answers.setdefault(player, deque(maxlen=PLAYER_HOURLY))
-        if len(times) == PLAYER_HOURLY and time.monotonic() - times[0] < 3600:
+        if full(times, 3600):
             return {}
         times.append(time.monotonic())
     return bot_line(bot, f"{quoted(name)} just wrote in the chat: {quoted(text)}", event.get("steamid"), name,
@@ -764,7 +770,7 @@ def on_news(event):
 def write_journal():
     """Yesterday's entry of the server's journal, from yesterday's story, once: checked by the moderator, like every
     line. A day with no story, or a refused entry: no entry that day. No answer (the API down): asked again later."""
-    global journal_tried
+    global journal_tried, journal_draft
     day = yesterday()
     if journal_tried == day:
         return
@@ -775,11 +781,16 @@ def write_journal():
     if done or not lines:
         journal_tried = day
         return
-    events = "\n".join(quoted(line) for line in lines)
-    answer = claude(JOURNAL, f"Yesterday's events, in order:\n{events}", max_tokens=400)
-    if answer is None:
-        return
-    text = clean(answer, 800)
+    # An entry already written, waiting for the moderator's answer: only the check is asked again.
+    if journal_draft and journal_draft[0] == day:
+        text = journal_draft[1]
+    else:
+        events = "\n".join(quoted(line) for line in lines)
+        answer = claude(JOURNAL, f"Yesterday's events, in order:\n{events}", max_tokens=400)
+        if answer is None:
+            return
+        text = TAG.sub("", clean(answer, 800))
+        journal_draft = (day, text)
     verdict = safe(text) if text else False
     if verdict is not None:
         journal_tried = day

@@ -1,5 +1,5 @@
 // "votekick" in chat: a menu of the other humans; a player is kicked once 60 % of the other humans chose them.
-// Counted against all the humans on the server, not only those who answer: one player alone never decides.
+// Counted against all the humans in a team, not only those who answer: one player alone never decides.
 // Admins are not in the menu (immunity). The first time in a day: kicked; the second: banned 5 minutes; then 30
 // (counted by SteamID in War3FT's database, table cs_war3_ai_votekicks, so that a map change does not forget it).
 #include <amxmodx>
@@ -34,11 +34,17 @@ public client_disconnected(id)
 
 public cmd_votekick(id)
 {
-	new players[32], count
-	get_players(players, count, "ch")  // c: no bots; h: no HLTV
+	new players[32], count = humans_playing(players)
 	if (count < KICK_MIN_HUMANS)
 	{
-		client_print(id, print_chat, "[Votekick] Needs at least %d human players.", KICK_MIN_HUMANS)
+		client_print(id, print_chat, "[Votekick] Needs at least %d human players in a team.", KICK_MIN_HUMANS)
+		return PLUGIN_HANDLED
+	}
+	// A spectator's vote would not count.
+	new team = get_user_team(id)
+	if (team != 1 && team != 2)
+	{
+		client_print(id, print_chat, "[Votekick] Join a team to vote.")
 		return PLUGIN_HANDLED
 	}
 

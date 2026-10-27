@@ -132,8 +132,8 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2`.
 - Les bots ont un niveau de 1 à 5, tiré à chaque carte : ton XP est à toi, la leur ne s'accumule jamais.
 - **Pose-leur une question** sur le jeu : un message avec un **?** reçoit en général une réponse, comme
   *which race is good for a beginner?*
-- Si tu arrives sur un serveur où il n'y a que des bots, la partie **redémarre** : les scores de la carte repartent de zéro (l'XP
-  et les classements restent).
+- Si tu arrives sur un serveur où il n'y a que des bots, dans les 10 premières minutes d'une carte, la partie
+  **redémarre** : les scores de la carte repartent de zéro (l'XP et les classements restent).
 
 ## Le maître du jeu
 

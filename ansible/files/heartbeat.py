@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 # Installed by deploy.yml as /usr/local/sbin/cs-war3-ai-heartbeat, run every 5 minutes by cs-war3-ai-heartbeat.timer.
-# Checks that the game answers and that the stats page loads, then tells Healthchecks.io: a ping when all is well,
+# Checks that the game answers, that the stats page loads and that the disk is not nearly full, then tells
+# Healthchecks.io: a ping when all is well,
 # a /fail ping with the reason otherwise (after a second look 30 seconds later). No ping at all (the VPS is down)
 # also raises an alert there.
 import http.client
+import shutil
 import socket
 import time
 import urllib.request
 
 SETTINGS = "/etc/cs-war3-ai/healthchecks.env"
+DISK_FULL = 0.9  # the share of the disk in use that raises an alert: logs or backups growing, before the game stops
 
 
 def read_settings():
@@ -52,6 +55,9 @@ def problems_now(domain):
     # HTTPException (a broken answer) is not an OSError.
     except (OSError, http.client.HTTPException):
         problems.append("the stats page does not load")
+    disk = shutil.disk_usage("/")
+    if disk.used / disk.total > DISK_FULL:
+        problems.append(f"the disk is {100 * disk.used // disk.total}% full")
     return problems
 
 

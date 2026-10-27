@@ -15,7 +15,7 @@ public plugin_init()
 
 public client_putinserver(id)
 {
-	// Not in a map's last 10 minutes either: it ends soon, and a restart could start its clock again.
+	// Not in a map's last 10 minutes either: the restart starts its 20 minutes again.
 	if (is_user_bot(id) || is_user_hltv(id) || get_gametime() < MAP_START || get_timeleft() < 600)
 		return
 	new players[32], count

@@ -160,8 +160,11 @@
             Description=Back up the cs-war3-ai game data
             After=docker.service
 
+            # Limits: whatever the game's folders hold, this root script cannot take the VPS down.
             [Service]
             Type=oneshot
+            MemoryMax=512M
+            TimeoutStartSec=30min
             ExecStart=/usr/local/sbin/cs-war3-ai-backup
         - name: cs-war3-ai-backup.timer
           content: |
@@ -216,8 +219,11 @@
             [Unit]
             Description=Write yesterday's chat into /srv/collect/chat
 
+            # Limits: whatever the game's logs hold, this root script cannot take the VPS down.
             [Service]
             Type=oneshot
+            MemoryMax=256M
+            TimeoutStartSec=15min
             ExecStart=/usr/local/sbin/cs-war3-ai-chat-report
         - name: cs-war3-ai-chat-report.timer
           content: |

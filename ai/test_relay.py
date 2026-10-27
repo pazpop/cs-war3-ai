@@ -153,6 +153,13 @@ class Relay(unittest.TestCase):
             relay.hour_spent.clear()
             relay.db.execute("INSERT OR REPLACE INTO spend VALUES (?, ?)", (relay.today(), relay.DAILY_USD))
             self.assertIsNone(relay.claude("system", "prompt"))
+            # The day's last tenth: the name checks only (hourly=False).
+            relay.db.execute("INSERT OR REPLACE INTO spend VALUES (?, ?)", (relay.today(), 0.95 * relay.DAILY_USD))
+            self.assertIsNone(relay.claude("system", "prompt"))
+        with mock.patch.object(relay, "API_KEY", "test"), \
+                mock.patch.object(relay.urllib.request, "urlopen", side_effect=OSError("asked")) as request:
+            relay.claude("system", "prompt", hourly=False)
+        self.assertEqual(request.call_count, 1)
         relay.db.execute("DELETE FROM spend")
 
     def test_news(self):
@@ -234,6 +241,7 @@ class Relay(unittest.TestCase):
         self.assertIsNone(relay.valid_gm(bounty, PLAYERS))
         self.assertIsNone(relay.valid_gm({**bounty, "target": 3, "line": ""}, PLAYERS))
         self.assertIsNotNone(relay.valid_gm({**bounty, "target": 3}, PLAYERS))
+        self.assertEqual(relay.valid_gm({**bounty, "target": 3, "line": "[INFO] Hunt Kim!"}, PLAYERS)["text"], "Hunt Kim!")
         relay.recent_targets.append(relay.player_key(PLAYERS[0]))  # by SteamID (or id), not by userid alone
         self.assertIsNone(relay.valid_gm({**bounty, "target": 3}, PLAYERS))
         relay.recent_targets.clear()

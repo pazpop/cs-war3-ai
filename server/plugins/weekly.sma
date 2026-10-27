@@ -98,9 +98,9 @@ public cmd_goal(id)
 {
 	new target = GOALS[g_goal][TARGET]
 	if (g_steamid[id][0])
-		client_print_color(id, print_team_default, "^4[Goal]^1 This week: %s. You: %d / %d. A new goal every Monday.",
+		client_print_color(id, print_team_default, "^4[STATS]^1 This week: %s. You: %d / %d. A new goal every Monday.",
 			GOALS[g_goal][TEXT], min(g_count[id], target), target)
 	else
-		client_print_color(id, print_team_default, "^4[Goal]^1 This week: %s. A new goal every Monday.", GOALS[g_goal][TEXT])
+		client_print_color(id, print_team_default, "^4[STATS]^1 This week: %s. A new goal every Monday.", GOALS[g_goal][TEXT])
 	return PLUGIN_HANDLED
 }

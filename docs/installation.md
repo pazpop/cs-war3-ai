@@ -46,8 +46,10 @@ Then open a new terminal (for Ansible's commands), and `cd cs-war3-ai`.
 
 1. A DNS name pointing to the VPS: set it as `domain` in [ansible/inventory.yml](../ansible/inventory.yml), with
    the server's `timezone` (the logs, the rankings and the journal follow it).
-   The chat messages: [server/messages.txt](../server/messages.txt). Commit your changes: `deploy.yml` stops
-   if they are not committed.
+   The chat messages: [server/messages.txt](../server/messages.txt). Your own server: also the links and the
+   contact in [stats/guide.html](../stats/guide.html) and [stats/common.php](../stats/common.php), and `sv_region`
+   in [server/server.cfg](../server/server.cfg). Commit these changes: `deploy.yml` stops while a file it copies
+   is not committed.
 2. An SSH key for Ansible (set `ansible_ssh_private_key_file` in the inventory to it), copied to the provider's account:
    `ssh-keygen -t ed25519 -f ~/.ssh/<your key>`, then `ssh-copy-id -i ~/.ssh/<your key>.pub debian@<domain>` (port
    22: with the Edge Network Firewall on, its temporary rule first, see [Setting up the VPS](#setting-up-the-vps))
@@ -295,13 +297,13 @@ Its logs, on the VPS: `cd /srv/cs-war3-ai && sudo docker compose logs ai`.
 if the VPS is down.
 
 1. Create two checks: **backup** (period 1 day, grace 1 hour) and **server** (period 5 minutes, grace 10 minutes).
-2. Put their ping URLs in the vault: `ansible-vault edit ansible/vault.yml`, then
+2. Put their ping URLs in the vault: `EDITOR=nano ansible-vault edit ansible/vault.yml`, then
    `vault_hc_backup: https://hc-ping.com/<uuid>` and `vault_hc_server: https://hc-ping.com/<uuid>`.
 3. Run `deploy.yml`.
 
 - **backup**: [ansible/files/backup.sh](../ansible/files/backup.sh) pings on success, `/fail` on failure.
 - **server**: every 5 minutes, [ansible/files/heartbeat.py](../ansible/files/heartbeat.py) checks that the game
-  answers and that the stats page loads, then pings (`/fail` with the reason if something is wrong).
+  answers, that the stats page loads and that the disk is under 90 % full, then pings (`/fail` with the reason if something is wrong).
 
 Without these URLs, nothing is sent.
 
