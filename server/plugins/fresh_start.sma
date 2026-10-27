@@ -6,6 +6,8 @@
 #define DELAY 5.0       // seconds after the human enters: they see it happen
 #define MAP_START 30.0  // a map that just started has its scores at zero already
 
+new bool:g_done  // once a map at most: a human who reconnects again and again does not restart it each time
+
 public plugin_init()
 {
 	register_plugin("Fresh start", "1.0", "cs-war3-ai")
@@ -19,8 +21,11 @@ public client_putinserver(id)
 	new players[32], count
 	get_players(players, count, "ch")  // c: no bots; h: no HLTV
 	// Only this one: everyone else is a bot.
-	if (count == 1)
+	if (count == 1 && !g_done)
+	{
+		g_done = true
 		set_task(DELAY, "restart")
+	}
 }
 
 public restart()

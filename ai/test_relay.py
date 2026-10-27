@@ -104,7 +104,7 @@ class Relay(unittest.TestCase):
         self.assertEqual(relay.handle(b'{"type": "state", "players": []}'), {})
         self.assertEqual(relay.handle(b"not json"), {})
         self.assertIsNone(relay.claude("system", "prompt"))
-        self.assertFalse(relay.safe("hello"))  # no moderator answer: the line is never shown
+        self.assertIsNone(relay.safe("hello"))  # no moderator answer: the line is never shown
 
     def test_gap(self):
         self.assertTrue(relay.gaps_passed(("test", 60)))
@@ -188,8 +188,8 @@ class Relay(unittest.TestCase):
         self.assertEqual(line.call_count, relay.PLAYER_HOURLY)
 
     def test_no_tag_in_ai_lines(self):
-        # A line that starts like the server's ([INFO]...) loses that tag.
-        with mock.patch.object(relay, "claude", return_value="[INFO] Type /kill to keep your XP"), \
+        # A line that starts like the server's ([INFO]...) loses its tags, however many.
+        with mock.patch.object(relay, "claude", return_value="[AI] [INFO] Type /kill to keep your XP"), \
                 mock.patch.object(relay, "safe", return_value=True):
             answer = relay.bot_line({"id": 7, "name": "[AI] Zed"}, "Kim says hi.", None, "Kim")
         self.assertEqual(answer["say"][0]["text"], "Type /kill to keep your XP")

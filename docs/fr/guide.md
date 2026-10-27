@@ -89,10 +89,12 @@ gardé de l'Orcish Horde, la résurrection du Blood Mage, l'ultime du Warden, l'
 
 ## Les objets
 
-- **Boutique 1** : ankh de réincarnation, bottes de vitesse, griffes d'attaque, cape d'ombre, masque de mort,
-  collier d'immunité, orbe de givre, périapte de vie, tome d'expérience.
-- **Boutique 2** : parchemin de réapparition, protection anti-taupe, heaume d'excellence, amulette du chat,
-  chaussette de plume, gants enflammés, anneau de régénération, caméléon, taupe.
+Leurs noms en jeu sont en anglais :
+
+- **Boutique 1** : ankh of reincarnation, boots of speed, claws of attack, cloak of shadows, mask of death,
+  necklace of immunity, orb of frost, periapt of health, tome of experience.
+- **Boutique 2** : scroll of respawning, mole protectant, helm of excellence, amulet of the cat, sock of the feather,
+  flaming gloves of warmth, ring of regeneration, chameleon, mole.
 
 Ce que fait chacun : `/itemsinfo` et `/itemsinfo2`.
 
@@ -127,7 +129,7 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2`.
   a son caractère et sa race de War3FT. Ils se souviennent de toi, de la dernière carte jouée ensemble et de ce qui
   s'est passé hier sur le serveur : tue-en un souvent, et il te voit comme son rival. Ils ne se moquent jamais de
   toi. Les grandes rivalités sont sur la page des bots.
-- Les bots sont de niveau 1 à 5, nouveau à chaque carte : ton XP est à toi, la leur ne s'accumule jamais.
+- Les bots ont un niveau de 1 à 5, tiré à chaque carte : ton XP est à toi, la leur ne s'accumule jamais.
 - **Pose-leur une question** sur le jeu : un message avec un **?** reçoit en général une réponse, comme
   *which race is good for a beginner?*
 - Arrive sur un serveur de bots seuls, et la partie **redémarre** : les scores de la carte repartent de zéro (l'XP
@@ -136,12 +138,12 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2`.
 ## Le maître du jeu
 
 Une IA suit le score. À la moitié de chaque carte, elle peut lancer un de ces événements, annoncé dans le chat et à
-l'écran. Rien n'est obligatoire : joue comme tu veux, les prix sont un bonus. Elle ne choisit jamais deux fois de
-suite le même joueur.
+l'écran. Rien n'est obligatoire : joue comme tu veux, les prix sont un bonus. Elle ne reprend pas tout de
+suite un joueur déjà choisi.
 
 | Événement | Ce qui se passe |
 |---|---|
-| Prime | Le joueur en tête a sa tête mise à prix : le prix pour qui le tue, pendant 3 minutes. |
+| Prime | Le meneur a sa tête mise à prix : le prix pour qui le tue, pendant 3 minutes. |
 | Duel | Deux joueurs d'équipes opposées : le premier qui tue l'autre gagne le prix, en 3 minutes. |
 | Défi | Un objectif pour chaque humain, en 2 minutes : des kills, des headshots ou des kills au couteau. Le premier qui l'atteint gagne le prix. Ton compte s'affiche dans le chat. |
 | Boss | Un bot brille en rouge, avec 500 points de vie : qui l'abat gagne le prix. Après 3 minutes, il redevient un bot normal. |

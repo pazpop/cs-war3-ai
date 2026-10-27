@@ -31,8 +31,9 @@ anyone who wants to run their own server, and get players to come back and bring
   bots' latest lines, the journal it writes each night from the Game Master's announcements and the bots' lines).
   In the game the AI shows as `[AI] <bot>`, `[AI Game Master]`, `[AI Coach]` (Anthropic requires the disclosure).
   Each human's name is checked on arrival and on each change (`NAME_CHECK`; the answer kept 30 days in the relay's
-  `names` table; not held back by the hourly share): an offensive one makes the plugin rename the player "Player", so
-  the chat, the announcements and the stats site never show it. A player whose messages get 3 lines held back within
+  `names` table; the day's last tenth of the budget kept for it): an offensive one makes the plugin rename the player
+  "Player", a second after arrival or change. Without an answer (no key, the API down), a name passes until the next
+  check. A player whose messages get 3 lines held back within
   an hour is ignored for an hour (`REFUSALS`, `MUTE`). `/coach on` is kept by SteamID in the relay (`coach_on`).
 - The chat's tags: `[HELP]` a command and `[INFO]` the server (messages.sma), `[STATS]` numbers (top 5, MVP,
   achievements, goal reached); the AI's lines keep "AI" in their tag.

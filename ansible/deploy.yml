@@ -37,7 +37,7 @@
     # or a change not committed would go public or into the image. Only what git has, as committed.
     - name: Check that the copied folders hold only committed files
       ansible.builtin.command:  # noqa: command-instead-of-module
-        cmd: git status --porcelain --ignored --untracked-files=all -- server ai stats caddy compose.yml
+        cmd: git status --porcelain --ignored --untracked-files=all -- server ai stats caddy compose.yml .dockerignore ansible/files
         chdir: "{{ playbook_dir }}/.."
       delegate_to: localhost
       become: false

@@ -2,7 +2,8 @@
 
 English (official): [../installation.md](../installation.md)
 
-Un VPS Debian 13, installé avec Ansible depuis Ubuntu (WSL sous Windows convient). Le serveur tourne dans Docker.
+Un VPS Debian 13 (écrit pour OVHcloud : son premier compte est `debian`, son mot de passe arrive par courriel),
+installé avec Ansible depuis Ubuntu (WSL sous Windows convient). Le serveur tourne dans Docker.
 
 ## Composants
 
@@ -36,9 +37,11 @@ Les voix de l'annonceur ([CREDITS.txt](../../server/sound/announcer/CREDITS.txt)
 Sur ton PC, dans Ubuntu : git et Ansible, puis ce dépôt.
 
 ```bash
-sudo apt install git pipx && pipx install --include-deps ansible && pipx ensurepath
-git clone https://github.com/pazpop/cs-war3-ai.git && cd cs-war3-ai
+sudo apt update && sudo apt install git pipx && pipx install --include-deps ansible && pipx ensurepath
+git clone https://github.com/pazpop/cs-war3-ai.git
 ```
+
+Puis ouvre un nouveau terminal (pour les commandes d'Ansible), et `cd cs-war3-ai`.
 
 1. Un nom DNS qui pointe vers le VPS : c'est `domain` dans [ansible/inventory.yml](../../ansible/inventory.yml),
    avec le fuseau horaire du serveur `timezone` (les logs, les classements et le journal le suivent). Les messages du chat : [server/messages.txt](../../server/messages.txt).
@@ -52,7 +55,7 @@ git clone https://github.com/pazpop/cs-war3-ai.git && cd cs-war3-ai
    fichier et de son mot de passe.
    ```bash
    source vault.sh                       # le mot de passe du coffre, gardé 2 h dans ce terminal
-   ansible-vault create ansible/vault.yml
+   EDITOR=nano ansible-vault create ansible/vault.yml
    ```
    Dedans, optionnel : `vault_anthropic_key: sk-ant-...`, pour l'IA (voir [L'IA](#lia-optionnel)). Un coffre vide
    convient : `{}`.
@@ -71,7 +74,8 @@ ansible-playbook -i ansible/inventory.yml ansible/config.yml  # le système : pa
 ansible-playbook -i ansible/inventory.yml ansible/deploy.yml  # le serveur de jeu et la page de stats
 ```
 
-`config.yml` et `deploy.yml` se relancent autant qu'on veut (voir [Les mises à jour](#les-mises-à-jour)). `config.yml`
+Le premier démarrage télécharge CS 1.6 : quelques minutes avant que le serveur réponde (`sudo docker logs -f
+cs-war3-ai-hlds-1` sur le VPS le montre). `config.yml` et `deploy.yml` se relancent autant qu'on veut (voir [Les mises à jour](#les-mises-à-jour)). `config.yml`
 redémarre le VPS quand une mise à jour le demande : lance-le quand personne ne joue.
 
 ## Le serveur de jeu
@@ -270,7 +274,8 @@ des actions :
   joueur très en avance, un duel entre deux joueurs, un défi (kills, headshots ou kills au couteau,
   en 2 minutes), un boss (un bot à 500 points de vie, entouré d'un halo rouge), 30 secondes de gravité basse, de
   l'argent pour tous, 100 XP de War3FT pour chaque humain (`changexp`), un objet des boutiques de War3FT pour tous
-  (`wc3_giveitem`). Chaque prix vaut 3000 $ et 200 XP, et personne n'est obligé de participer. Il ne choisit que dans
+  (`wc3_giveitem`). Le prix d'une prime, d'un duel, d'un défi ou d'un boss vaut 3000 $ et 200 XP, et personne
+  n'est obligé de participer. Il ne choisit que dans
   cette liste, et jamais deux fois de suite le même événement ; le plugin vérifie chaque événement et le lance
   lui-même.
 - **Le journal** : chaque nuit, le relais écrit l'entrée de la veille (3 à 5 phrases) à partir des annonces du
@@ -285,8 +290,8 @@ réponse, faute de clé ou de budget, un pseudo passe et sera revérifié plus t
 en une heure, les suivants d'un joueur sont refusés sans demander). Au moindre doute ou à la moindre erreur, aucune
 réplique ne s'affiche. Un bot répond au même joueur au plus toutes les 10 secondes et 30 fois par heure, et parle de
 la mort d'un même joueur au plus toutes les 2 minutes ; un joueur dont les messages font refuser 3 répliques en une
-heure est ignoré pendant une heure. Le maître du jeu ne met une prime que sur le meneur, et ne choisit jamais deux
-fois de suite un humain de ses derniers événements. En jeu, l'IA s'affiche `[AI] Zed`, `[AI Game Master]` et
+heure est ignoré pendant une heure. Le maître du jeu ne met une prime que sur le meneur, et ne reprend pas un humain
+de ses derniers événements. En jeu, l'IA s'affiche `[AI] Zed`, `[AI Game Master]` et
 `[AI Coach]` : les joueurs savent qu'ils parlent à une IA (Anthropic l'exige).
 
 Mise en place : une clé API de [console.anthropic.com](https://console.anthropic.com) dans le coffre
@@ -346,8 +351,8 @@ ne filtre que ce qui vient de l'extérieur d'OVHcloud, et seulement en IPv4.
 ## Les admins
 
 SteamID dans `ansible/personal.yml`. Dans la console du jeu : `amxmodmenu` (le menu admin), `amx_who`.
-Pas de rcon (son mot de passe traverserait Internet en clair). La console du serveur, sur le VPS :
-`sudo docker attach cs-war3-ai-hlds-1` (pour sortir : Ctrl+P puis Ctrl+Q ; Ctrl+C redémarre le serveur).
+Pas de rcon (son mot de passe traverserait Internet en clair) : la console du serveur, c'est `docker attach` (voir
+plus haut).
 
 Pour retirer le pseudo d'un joueur du site de stats (sur demande, avec son SteamID), sur le VPS :
 

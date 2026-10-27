@@ -228,7 +228,7 @@ answers = {}  # a human (player_key) -> when the bots answered them (the last PL
 name_checks = {}  # a human (player_key) -> when a new name of theirs was checked (the last NAME_CHECKS)
 journal_tried = None  # the day whose journal was written or refused: not asked again
 # A tag at the start of an AI line ([INFO], [AI Game Master]...): taken out, the AI never passes for the server.
-TAG = re.compile(r"^\s*\[[^\]]*\]\s*")
+TAG = re.compile(r"^(\s*\[[^\]]*\]\s*)+")
 
 
 def today():
@@ -621,7 +621,8 @@ def on_join(event):
         remember(steamid, game_map=event.get("map"))
         return {"rename": [event["id"]]}
     # A map change puts every player in the game again: only a real arrival gets a hello.
-    if bots and (since is None or since > GREET_AGAIN):
+    # At most one hello every 30 seconds on the server: reconnecting again and again cannot spend the hour's share.
+    if bots and (since is None or since > GREET_AGAIN) and gaps_passed(("greet", 30)):
         bot = rival_bot(bots, steamid) or random.choice(bots)
         if is_new(steamid):
             situation = (f"{quoted(name)} joins the server for the first time. Welcome them, in English, with one "

@@ -18,7 +18,7 @@
 #define RELAY_IP "10.27.15.10"
 #define RELAY_PORT 27100
 #define TIMEOUT 30.0          // seconds to wait for an answer: a few requests to Claude (names, a line, its check)
-#define MAX_PENDING 16        // requests waiting at once: the map's summary goes to every human together
+#define MAX_PENDING 16        // requests waiting at once: the map's summaries all go together (up to 12 humans)
 #define COACH_RESERVE 4       // places the coach's summaries and timed tips leave free for the other events
 #define STATE_AT 600.0        // seconds into the map when the Game Master looks at the game: once, halfway
 #define EVENT_TIME 180.0      // seconds a bounty, a duel or a boss lasts

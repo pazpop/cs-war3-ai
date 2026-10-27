@@ -19,7 +19,7 @@ répondent, et un maître du jeu. Et le code pour monter le tien.
 - Un maître du jeu IA : primes, duels, un boss, des défis ; un journal chaque nuit sur le site.
 - `/coach` : un conseil d'un coach IA, ou la réponse à ta question, tiré de tes chiffres sur la carte, en privé ;
   `/coach on` : un toutes les 5 minutes.
-- Un objectif de la semaine, des succès, et des classements avec un Hall of fame sur
+- Un objectif de la semaine, des succès, et des classements avec un tableau d'honneur sur
   [cs.pazpop.net](https://cs.pazpop.net).
 - Serveur à 1000 FPS, Amérique du Nord (est).
 

@@ -2,7 +2,8 @@
 
 Français : [fr/installation.md](fr/installation.md)
 
-A Debian 13 VPS, set up with Ansible from Ubuntu (WSL on Windows works). The server runs in Docker.
+A Debian 13 VPS (written for OVHcloud: its first account is `debian`, its password comes by email), set up with
+Ansible from Ubuntu (WSL on Windows works). The server runs in Docker.
 
 ## Components
 
@@ -35,9 +36,11 @@ The announcer's voices ([CREDITS.txt](../server/sound/announcer/CREDITS.txt)) an
 On your PC, in Ubuntu: git and Ansible, then this repository.
 
 ```bash
-sudo apt install git pipx && pipx install --include-deps ansible && pipx ensurepath
-git clone https://github.com/pazpop/cs-war3-ai.git && cd cs-war3-ai
+sudo apt update && sudo apt install git pipx && pipx install --include-deps ansible && pipx ensurepath
+git clone https://github.com/pazpop/cs-war3-ai.git
 ```
+
+Then open a new terminal (for Ansible's commands), and `cd cs-war3-ai`.
 
 1. A DNS name pointing to the VPS: set it as `domain` in [ansible/inventory.yml](../ansible/inventory.yml), with
    the server's `timezone` (the logs, the rankings and the journal follow it).
@@ -52,7 +55,7 @@ git clone https://github.com/pazpop/cs-war3-ai.git && cd cs-war3-ai
    its password.
    ```bash
    source vault.sh                       # the vault password, kept 2 h in this terminal
-   ansible-vault create ansible/vault.yml
+   EDITOR=nano ansible-vault create ansible/vault.yml
    ```
    Inside, optional: `vault_anthropic_key: sk-ant-...`, for the AI (see [The AI](#the-ai-optional)). An empty
    vault is fine: `{}`.
@@ -70,7 +73,8 @@ ansible-playbook -i ansible/inventory.yml ansible/config.yml  # the system: fire
 ansible-playbook -i ansible/inventory.yml ansible/deploy.yml  # the game server and the stats page
 ```
 
-`config.yml` and `deploy.yml` can be run again (see [Updating](#updating)). `config.yml` reboots the VPS when an update
+The first start downloads CS 1.6: a few minutes before the server answers (`sudo docker logs -f
+cs-war3-ai-hlds-1` on the VPS shows it). `config.yml` and `deploy.yml` can be run again (see [Updating](#updating)). `config.yml` reboots the VPS when an update
 needs it: run it when nobody plays.
 
 ## The game server
@@ -252,7 +256,8 @@ Bots that talk back, and a Game Master. `ai.sma` sends the game's news to the re
 - **The Game Master**: halfway through each map (10 minutes), it reads the score and may start an event: a bounty on a player far ahead,
   a duel between two players, a challenge (kills, headshots or knife kills, in 2 minutes), a boss (a bot
   with 500 health and a red glow), 30 seconds of low gravity, money for everyone, 100 War3FT XP for every human
-  (`changexp`), a War3FT shop item for everyone (`wc3_giveitem`). Each prize is $3000 and 200 XP, and nobody has to
+  (`changexp`), a War3FT shop item for everyone (`wc3_giveitem`). The prize of a bounty, a duel, a challenge or a
+  boss is $3000 and 200 XP, and nobody has to
   take part. It can only pick from this list, never the same event twice in a row; the plugin checks each event
   and runs it itself.
 - **The journal**: each night, the relay writes the day before's entry (3 to 5 sentences) from the Game Master's
@@ -324,8 +329,7 @@ it only filters what comes from outside OVHcloud, and only IPv4.
 ## Admins
 
 SteamIDs in `ansible/personal.yml`. In the game console: `amxmodmenu` (the admin menu), `amx_who`.
-No rcon (its password would cross the Internet in clear). The server's console, on the VPS:
-`sudo docker attach cs-war3-ai-hlds-1` (leave with Ctrl+P then Ctrl+Q; Ctrl+C restarts the server).
+No rcon (its password would cross the Internet in clear): the server's console is `docker attach` (see above).
 
 To take a player's name off the stats site (on request, with their SteamID), on the VPS:
 

@@ -10,6 +10,7 @@
 
 new g_idle[33]
 new Float:g_view[33][3]  // where the player looked at the last check
+new g_buttons[33]        // the keys held at the last check
 new bool:g_spawned[33]   // respawned since the last check
 
 public plugin_init()
@@ -52,8 +53,12 @@ public check_players()
 
 		new TeamName:team = get_member(id, m_iTeam)
 		new bool:moved = mouse_moved(id)
-		// Already out of the game, a key pressed this second (or still held), or the mouse moved: nothing to do.
-		if (team == TEAM_SPECTATOR || team == TEAM_UNASSIGNED || get_user_button(id) || get_user_oldbutton(id) || moved)
+		// A key pressed or released since the last check: a key held down (crouching...) does not keep a player in.
+		new buttons = get_user_button(id)
+		new bool:pressed = buttons != g_buttons[id]
+		g_buttons[id] = buttons
+		// Already out of the game, a key pressed or released, or the mouse moved: nothing to do.
+		if (team == TEAM_SPECTATOR || team == TEAM_UNASSIGNED || pressed || moved)
 		{
 			g_idle[id] = 0
 			continue
