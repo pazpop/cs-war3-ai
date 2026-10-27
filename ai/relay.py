@@ -451,8 +451,8 @@ def safe(text, context="", player=None):
     answer = claude(MODERATOR, prompt, schema=MODERATION_SCHEMA, max_tokens=50)
     allowed = approved(answer)
     if not allowed:
-        # In the relay's log (docker compose logs ai), to see what was held back.
-        print("Not shown:", text, flush=True)
+        # In the relay's log (docker compose logs ai): that a line was held back, not its words (they may be the worst).
+        print(f"Not shown: a line of {len(text)} characters", flush=True)
         if answer is not None and player:
             with lock:
                 refusals.setdefault(player, deque(maxlen=REFUSALS)).append(time.monotonic())
@@ -494,7 +494,7 @@ def name_allowed(name, player=None):
         db.execute("INSERT OR REPLACE INTO names VALUES (?, ?, ?)", (name, allowed, today()))
         db.commit()
     if not allowed:
-        print("Name refused:", name, flush=True)
+        print("Name refused: the player is renamed", flush=True)
     return allowed
 
 

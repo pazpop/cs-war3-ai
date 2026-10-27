@@ -21,6 +21,8 @@ services:
     restart: unless-stopped
     # The clean quit saves the XP, the ranking and every player's achievements: more time than Docker's 10 seconds.
     stop_grace_period: 30s
+    # A wide cap (the game uses well under 1 GB): the VPS has no swap, and a game taken over must not starve the rest.
+    mem_limit: 2g
     ports:
       - "27015:27015/udp"
     environment:
@@ -51,7 +53,7 @@ services:
     image: cs-war3-ai-ai
     restart: unless-stopped
     # Caps on memory and CPU, like the stats page and both Caddys: the VPS has no swap, and a leak or a flood of
-    # requests must stop or slow this container, not the game (the game has none).
+    # requests must stop or slow this container, not the game (whose own cap is wide, and has no CPU cap).
     mem_limit: 256m
     cpus: 0.5
     # Nothing to write but its database (a volume) and SQLite's temporary files.
