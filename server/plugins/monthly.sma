@@ -51,14 +51,10 @@ public count_mvp()
 // The humans in a team who killed on this map.
 humans_who_scored()
 {
-	new players[32], count, scored
-	get_players(players, count, "ch")  // c: no bots; h: no HLTV
+	new players[32], count = humans_playing(players), scored
 	for (new i = 0; i < count; i++)
-	{
-		new team = get_user_team(players[i])  // 1: T, 2: CT
-		if ((team == 1 || team == 2) && get_user_frags(players[i]) > 0)
+		if (get_user_frags(players[i]) > 0)
 			scored++
-	}
 	return scored
 }
 

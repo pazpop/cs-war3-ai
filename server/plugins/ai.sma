@@ -502,8 +502,9 @@ bool:start_event(JSON:gm, const event[], target, target2)
 {
 	new challenge[16]
 	json_object_get_string(gm, "challenge", challenge, charsmax(challenge))
-	if (equal(event, "bounty") && !target
-		|| equal(event, "duel") && (!target || !target2 || target == target2)
+	// A target gone to spectator (away) since the look: the event could not be won.
+	if (equal(event, "bounty") && (!target || !in_team(target))
+		|| equal(event, "duel") && (!target || !target2 || target == target2 || !in_team(target) || !in_team(target2))
 		|| equal(event, "boss") && (!target || !is_user_bot(target) || !is_user_alive(target))
 		|| equal(event, "challenge") && !equal(challenge, "kills") && !equal(challenge, "headshots")
 			&& !equal(challenge, "knife"))

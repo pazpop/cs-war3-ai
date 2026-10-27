@@ -50,6 +50,7 @@ public plugin_init()
 	register_kills()
 	register_clcmd("say /ach", "cmd_achievements")
 	register_clcmd("say /achievements", "cmd_achievements")
+	register_clcmd("say_team /ach", "cmd_achievements")
 	set_task(float(TIME_STEP), "count_time", .flags = "b")
 
 	connect_db()

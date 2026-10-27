@@ -39,6 +39,7 @@ Sur ton PC, dans Ubuntu : git et Ansible, puis ce dépôt.
 
 ```bash
 sudo apt update && sudo apt install git pipx && pipx install --include-deps ansible && pipx ensurepath
+git config --global user.name "<un nom>" && git config --global user.email "<un courriel>"  # pour tes commits
 git clone https://github.com/pazpop/cs-war3-ai.git
 ```
 
@@ -46,11 +47,12 @@ Puis ouvre un nouveau terminal (pour les commandes d'Ansible), et `cd cs-war3-ai
 
 1. Un nom DNS qui pointe vers le VPS : c'est `domain` dans [ansible/inventory.yml](../../ansible/inventory.yml),
    avec le fuseau horaire du serveur `timezone` (les logs, les classements et le journal le suivent). Les messages
-   du chat : [server/messages.txt](../../server/messages.txt). Commite tes changements : `deploy.yml` ne copie que
-   les fichiers commités.
+   du chat : [server/messages.txt](../../server/messages.txt). Fais un commit de tes changements : `deploy.yml`
+   s'arrête s'ils ne sont pas commités.
 2. Une clé SSH pour Ansible (indique-la dans `ansible_ssh_private_key_file`, dans l'inventaire), copiée sur le compte
    de l'hébergeur :
-   `ssh-keygen -t ed25519 -f ~/.ssh/<ta clé>`, puis `ssh-copy-id -i ~/.ssh/<ta clé>.pub debian@<domaine>`
+   `ssh-keygen -t ed25519 -f ~/.ssh/<ta clé>`, puis `ssh-copy-id -i ~/.ssh/<ta clé>.pub debian@<domaine>` (port
+   22 : avec l'Edge Network Firewall actif, sa règle temporaire d'abord, voir [Installer le VPS](#installer-le-vps))
 3. Copie [ansible/personal.example.yml](../../ansible/personal.example.yml) en `ansible/personal.yml` (ignoré par git)
    et remplis-le : le compte de l'hébergeur, ton compte et sa clé publique (un autre `ssh-keygen`), le dossier des
    sauvegardes, les SteamID des admins.
@@ -124,7 +126,7 @@ rate) :
   ReDeathmatch fait réapparaître les joueurs. Sauvegarde aussi l'XP de tous toutes les 5 minutes : War3FT
   sauvegarde en fin de manche, qui n'arrive jamais ici.
 - `damage.sma` : les dégâts que le joueur inflige, sous le viseur, à chaque coup.
-- `fresh_start.sma` : quand le premier humain arrive sur un serveur de bots seuls, la partie redémarre
+- `fresh_start.sma` : quand le premier humain arrive sur un serveur où il n'y a que des bots, la partie redémarre
   (`sv_restart`) : tous les scores à zéro, un départ équitable (une fois par carte, pas dans ses 10 dernières minutes).
   L'XP, le classement du mois et les succès restent.
 - `help.sma` : `/help` ou `help` dans le chat, ou `help` dans la console, rouvre le guide.
@@ -136,7 +138,7 @@ rate) :
   carte, le top 5 et la place du joueur, sur une ligne ; à sa fin, la carte du joueur (kills, morts, meilleure
   série, headshots) et sa place avant et après (pas après un rtv : la carte change aussitôt). Compte aussi les MVP du mois de chaque humain (premier du
   tableau des scores en fin de carte, bots compris, quand au moins deux humains ont marqué).
-- `name_spam.sma` : un humain qui change de pseudo 10 fois en 10 minutes, sur une même carte, est expulsé pour une heure.
+- `name_spam.sma` : un humain qui change de pseudo 10 fois en 10 minutes, sur une même carte, est banni pour une heure.
 - `no_spray.sma` : pas de sprays (la touche T) ; `sv_allowupload 0` cache déjà les images perso ; les bots :
   `yb_spraypaints 0`.
 - `rank_tag.sma` : le top 10 affiche sa place dans le chat, `[#3] nom : message` ; le top 3 du mois passé,
@@ -223,9 +225,6 @@ sudo docker compose start hlds ai
   l'application gratuite Renovate sur le dépôt). Dans cette
   pull request, remplace l'empreinte SHA-256 de la version dans [server/Dockerfile](../../server/Dockerfile) :
   `curl -sL <adresse de l'archive> | sha256sum`. D'ici là, la vérification ci-dessous échoue, exprès.
-- **Depuis le PC** (le script du propriétaire : il attend ce dossier nommé `cs-war3-ai`, avec `pazpop.net` à
-  côté) : `./deploy-all.sh` pousse ce dépôt et `../pazpop.net` quand ils ont de nouveaux commits, puis
-  lance `deploy.yml` (`--all` : tout, même sans nouveau commit).
 - **Les vérifications** : chaque push lance [.github/workflows/check.yml](../../.github/workflows/check.yml) :
   `ansible-lint`, `shellcheck`, la syntaxe Python et PHP, les tests Python, et le build des deux images (celle du jeu
   vérifie les SHA-256 et compile nos plugins).

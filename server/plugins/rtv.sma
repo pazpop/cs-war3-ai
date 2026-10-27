@@ -17,6 +17,7 @@ public plugin_init()
 	register_plugin("Rock the vote", "1.0", "cs-war3-ai")
 	register_clcmd("say rtv", "cmd_rtv")
 	register_clcmd("say /rtv", "cmd_rtv")
+	register_clcmd("say_team rtv", "cmd_rtv")
 	load_maps()
 }
 
@@ -65,7 +66,8 @@ public cmd_rtv(id)
 			votes++
 
 	// The share of humans, rounded up: with 5 humans and 60 %, 3.
-	new needed = floatround(SHARE * float(count), floatround_ceil)
+	// At least one: a spectator alone (nobody in a team) cannot start a vote with no vote at all.
+	new needed = max(1, floatround(SHARE * float(count), floatround_ceil))
 	if (!already)
 	{
 		new name[32]

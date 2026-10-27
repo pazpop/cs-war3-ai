@@ -42,7 +42,7 @@ class Relay(unittest.TestCase):
 
     def test_seen(self):
         # The first time: never seen; then a few seconds: a map change, not an arrival.
-        self.assertIsNone(relay.seen({"steamid": "STEAM_0:1:9", "name": "Ann"}))
+        self.assertIsNone(relay.seen({"steamid": "STEAM_0:1:9", "name": "Ann"}, arrival=True))
         self.assertLess(relay.seen({"steamid": "STEAM_0:1:9", "name": "Ann"}), relay.GREET_AGAIN)
 
     def test_valid_gm(self):
@@ -65,6 +65,7 @@ class Relay(unittest.TestCase):
 
     def test_memory(self):
         self.assertTrue(relay.is_new("STEAM_0:1:1"))
+        relay.remember("STEAM_0:1:1", arrival=True)
         relay.remember("STEAM_0:1:1", "bot_kills")
         relay.remember("STEAM_0:1:1", "bot_kills")
         self.assertFalse(relay.is_new("STEAM_0:1:1"))
@@ -76,7 +77,7 @@ class Relay(unittest.TestCase):
         for _ in range(5):
             relay.rival("[AI] Rex", "STEAM_0:1:2", "human_wins")
         relay.rival("[AI] Rex", "STEAM_0:1:2", "bot_wins")
-        relay.remember("STEAM_0:1:2")
+        relay.remember("STEAM_0:1:2", arrival=True)
         self.assertEqual(relay.score("Rex", "STEAM_0:1:2"), (5, 1))
         self.assertIn("your rival", relay.memory("STEAM_0:1:2", "Kim", "Rex"))
         self.assertNotIn("your rival", relay.memory("STEAM_0:1:2", "Kim", "Zed"))
@@ -132,7 +133,7 @@ class Relay(unittest.TestCase):
         self.assertEqual(relay.quoted('été "gg" хорошо'), '"été \\"gg\\" хорошо"')
 
     def test_last_map(self):
-        relay.remember("STEAM_0:1:5", game_map="de_nuke")
+        relay.remember("STEAM_0:1:5", game_map="de_nuke", arrival=True)
         self.assertIn("last played together on de_nuke", relay.memory("STEAM_0:1:5", "Ann", "Zed"))
 
     def test_moderator_answer(self):
@@ -215,6 +216,16 @@ class Relay(unittest.TestCase):
         self.assertIn("/coach", relay.GUIDE)
         self.assertNotIn("<", relay.GUIDE)
         relay.db.execute("DELETE FROM journal WHERE day = ?", (relay.yesterday(),))
+
+    def test_hello_after_a_quick_kill(self):
+        # A newcomer who kills or chats in their first seconds still gets the first-time hello, with its tip.
+        relay.last_line.pop("greet", None)
+        kim = {"id": 21, "name": "Kim", "bot": False, "steamid": "STEAM_0:1:21"}
+        relay.handle(json.dumps({"type": "kill", "killer": kim, "victim": {"id": 7, "name": "[AI] Zed", "bot": True},
+                                 "weapon": "ak47"}).encode())
+        with mock.patch.object(relay, "bot_line", return_value={}) as line:
+            relay.on_join({**kim, "type": "join", "bots": [{"id": 7, "name": "[AI] Zed"}]})
+        self.assertIn("for the first time", line.call_args[0][1])
 
     def test_gm_fair(self):
         # A bounty only on the leader; every event announced; a human just picked is not picked again.

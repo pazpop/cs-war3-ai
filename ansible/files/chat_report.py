@@ -43,10 +43,12 @@ def main():
     day = sys.argv[1] if len(sys.argv) > 1 else str(datetime.date.today() - datetime.timedelta(days=1))
     volume = subprocess.run(["docker", "volume", "inspect", "-f", "{{.Mountpoint}}", "cs-war3-ai_hlds"],
                             capture_output=True, text=True, check=True).stdout.strip()
+    volume = os.path.realpath(volume)
     lines = []
-    # Only the game's real log files: a link or a pipe it left would make this script (root) read anything, or hang.
+    # Only the game's real log files: a link (the file or a folder above it) or a pipe it left would make this
+    # script (root) read anything, or hang.
     logs = [path for path in glob.glob(f"{volume}/cstrike/logs/L*.log")
-            if not os.path.islink(path) and os.path.isfile(path)]
+            if os.path.realpath(path) == path and os.path.isfile(path)]
     for path in sorted(logs, key=os.path.getmtime):
         with open(path, encoding="utf-8", errors="replace") as file:
             lines += file

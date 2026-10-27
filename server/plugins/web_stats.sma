@@ -18,6 +18,7 @@ public plugin_init()
 	run("CREATE TABLE IF NOT EXISTS cs_war3_ai_names (steamid TEXT PRIMARY KEY, name TEXT NOT NULL, seen INTEGER NOT NULL)")
 	get_localinfo("stats_domain", g_domain, charsmax(g_domain))
 	register_clcmd("say /mystats", "cmd_mystats")
+	register_clcmd("say_team /mystats", "cmd_mystats")
 }
 
 // The link to the player's own page, in the chat and in the console (to copy it).

@@ -312,13 +312,18 @@ def valid_gm(answer, players):
     return {"event": event, "target": target, "target2": target2, "challenge": challenge, "count": count, "text": line}
 
 
-def remember(steamid, column=None, game_map=None):
-    """A human's history, for the bots: when they came, on which map they last played, how they fare against bots."""
+def remember(steamid, column=None, game_map=None, arrival=False):
+    """A human's history, for the bots: when they came, on which map they last played, how they fare against bots.
+    Only their arrival (arrival=True) makes them known: a kill or a message in their first seconds, before the plugin
+    tells of their arrival, does not take their first-time hello away."""
     if not steamid:
         return
     with lock:
-        db.execute("INSERT INTO players (steamid, first_seen, last_seen) VALUES (?, ?, ?) "
-                   "ON CONFLICT (steamid) DO UPDATE SET last_seen = excluded.last_seen", (steamid, today(), today()))
+        if arrival:
+            db.execute("INSERT INTO players (steamid, first_seen, last_seen) VALUES (?, ?, ?) ON CONFLICT (steamid) "
+                       "DO UPDATE SET last_seen = excluded.last_seen", (steamid, today(), today()))
+        else:
+            db.execute("UPDATE players SET last_seen = ? WHERE steamid = ?", (today(), steamid))
         if column in ("bot_kills", "bot_deaths"):
             db.execute(f"UPDATE players SET {column} = {column} + 1 WHERE steamid = ?", (steamid,))
         if game_map:
@@ -538,13 +543,15 @@ def tell(line):
         db.commit()
 
 
-def seen(human):
-    """Notes that the game spoke of this human now; returns how many seconds since the last time (None: never)."""
+def seen(human, arrival=False):
+    """Notes that the game spoke of this human now; returns how many seconds since the last time (None: never). Only
+    their arrival (arrival=True) starts the clock: a kill in their first seconds does not hide a real arrival."""
     key = player_key(human)
     now = time.monotonic()
     with lock:
         before = last_active.get(key)
-        last_active[key] = now
+        if arrival or before is not None:
+            last_active[key] = now
     return None if before is None else now - before
 
 
@@ -615,10 +622,10 @@ def on_join(event):
     """A human arrives: a bot says hello, their rival if any; a newcomer also gets a tip."""
     bots, steamid, name = event.get("bots", []), event.get("steamid"), event["name"]
     answer = {}
-    since = seen(event)
+    since = seen(event, arrival=True)
     # An offensive name: no hello, and the plugin renames the player.
     if not name_allowed(name, player_key(event)):
-        remember(steamid, game_map=event.get("map"))
+        remember(steamid, game_map=event.get("map"), arrival=True)
         return {"rename": [event["id"]]}
     # A map change puts every player in the game again: only a real arrival gets a hello.
     # At most one hello every 30 seconds on the server: reconnecting again and again cannot spend the hour's share.
@@ -633,7 +640,7 @@ def on_join(event):
                          "map you played together.")
             answer = bot_line(bot, situation, steamid, name)
     # After the greeting: before, "last seen" and the last map would already be today's.
-    remember(steamid, game_map=event.get("map"))
+    remember(steamid, game_map=event.get("map"), arrival=True)
     return answer
 
 
@@ -665,7 +672,7 @@ def on_coach_mode(event):
     """/coach on or /coach off: a tip every 5 minutes, or not. Kept by SteamID (the plugin sends only real ones)."""
     steamid = event.get("steamid")
     if steamid:
-        remember(steamid)
+        remember(steamid, arrival=True)
         with lock:
             if event.get("on") is True:
                 db.execute("INSERT OR IGNORE INTO coach_on VALUES (?)", (steamid,))
@@ -728,10 +735,10 @@ def on_state(event):
         answer = valid_gm(json.loads(text), players) if text else None
     except (ValueError, AttributeError):
         answer = None
-    # Never the same event twice in a row: a name written to ask for it cannot make it rain XP every 10 minutes.
+    # Never the same event twice in a row: a name written to ask for it cannot make it rain XP at every map.
     if answer and answer["event"] != "none" and last and answer["event"] == last[-1]:
         answer = None
-    if not answer or (answer["text"] and not safe(answer["text"])):
+    if not answer or not safe(answer["text"]):
         return result
     with lock:
         last_events.append(answer["event"])
@@ -833,7 +840,7 @@ async def every_day():
 async def main():
     # As many requests at once as the plugin can wait for (MAX_PENDING in ai.sma): the map's summaries all come
     # together, and Python's default (CPUs + 4) would make the last ones miss the plugin's TIMEOUT.
-    asyncio.get_running_loop().set_default_executor(ThreadPoolExecutor(max_workers=16))
+    asyncio.get_running_loop().set_default_executor(ThreadPoolExecutor(max_workers=20))
     server = await asyncio.start_server(serve, "0.0.0.0", PORT, limit=16384)
     print(f"AI relay on port {PORT}, model {MODEL}, {DAILY_USD} $ a day" + ("" if API_KEY else ", no API key: silent"),
           flush=True)

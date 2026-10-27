@@ -170,8 +170,9 @@ configs:
 networks:
   # The game alone, and its AI relay.
   game:
-  # The front and FastDL only: FastDL cannot reach PHP (stats:9000).
+  # The front and FastDL only. Internal: FastDL reaches neither PHP (stats:9000) nor the Internet.
   fastdl:
+    internal: true
   # Between the game and its AI relay. Internal (no way out): both go out through "game". A fixed range, for the
   # relay's address (outside Docker's own ranges).
   ai:

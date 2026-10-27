@@ -20,7 +20,7 @@ Counter-Strike 1.6, avec les races et les sorts de Warcraft 3 : Frozen Throne (l
 - **Rien de sexuel ni d'illégal**, et aucune information personnelle, ni la tienne ni celle d'un autre.
 - **Pas de triche** : ni hack, ni script, ni bug utilisé exprès.
 - **Pas de spam**, ni de pub pour d'autres serveurs. Changer de pseudo 10 fois en 10 minutes, sur une même carte,
-  te fait expulser pour une heure.
+  te fait bannir pour une heure.
 - Absent **60 secondes** (aucune touche, souris immobile) : tu passes en spectateur (ce temps ne compte pas pour
   les succès). Un ping au-dessus de
   **300 ms** pendant 50 secondes te fait expulser.

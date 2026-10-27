@@ -38,6 +38,7 @@ On your PC, in Ubuntu: git and Ansible, then this repository.
 
 ```bash
 sudo apt update && sudo apt install git pipx && pipx install --include-deps ansible && pipx ensurepath
+git config --global user.name "<a name>" && git config --global user.email "<an email>"  # for your commits
 git clone https://github.com/pazpop/cs-war3-ai.git
 ```
 
@@ -45,10 +46,11 @@ Then open a new terminal (for Ansible's commands), and `cd cs-war3-ai`.
 
 1. A DNS name pointing to the VPS: set it as `domain` in [ansible/inventory.yml](../ansible/inventory.yml), with
    the server's `timezone` (the logs, the rankings and the journal follow it).
-   The chat messages: [server/messages.txt](../server/messages.txt). Commit your changes: `deploy.yml` copies
-   only committed files.
+   The chat messages: [server/messages.txt](../server/messages.txt). Commit your changes: `deploy.yml` stops
+   if they are not committed.
 2. An SSH key for Ansible (set `ansible_ssh_private_key_file` in the inventory to it), copied to the provider's account:
-   `ssh-keygen -t ed25519 -f ~/.ssh/<your key>`, then `ssh-copy-id -i ~/.ssh/<your key>.pub debian@<domain>`
+   `ssh-keygen -t ed25519 -f ~/.ssh/<your key>`, then `ssh-copy-id -i ~/.ssh/<your key>.pub debian@<domain>` (port
+   22: with the Edge Network Firewall on, its temporary rule first, see [Setting up the VPS](#setting-up-the-vps))
 3. Copy [ansible/personal.example.yml](../ansible/personal.example.yml) to `ansible/personal.yml` (ignored by git)
    and fill it in: the provider's account, your account and its public key (another `ssh-keygen`), the backup
    folder, the admins' SteamIDs.
@@ -129,7 +131,7 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
   top 5 and the player's place, in one line; at its end, the player's map (kills, deaths, best streak, headshots)
   and their place before and after it (not after an rtv: the map changes at once). Also each human's map MVPs of the month (on top of the scoreboard at a
   map's end, bots included, when two humans or more scored).
-- `name_spam.sma`: a human who changes their name 10 times within 10 minutes, on one map, is kicked for an hour.
+- `name_spam.sma`: a human who changes their name 10 times within 10 minutes, on one map, is banned for an hour.
 - `no_spray.sma`: no sprays (the T key): `sv_allowupload 0` already hides custom images; the bots: `yb_spraypaints 0`.
 - `rank_tag.sma`: the top 10 show their place in the chat, `[#3] name: message`; last month's top 3, `[Champion]`.
 - `rtv.sma`: `rtv` in chat; at 60 % of the humans playing (in a team), adminvote's vote on 4 random maps (not in the
@@ -208,9 +210,6 @@ sudo docker compose start hlds ai
   app on the repository). In that pull request,
   replace the version's SHA-256 in [server/Dockerfile](../server/Dockerfile): `curl -sL <archive URL> | sha256sum`.
   Until then, the check below fails, on purpose.
-- **From the PC** (the owner's script: it expects this folder named `cs-war3-ai`, with `pazpop.net` next to it):
-  `./deploy-all.sh` pushes this repository and `../pazpop.net` when they have new commits, then
-  runs `deploy.yml` (`--all`: everything, even without new commits).
 - **Checks**: every push runs [.github/workflows/check.yml](../.github/workflows/check.yml): `ansible-lint`,
   `shellcheck`, the Python and PHP syntax, the Python tests, and both image builds (the game's checks the SHA-256 and
   compiles our plugins).

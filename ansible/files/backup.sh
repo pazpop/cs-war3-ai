@@ -36,8 +36,13 @@ trap finish EXIT
 trap 'exit 1' TERM INT
 
 # The volumes' folders on the VPS (this script runs as root).
-game=$(docker volume inspect -f '{{.Mountpoint}}' cs-war3-ai_hlds)/cstrike/addons/amxmodx/data
-relay=$(docker volume inspect -f '{{.Mountpoint}}' cs-war3-ai_ai)
+game=$(realpath "$(docker volume inspect -f '{{.Mountpoint}}' cs-war3-ai_hlds)")/cstrike/addons/amxmodx/data
+relay=$(realpath "$(docker volume inspect -f '{{.Mountpoint}}' cs-war3-ai_ai)")
+# A folder the game replaced by a link: the backup stops (it runs as root, and would copy what the link points to).
+if [ "$(realpath "$game")" != "$game" ]; then
+  echo "A link in the game's folders: $game" >&2
+  exit 1
+fi
 cp -a "$game" "$work/data"
 # A link the game left (a file or a folder): removed before anything below follows it as root.
 find "$work" -type l -delete
@@ -54,8 +59,8 @@ import sqlite3
 import sys
 
 for source, copy in zip(sys.argv[1::2], sys.argv[2::2]):
-    # A link the game left: not followed (this runs as root).
-    if os.path.islink(source) or not os.path.exists(source):
+    # A link the game left, the file or a folder above it: not followed (this runs as root).
+    if os.path.realpath(source) != source or not os.path.exists(source):
         continue
     # lexists: a link the game left in its folder is removed too, never followed (this runs as root).
     if os.path.lexists(copy):

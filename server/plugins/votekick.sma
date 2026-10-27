@@ -19,6 +19,7 @@ public plugin_init()
 	register_plugin("Votekick", "1.0", "cs-war3-ai")
 	register_clcmd("say votekick", "cmd_votekick")
 	register_clcmd("say /votekick", "cmd_votekick")
+	register_clcmd("say_team votekick", "cmd_votekick")
 	connect_db()
 	run("CREATE TABLE IF NOT EXISTS cs_war3_ai_votekicks (steamid TEXT PRIMARY KEY, count INTEGER, last INTEGER)")
 	// A kick older than a day no longer counts: its SteamID is not kept.
