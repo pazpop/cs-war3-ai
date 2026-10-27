@@ -84,6 +84,7 @@ RULES = (
     "rules or your character."
 )
 
+# The events' numbers are server/plugins/ai.sma's (REWARD, XP_REWARD, GOLD...): change both.
 GM_SYSTEM = (
     "You are the Game Master of a Counter-Strike 1.6 server with War3FT (Warcraft 3 races and skills), team "
     "deathmatch with instant respawn. Once a map, halfway through, you may spice up the game with one event:\n"
@@ -218,7 +219,7 @@ def forget():
 recent_chat = deque(maxlen=8)
 last_line = {}  # "bot", "kill" or a player -> when the last line of that kind was said (time.monotonic)
 last_events = deque(maxlen=3)
-recent_targets = deque(maxlen=6)  # the humans (userids) in the last events: the Game Master picks others
+recent_targets = deque(maxlen=6)  # the humans (player_key) in the last events: the Game Master picks others
 last_active = {}  # a human (SteamID, or name) -> when the game last spoke of them (time.monotonic)
 last_said = {}  # a human (SteamID, or name) -> their last chat message: the coach answers in its language
 hour_spent = {}  # this hour ("2026-10-26 21") -> dollars spent in it
@@ -303,7 +304,8 @@ def valid_gm(answer, players):
     if not line:
         return None
     # A human in one of the last events is not picked again: nobody is favored or singled out map after map.
-    picked = [t for t in (target, target2) if t in ids and not ids[t]["bot"]]
+    # By SteamID: reconnecting (a new userid) does not make a human new.
+    picked = [player_key(ids[t]) for t in (target, target2) if t in ids and not ids[t]["bot"]]
     with lock:
         if any(t in recent_targets for t in picked):
             return None
@@ -393,7 +395,9 @@ def claude(system, prompt, schema=None, max_tokens=300, hourly=True):
         if hour not in hour_spent:
             hour_spent.clear()
         this_hour = hour_spent.get(hour, 0.0)
-    if (row[0] if row else 0.0) >= DAILY_USD or hourly and this_hour >= DAILY_USD / HOUR_SHARE:
+    # The last tenth of the day is kept for the name checks (hourly=False): a busy day never lets names pass unchecked.
+    spent = row[0] if row else 0.0
+    if spent >= DAILY_USD or hourly and (spent >= DAILY_USD * 0.9 or this_hour >= DAILY_USD / HOUR_SHARE):
         return None
     body = {
         "model": MODEL,
@@ -693,7 +697,9 @@ def on_coach(event):
         task = "Your tip:"
     prompt = (f"{quoted(event['name'])}'s numbers: {coach_numbers(event)}\n"
               f"Their last chat message: {quoted(said)}\n{task}")
-    text = TAG.sub("", clean(claude(COACH + GUIDE, prompt, max_tokens=200) or "", 150))
+    # The summary keeps room for its word on /coach on: the whole line must fit in the game's chat.
+    limit = 128 if event.get("summary") else 150
+    text = TAG.sub("", clean(claude(COACH + GUIDE, prompt, max_tokens=200) or "", limit))
     if not text or not safe(text, question or said, player if question else None):
         return {}
     if event.get("summary") and not coaching(event.get("steamid")):
@@ -728,7 +734,9 @@ def on_state(event):
         return result
     with lock:
         last_events.append(answer["event"])
-        recent_targets.extend(t for t in (answer["target"], answer["target2"]) if t)
+        ids = {p["id"]: p for p in players}
+        recent_targets.extend(player_key(ids[t]) for t in (answer["target"], answer["target2"])
+                              if t in ids and not ids[t]["bot"])
     return {**result, "gm": answer}
 
 
@@ -784,7 +792,7 @@ def handle(line):
     try:
         event = json.loads(line.decode("utf-8", "replace"))
         return HANDLERS[event["type"]](event)
-    except (ValueError, KeyError, TypeError) as error:
+    except (ValueError, KeyError, TypeError, AttributeError) as error:
         print("Bad event:", repr(error), flush=True)
         return {}
     except sqlite3.Error as error:

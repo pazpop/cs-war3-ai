@@ -27,7 +27,8 @@ The game image downloads the first eight at build time; versions and SHA-256 che
 CS 1.6 itself (the `steam_legacy` branch, the only one ReHLDS replaces) is downloaded on first start, into the
 `hlds` volume. No game file from Valve is in the repository or the image (only SteamCMD); nothing from War3FT is in the
 repository.
-The announcer's voices are the only third-party files in it ([CREDITS.txt](../server/sound/announcer/CREDITS.txt)).
+The announcer's voices ([CREDITS.txt](../server/sound/announcer/CREDITS.txt)) and the stats site's images
+([stats/img/CREDITS.txt](../stats/img/CREDITS.txt)) are the only third-party files in it.
 
 ## Your settings
 
@@ -39,7 +40,7 @@ git clone https://github.com/pazpop/cs-war3-ai.git && cd cs-war3-ai
 ```
 
 1. A DNS name pointing to the VPS: set it as `domain` in [ansible/inventory.yml](../ansible/inventory.yml), with
-   your own servers in `collect_domains`, and the server's `timezone` (the logs, the rankings and the journal follow it).
+   the server's `timezone` (the logs, the rankings and the journal follow it).
    The chat messages: [server/messages.txt](../server/messages.txt).
 2. An SSH key for Ansible (`ansible_ssh_private_key_file` in the inventory), copied to the provider's account:
    `ssh-keygen -t ed25519 -f ~/.ssh/<your key>`, then `ssh-copy-id -i ~/.ssh/<your key>.pub debian@<domain>`
@@ -113,16 +114,16 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
 - `fresh_start.sma`: when the first human joins a server of bots only, the game restarts (`sv_restart`): every
   score back to zero, a fair start (not in a map's last 10 minutes). XP, the ranking of the month and the
   achievements stay.
-- `help.sma`: `/help` in chat, or `help` in the console, opens the guide again.
+- `help.sma`: `/help` or `help` in chat, or `help` in the console, opens the guide again.
 - `high_ping.sma`: a ping over 300 ms for 50 seconds, and a player is kicked.
 - `messages.sma`: a message in the chat every 5 minutes, in turn, from [server/messages.txt](../server/messages.txt):
   `[HELP]` for a command, `[INFO]` for the rest (add the server to your favorites). One minute before the map's end:
   the next map.
 - `monthly.sma`: the ranking of the month (kills - deaths, from zero on the 1st), on the stats page. At each map, the
   top 5 and the player's place, in one line; at its end, the player's map (kills, deaths, best streak, headshots)
-  and their place before and after it. Also each human's map MVPs of the month (on top of the scoreboard at a
+  and their place before and after it (not after an rtv: the map changes at once). Also each human's map MVPs of the month (on top of the scoreboard at a
   map's end, bots included, when two humans or more scored).
-- `name_spam.sma`: a human who changes their name 10 times within 10 minutes is kicked for an hour.
+- `name_spam.sma`: a human who changes their name 10 times within 10 minutes, on one map, is kicked for an hour.
 - `no_spray.sma`: no sprays (the T key): `sv_allowupload 0` already hides custom images; the bots: `yb_spraypaints 0`.
 - `rank_tag.sma`: the top 10 show their place in the chat, `[#3] name: message`; last month's top 3, `[Champion]`.
 - `rtv.sma`: `rtv` in chat; at 60 % of all the humans on the server, adminvote's vote on 4 random maps (not in the
@@ -210,10 +211,9 @@ sudo docker compose start hlds ai
 
 ## Player counts
 
-Every 5 minutes, [ansible/files/collect.py](../ansible/files/collect.py) adds one line per server to
+Every 5 minutes, [ansible/files/collect.py](../ansible/files/collect.py) adds one line to
 `/srv/collect/players.csv`: time (the VPS's, with its offset from UTC), server, online, humans, bots, slots, map.
-Only numbers and the map, nothing about the players (about 15 KB a day per server). The servers: `collect_domains`
-in [ansible/inventory.yml](../ansible/inventory.yml). To download it:
+Only numbers and the map, nothing about the players (about 15 KB a day). To download it:
 
 ```bash
 scp -P 2222 -i ~/.ssh/<your key> deploy@<domain>:/srv/collect/players.csv .

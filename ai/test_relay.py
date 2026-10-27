@@ -223,7 +223,7 @@ class Relay(unittest.TestCase):
         self.assertIsNone(relay.valid_gm(bounty, PLAYERS))
         self.assertIsNone(relay.valid_gm({**bounty, "target": 3, "line": ""}, PLAYERS))
         self.assertIsNotNone(relay.valid_gm({**bounty, "target": 3}, PLAYERS))
-        relay.recent_targets.append(3)
+        relay.recent_targets.append(relay.player_key(PLAYERS[0]))  # by SteamID (or id), not by userid alone
         self.assertIsNone(relay.valid_gm({**bounty, "target": 3}, PLAYERS))
         relay.recent_targets.clear()
 

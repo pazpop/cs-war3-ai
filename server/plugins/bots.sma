@@ -14,10 +14,11 @@
 // War3FT's races, in its order (race 1 to 8), as written in bots.txt.
 new const RACES[][] = { "Undead Scourge", "Human Alliance", "Orcish Horde", "Night Elves", "Blood Mage",
 	"Shadow Hunter", "Warden", "Crypt Lord" }
-// Taken out of a human's name: the tags only the AI and the rankings give ([AI] Zed, [AI Game Master], [AI Coach],
-// [Champion], [#3]; the relay's name check catches other look-alikes), and < and >, which War3FT's /playerskills page
-// would read as HTML.
-new const NAME_BANNED[][] = { "[AI]", "[AI ", "Game Master", "Coach]", "[Champion]", "[#", "<", ">" }
+// Taken out of a human's name: the tags only the AI, the rankings and the server give ([AI] Zed, [AI Game Master],
+// [AI Coach], [Champion], [#3], [INFO], [STATS], [HELP]; the relay's name check catches other look-alikes), and < and
+// >, which War3FT's /playerskills page would read as HTML.
+new const NAME_BANNED[][] = { "[AI]", "[AI ", "Game Master", "Coach]", "[Champion]", "[#", "[INFO]", "[STATS]",
+	"[HELP]", "<", ">" }
 new const T_SKINS[][] = { "terror", "leet", "arctic", "guerilla" }
 new const CT_SKINS[][] = { "urban", "gsg9", "sas", "gign" }
 

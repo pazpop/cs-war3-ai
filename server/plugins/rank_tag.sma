@@ -85,7 +85,9 @@ public on_say(id)
 	new authid[35], team[16]
 	get_user_authid(id, authid, charsmax(authid))
 	get_user_team(id, team, charsmax(team))
-	log_message("^"%s<%d><%s><%s>^" say ^"%s^"", name, get_user_userid(id), authid, team, message)
+	new who[96]
+	formatex(who, charsmax(who), "%s<%d><%s><%s>", name, get_user_userid(id), authid, team)
+	log_say(who, message)
 	// The plugins after this one still see the message; only the game's own copy is not shown.
 	return PLUGIN_HANDLED_MAIN
 }

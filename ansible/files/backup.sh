@@ -39,6 +39,8 @@ trap 'exit 1' TERM INT
 game=$(docker volume inspect -f '{{.Mountpoint}}' cs-war3-ai_hlds)/cstrike/addons/amxmodx/data
 relay=$(docker volume inspect -f '{{.Mountpoint}}' cs-war3-ai_ai)
 cp -a "$game" "$work/data"
+# A link the game left (a file or a folder): removed before anything below follows it as root.
+find "$work" -type l -delete
 # A journal copied during a write would be replayed onto the clean copy below, at restore: never kept.
 rm -f "$work"/data/sqlite3/*-journal "$work"/data/sqlite3/*-wal "$work"/data/sqlite3/*-shm
 # Owned like the volume: a restore must leave the relay (not root) able to write in it.

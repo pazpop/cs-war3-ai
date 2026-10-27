@@ -17,7 +17,7 @@
         upgrade: dist
         lock_timeout: 600
 
-    # python3-systemd: fail2ban reads SSH logins from the systemd journal. curl: the pings to Healthchecks.io.
+    # python3-systemd: fail2ban reads SSH logins from the systemd journal. curl: backup.sh's pings to Healthchecks.io.
     - name: Install fail2ban, the firewall and automatic updates
       ansible.builtin.apt:
         name:

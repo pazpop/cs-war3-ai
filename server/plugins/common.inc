@@ -26,6 +26,18 @@ stock kick_and_ban(id, minutes, const reason[])
 		server_cmd("banid %d %s", minutes, authid)
 }
 
+// A chat line in the game's log, as the game writes them (the daily chat report reads them). Quotes become ': a name
+// or a message cannot end the line early and fake another one.
+stock log_say(const who[], const text[])
+{
+	new who_clean[96], text_clean[192]
+	copy(who_clean, charsmax(who_clean), who)
+	copy(text_clean, charsmax(text_clean), text)
+	replace_string(who_clean, charsmax(who_clean), "^"", "'")
+	replace_string(text_clean, charsmax(text_clean), "^"", "'")
+	log_message("^"%s^" say ^"%s^"", who_clean, text_clean)
+}
+
 // A chat command typed without / or !: not a chat line. Ours, then War3FT's (it reads them with or without /, and
 // its item names buy the item).
 stock const COMMANDS[][] = { "help", "votekick", "rtv", "nextmap", "currentmap", "timeleft", "thetime",

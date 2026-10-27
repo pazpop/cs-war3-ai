@@ -28,8 +28,8 @@ officielles.
 CS 1.6 lui-même (la branche `steam_legacy`, la seule que ReHLDS remplace) est téléchargé au premier démarrage, dans
 le volume `hlds`. Aucun fichier du jeu de Valve dans le dépôt ni dans l'image (seulement SteamCMD) ; rien de
 War3FT dans le dépôt.
-Les voix de l'annonceur sont les seuls fichiers de tiers qu'il contient
-([CREDITS.txt](../../server/sound/announcer/CREDITS.txt)).
+Les voix de l'annonceur ([CREDITS.txt](../../server/sound/announcer/CREDITS.txt)) et les images du site de stats
+([stats/img/CREDITS.txt](../../stats/img/CREDITS.txt)) sont les seuls fichiers de tiers qu'il contient.
 
 ## Tes réglages
 
@@ -41,8 +41,7 @@ git clone https://github.com/pazpop/cs-war3-ai.git && cd cs-war3-ai
 ```
 
 1. Un nom DNS qui pointe vers le VPS : c'est `domain` dans [ansible/inventory.yml](../../ansible/inventory.yml),
-   avec tes propres serveurs dans `collect_domains`, et le fuseau horaire du serveur `timezone` (les logs, les classements et
-   le journal le suivent). Les messages du chat : [server/messages.txt](../../server/messages.txt).
+   avec le fuseau horaire du serveur `timezone` (les logs, les classements et le journal le suivent). Les messages du chat : [server/messages.txt](../../server/messages.txt).
 2. Une clé SSH pour Ansible (`ansible_ssh_private_key_file` dans l'inventaire), copiée sur le compte de l'hébergeur :
    `ssh-keygen -t ed25519 -f ~/.ssh/<ta clé>`, puis `ssh-copy-id -i ~/.ssh/<ta clé>.pub debian@<domaine>`
 3. Copie [ansible/personal.example.yml](../../ansible/personal.example.yml) en `ansible/personal.yml` (ignoré par git)
@@ -120,16 +119,16 @@ rate) :
 - `fresh_start.sma` : quand le premier humain arrive sur un serveur de bots seuls, la partie redémarre
   (`sv_restart`) : tous les scores à zéro, un départ équitable (pas dans les 10 dernières minutes d'une carte).
   L'XP, le classement du mois et les succès restent.
-- `help.sma` : `/help` dans le chat, ou `help` dans la console, rouvre le guide.
+- `help.sma` : `/help` ou `help` dans le chat, ou `help` dans la console, rouvre le guide.
 - `high_ping.sma` : un ping au-dessus de 300 ms pendant 50 secondes, et un joueur est expulsé.
 - `messages.sma` : un message dans le chat toutes les 5 minutes, à tour de rôle, tiré de
   [server/messages.txt](../../server/messages.txt) : `[HELP]` pour une commande, `[INFO]` pour le reste (ajouter le
   serveur aux favoris). Une minute avant la fin de la carte : la carte suivante.
 - `monthly.sma` : le classement du mois (kills - morts, repart de zéro le 1er), sur la page de stats. À chaque
   carte, le top 5 et la place du joueur, sur une ligne ; à sa fin, la carte du joueur (kills, morts, meilleure
-  série, headshots) et sa place avant et après. Compte aussi les MVP du mois de chaque humain (premier du
+  série, headshots) et sa place avant et après (pas après un rtv : la carte change aussitôt). Compte aussi les MVP du mois de chaque humain (premier du
   tableau des scores en fin de carte, bots compris, quand au moins deux humains ont marqué).
-- `name_spam.sma` : un humain qui change de pseudo 10 fois en 10 minutes est expulsé pour une heure.
+- `name_spam.sma` : un humain qui change de pseudo 10 fois en 10 minutes, sur une même carte, est expulsé pour une heure.
 - `no_spray.sma` : pas de sprays (la touche T) ; `sv_allowupload 0` cache déjà les images perso ; les bots :
   `yb_spraypaints 0`.
 - `rank_tag.sma` : le top 10 affiche sa place dans le chat, `[#3] nom : message` ; le top 3 du mois passé,
@@ -225,10 +224,10 @@ sudo docker compose start hlds ai
 
 ## Le nombre de joueurs
 
-Toutes les 5 minutes, [ansible/files/collect.py](../../ansible/files/collect.py) ajoute une ligne par serveur dans
-`/srv/collect/players.csv` : heure (celle du VPS, avec son décalage sur UTC), serveur, en ligne, humains, bots, places, carte.
-Seulement des nombres et la carte, rien sur les joueurs (environ 15 Ko par jour et par serveur). Les serveurs : `collect_domains` dans
-[ansible/inventory.yml](../../ansible/inventory.yml). Pour le télécharger :
+Toutes les 5 minutes, [ansible/files/collect.py](../../ansible/files/collect.py) ajoute une ligne dans
+`/srv/collect/players.csv` : heure (celle du VPS, avec son décalage sur UTC), serveur, en ligne, humains, bots,
+places, carte. Seulement des nombres et la carte, rien sur les joueurs (environ 15 Ko par jour). Pour le
+télécharger :
 
 ```bash
 scp -P 2222 -i ~/.ssh/<ta clé> deploy@<domaine>:/srv/collect/players.csv .

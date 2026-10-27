@@ -43,7 +43,8 @@ services:
   # not published. Without ANTHROPIC_API_KEY, it stays silent.
   ai:
     <<: *hardening
-    # From the repository's root, for the bots' list (server/bots.txt): see .dockerignore.
+    # From the repository's root, for the bots' list (server/bots.txt) and the guide (stats/guide.html): see
+    # .dockerignore.
     build:
       context: .
       dockerfile: ai/Dockerfile

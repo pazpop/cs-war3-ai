@@ -22,21 +22,20 @@
           - "'STEAM_0:1:123456' not in admin_steamids"
           - domain is match('^[a-z0-9.-]+$')
           - timezone is match('^[A-Za-z0-9_+/-]+$')
-          - collect_domains | select('match', '^[a-z0-9.-]+$') | list | length == collect_domains | length
           - vault_hc_backup | default('') is match('^(https://[A-Za-z0-9./_-]+)?$')
           - vault_hc_server | default('') is match('^(https://[A-Za-z0-9./_-]+)?$')
           - vault_anthropic_key | default('') is match('^(sk-ant-[A-Za-z0-9_-]+)?$')
         fail_msg: >-
           admin_steamids (ansible/personal.yml): your own SteamIDs, like STEAM_0:1:123456 (not this example).
-          domain and collect_domains (ansible/inventory.yml): lowercase letters, digits, dots and dashes.
+          domain (ansible/inventory.yml): lowercase letters, digits, dots and dashes.
           timezone (ansible/inventory.yml): a zone name, like America/Toronto or UTC.
           vault_hc_backup, vault_hc_server (ansible/vault.yml, optional): ping URLs like https://hc-ping.com/<uuid>.
           vault_anthropic_key (ansible/vault.yml, optional): an Anthropic API key, sk-ant-...
         quiet: true
 
     # Ansible copies the folders as they are on the PC: a file left there for a test (a page, a database, a plugin)
-    # would go public or into the image. Only the files git knows.
-    - name: Check that the copied folders hold no file unknown to git
+    # or a change not committed would go public or into the image. Only what git has, as committed.
+    - name: Check that the copied folders hold only committed files
       ansible.builtin.command:  # noqa: command-instead-of-module
         cmd: git status --porcelain --ignored --untracked-files=all -- server ai stats caddy compose.yml
         chdir: "{{ playbook_dir }}/.."
@@ -44,7 +43,7 @@
       become: false
       register: stray
       changed_when: false
-      failed_when: stray.stdout_lines | select('match', '^(\\?\\?|!!)') | reject('search', '__pycache__') | list | length > 0
+      failed_when: stray.stdout_lines | reject('search', '__pycache__') | list | length > 0
 
   tasks:
     # Ansible's copy never deletes: without this, a plugin removed from the repository would still be built
@@ -106,7 +105,7 @@
         chdir: "{{ app_dir }}"
       changed_when: false
 
-    # --pull: a fresh Debian base, so the image gets its security updates. Unchanged layers come from the cache.
+    # --pull: fresh base images (Debian, Python), so the images get their security updates. Unchanged layers come from the cache.
     - name: Build the images (the game, the AI relay)
       ansible.builtin.command:
         cmd: docker compose build --pull
@@ -196,15 +195,15 @@
         - name: cs-war3-ai-collect.service
           content: |
             [Unit]
-            Description=Add the player counts of our game servers to /srv/collect/players.csv
+            Description=Add the server's player count to /srv/collect/players.csv
 
             [Service]
             Type=oneshot
-            ExecStart=/usr/local/sbin/cs-war3-ai-collect {{ collect_domains | join(' ') }}
+            ExecStart=/usr/local/sbin/cs-war3-ai-collect {{ domain }}
         - name: cs-war3-ai-collect.timer
           content: |
             [Unit]
-            Description=Add the player counts of our game servers to /srv/collect/players.csv, every 5 minutes
+            Description=Add the server's player count to /srv/collect/players.csv, every 5 minutes
 
             [Timer]
             OnCalendar=*:0/5

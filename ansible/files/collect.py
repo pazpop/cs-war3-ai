@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Installed by deploy.yml as /usr/local/sbin/cs-war3-ai-collect, run every 5 minutes by cs-war3-ai-collect.timer.
-# Adds one line per server to /srv/collect/players.csv: the time (the VPS's, with its offset from UTC), the server and its status.php (online,
-# humans, bots, slots, map). Only numbers and map names, nothing about the players: to see when people play, and where.
+# Adds one line per server given (deploy.yml gives ours) to /srv/collect/players.csv: the time (the VPS's, with its
+# offset from UTC), the server and its status.php (online, humans, bots, slots, map). Only numbers and map names, nothing about the players: to see when people play, and where.
 #   cs-war3-ai-collect cs.pazpop.net
 import csv
 import http.client

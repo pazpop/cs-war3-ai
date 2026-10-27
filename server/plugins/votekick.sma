@@ -21,6 +21,8 @@ public plugin_init()
 	register_clcmd("say /votekick", "cmd_votekick")
 	connect_db()
 	run("CREATE TABLE IF NOT EXISTS cs_war3_ai_votekicks (steamid TEXT PRIMARY KEY, count INTEGER, last INTEGER)")
+	// A kick older than a day no longer counts: its SteamID is not kept.
+	run("DELETE FROM cs_war3_ai_votekicks WHERE last < strftime('%%s', 'now') - %d", KICKS_KEPT)
 }
 
 public client_disconnected(id)
@@ -110,15 +112,15 @@ public on_votekick_choice(id, menu, item)
 // Kicked; banned 5 minutes the second time within a day, 30 the next times. Without a real SteamID: kicked only.
 punish(target)
 {
-	new authid[35], steamid[72], times = 1
+	new authid[35], times = 1
 	get_user_authid(target, authid, charsmax(authid))
-	if (is_real_steamid(authid))
+	if (keep_steamid(target, authid))
 	{
-		SQL_QuoteString(Empty_Handle, steamid, charsmax(steamid), authid)
 		run("INSERT INTO cs_war3_ai_votekicks VALUES ('%s', 1, strftime('%%s', 'now')) ON CONFLICT (steamid) DO UPDATE \
 			SET count = CASE WHEN last < strftime('%%s', 'now') - %d THEN 1 ELSE count + 1 END, last = excluded.last",
-			steamid, KICKS_KEPT)
-		new Handle:query = SQL_PrepareQuery(g_db, "SELECT count FROM cs_war3_ai_votekicks WHERE steamid = '%s'", steamid)
+			g_steamid[target], KICKS_KEPT)
+		new Handle:query = SQL_PrepareQuery(g_db, "SELECT count FROM cs_war3_ai_votekicks WHERE steamid = '%s'",
+			g_steamid[target])
 		if (SQL_Execute(query) && SQL_MoreResults(query))
 			times = SQL_ReadResult(query, 0)
 		SQL_FreeHandle(query)

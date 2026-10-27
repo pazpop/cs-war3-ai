@@ -23,12 +23,14 @@
 #define STATE_AT 600.0        // seconds into the map when the Game Master looks at the game: once, halfway
 #define EVENT_TIME 180.0      // seconds a bounty, a duel or a boss lasts
 #define CHALLENGE_TIME 120.0  // seconds to meet a challenge
+// The events' numbers: ai/relay.py's GM_SYSTEM tells the Game Master the same ones (change both).
 #define REWARD 3000           // the prize of a bounty, a duel, a challenge or a boss, in dollars
 #define XP_REWARD 200         // and the same prize in War3FT XP (saved, unlike money): about 13 kills
 #define XP_RAIN 100           // xp_rain: War3FT XP for every human
 #define BOSS_HEALTH 500
-#define GOLD 1500             // gold_rain: for everyone
-#define LOW_GRAVITY 300       // sv_gravity during low_gravity (the game's own is 800)
+#define GOLD 1500             // gold_rain: dollars for everyone
+#define LOW_GRAVITY 300       // sv_gravity during low_gravity (the game's own is 800)...
+#define LOW_GRAVITY_TIME 30.0 // ...for this many seconds
 #define GREET_AFTER 10.0      // seconds after a human enters, before a bot says hello
 #define COACH_EVERY 300.0     // seconds between two tips for the players who typed /coach on
 #define SUMMARY_AT 60         // seconds left in the map when the coach sends each human their summary
@@ -394,7 +396,9 @@ do_actions(const answer[], bool:from_state)
 			client_print_color(id, print_team_default, "^4[AI Coach]^1 %s", text)
 			new name[32]
 			get_user_name(id, name, charsmax(name))
-			log_message("^"Coach to %s^" say ^"%s^"", name, text)
+			new who[48]
+			formatex(who, charsmax(who), "Coach to %s", name)
+			log_say(who, text)
 		}
 	}
 	free(coach)
@@ -437,7 +441,9 @@ bot_say(userid, const text[])
 	// In the game's log too, as a player's chat line: the daily chat report reads it (ansible/files/chat_report.py).
 	new team[16]
 	get_user_team(bot, team, charsmax(team))
-	log_message("^"%s<%d><BOT><%s>^" say ^"%s^"", name, userid, team, text)
+	new who[64]
+	formatex(who, charsmax(who), "%s<%d><BOT><%s>", name, userid, team)
+	log_say(who, text)
 }
 
 game_master(JSON:gm)
@@ -459,7 +465,7 @@ game_master(JSON:gm)
 			g_gravity = get_cvar_num("sv_gravity")
 		set_cvar_num("sv_gravity", LOW_GRAVITY)
 		remove_task(TASK_GRAVITY)
-		set_task(30.0, "end_low_gravity", TASK_GRAVITY)
+		set_task(LOW_GRAVITY_TIME, "end_low_gravity", TASK_GRAVITY)
 	}
 	else if (equal(event, "gold_rain"))
 	{
@@ -812,7 +818,7 @@ announce(const text[])
 	client_print_color(0, print_team_default, "^4[AI Game Master]^1 %s", text)
 	set_hudmessage(255, 80, 0, -1.0, 0.18, 0, 0.0, 5.0, 0.1, 0.5, -1)
 	show_hudmessage(0, "%s", text)
-	log_message("^"Game Master^" say ^"%s^"", text)
+	log_say("Game Master", text)
 	journal(text)
 }
 

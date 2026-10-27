@@ -13,5 +13,3 @@ all:
       # 60 s instead of 10: a shared VPS can freeze for several seconds, and sudo waits too.
       ansible_timeout: 60
       timezone: America/Toronto
-      # The servers whose player counts are added to /srv/collect/players.csv every 5 minutes (files/collect.py).
-      collect_domains: [cs.pazpop.net]
