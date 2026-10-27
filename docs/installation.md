@@ -22,6 +22,7 @@ Ansible from Ubuntu (WSL on Windows works). The server runs in Docker.
 | [PHP](https://www.php.net) | Runs the stats pages | PHP License |
 | [Python](https://www.python.org) | The AI relay (`ai/relay.py`), standard library only | PSF |
 | [Claude](https://www.anthropic.com/api) (Anthropic's API, optional) | The bots' chat lines and the Game Master | paid service |
+| [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) | Downloads CS 1.6 on the first start | Valve's terms |
 
 The game image downloads the first eight at build time; versions and SHA-256 checksums are in
 [server/Dockerfile](../server/Dockerfile). Caddy, PHP and Python are their own official Docker images.
@@ -44,8 +45,9 @@ Then open a new terminal (for Ansible's commands), and `cd cs-war3-ai`.
 
 1. A DNS name pointing to the VPS: set it as `domain` in [ansible/inventory.yml](../ansible/inventory.yml), with
    the server's `timezone` (the logs, the rankings and the journal follow it).
-   The chat messages: [server/messages.txt](../server/messages.txt).
-2. An SSH key for Ansible (`ansible_ssh_private_key_file` in the inventory), copied to the provider's account:
+   The chat messages: [server/messages.txt](../server/messages.txt). Commit your changes: `deploy.yml` copies
+   only committed files.
+2. An SSH key for Ansible (set `ansible_ssh_private_key_file` in the inventory to it), copied to the provider's account:
    `ssh-keygen -t ed25519 -f ~/.ssh/<your key>`, then `ssh-copy-id -i ~/.ssh/<your key>.pub debian@<domain>`
 3. Copy [ansible/personal.example.yml](../ansible/personal.example.yml) to `ansible/personal.yml` (ignored by git)
    and fill it in: the provider's account, your account and its public key (another `ssh-keygen`), the backup
@@ -107,7 +109,7 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
   scoreboard.
 - `announcer.sma`: the voices and messages for first blood, multi-kills and kill streaks. Players download the voices
   over HTTP (FastDL).
-- `block_test.sma`: blocks War3FT's debug commands `test` and `test2`, open to every player (they fill the logs).
+- `block_debug.sma`: blocks War3FT's debug commands `test` and `test2`, open to every player (they fill the logs).
 - `bots.sma`: each bot of [server/bots.txt](../server/bots.txt) most often plays its own War3FT race, wears its own
   skin on each team, and has a level of 1 to 5 at each map (its XP never adds up: no stronger than the humans).
   A human's name loses the tags only the AI and the rankings give (`[AI]`, `Game Master`, `[Champion]`, `[#3]`...),
@@ -116,7 +118,7 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
   respawns. Saves everyone's XP every 5 minutes too: War3FT saves at a round's end, which never comes here.
 - `damage.sma`: the damage the player deals, under the crosshair, at each hit.
 - `fresh_start.sma`: when the first human joins a server of bots only, the game restarts (`sv_restart`): every
-  score back to zero, a fair start (not in a map's last 10 minutes). XP, the ranking of the month and the
+  score back to zero, a fair start (once a map, not in its last 10 minutes). XP, the ranking of the month and the
   achievements stay.
 - `help.sma`: `/help` or `help` in chat, or `help` in the console, opens the guide again.
 - `high_ping.sma`: a ping over 300 ms for 50 seconds, and a player is kicked.
@@ -130,11 +132,11 @@ code several share; `kills.inc` also gets the kills of War3FT's spells, which th
 - `name_spam.sma`: a human who changes their name 10 times within 10 minutes, on one map, is kicked for an hour.
 - `no_spray.sma`: no sprays (the T key): `sv_allowupload 0` already hides custom images; the bots: `yb_spraypaints 0`.
 - `rank_tag.sma`: the top 10 show their place in the chat, `[#3] name: message`; last month's top 3, `[Champion]`.
-- `rtv.sma`: `rtv` in chat; at 60 % of all the humans on the server, adminvote's vote on 4 random maps (not in the
+- `rtv.sma`: `rtv` in chat; at 60 % of the humans playing (in a team), adminvote's vote on 4 random maps (not in the
   map's last 2 minutes, when mapchooser votes).
 - `slash_commands.sma`: `/nextmap`, `/currentmap`, `/timeleft`, `/thetime` (AMX Mod X only knows them without the
   slash): every command then works with a `/`.
-- `votekick.sma`: a player is kicked once 60 % of the other humans chose them (at least 3 humans; admins are not in
+- `votekick.sma`: a player is kicked once 60 % of the other humans playing chose them (at least 3 humans; admins are not in
   the menu). Again within a day: banned 5 minutes, then 30 (counted by SteamID).
 - `web_stats.sma`: for the stats page, stores each human's name (in SQLite, War3FT only keeps the SteamID), and
   copies the top 100 of CS's combat ranking (`/rank`, `/top15`) at each map start. `/mystats`: the link to the

@@ -1,7 +1,8 @@
-// "rtv" in chat: once 60 % of all the humans on the server ask for it (not only those who answer), adminvote's map
+// "rtv" in chat: once 60 % of all the humans playing (in a team) ask for it (not only those who answer), adminvote's map
 // vote (amx_votemap) starts on 4 random maps. The end-of-map vote stays mapchooser's.
 #include <amxmodx>
 #include <amxmisc>
+#include "common.inc"
 
 #define SHARE 0.6           // share of humans needed
 #define MAX_MAPS 64
@@ -58,8 +59,7 @@ public cmd_rtv(id)
 	new bool:already = g_wants_rtv[id]
 	g_wants_rtv[id] = true
 
-	new players[32], count, votes
-	get_players(players, count, "ch")  // c: no bots; h: no HLTV
+	new players[32], votes, count = humans_playing(players)
 	for (new i = 0; i < count; i++)
 		if (g_wants_rtv[players[i]])
 			votes++

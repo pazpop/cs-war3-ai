@@ -23,6 +23,11 @@ services:
     stop_grace_period: 30s
     # A wide cap (the game uses well under 1 GB): the VPS has no swap, and a game taken over must not starve the rest.
     mem_limit: 2g
+    # Its console shows the chat, team chat included: Docker keeps a small log of it (a few days), not 30 MB.
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "2"
     ports:
       - "27015:27015/udp"
     environment:
@@ -111,8 +116,9 @@ services:
         volume:
           subpath: cstrike/addons/amxmodx/data/sqlite3
 
-  # FastDL: the game's files over HTTP, behind the front. It reads the whole game volume, read-only, but serves
-  # only the files players download, and holds no certificate (see caddy/fastdl.Caddyfile).
+  # FastDL: the game's files over HTTP, behind the front. It reads the whole game volume, read-only, serves only the
+  # paths players download (a link the game planted there could point elsewhere in the volume: the game would have to
+  # be taken over first), holds no certificate, and reaches nothing but the front (see caddy/fastdl.Caddyfile).
   fastdl:
     <<: *hardening
     # The image's caddy program needs this one to start (it is set on the file).
@@ -122,6 +128,7 @@ services:
     mem_limit: 128m
     cpus: 0.5
     command: ["caddy", "run", "--config", "/etc/caddy/fastdl.Caddyfile"]
+    networks: [fastdl]
     volumes:
       - ./caddy:/etc/caddy:ro
       - hlds:/srv/hlds:ro
@@ -135,6 +142,8 @@ services:
     restart: unless-stopped
     mem_limit: 256m
     cpus: 0.5
+    # The stats page on the default network, FastDL on its own.
+    networks: [default, fastdl]
     ports:
       - "80:80"
       - "443:443"
@@ -161,6 +170,8 @@ configs:
 networks:
   # The game alone, and its AI relay.
   game:
+  # The front and FastDL only: FastDL cannot reach PHP (stats:9000).
+  fastdl:
   # Between the game and its AI relay. Internal (no way out): both go out through "game". A fixed range, for the
   # relay's address (outside Docker's own ranges).
   ai:

@@ -7,6 +7,9 @@
 	@fastdl path /cstrike/wc3.css /cstrike/sound/warcraft3/* /cstrike/sprites/warcraft3/* /cstrike/sound/announcer/*
 	handle @fastdl {
 		root * /srv/hlds
+		# Files to download, never a page to run: whatever a link could point to.
+		header X-Content-Type-Options nosniff
+		header Content-Security-Policy "default-src 'none'"
 		file_server
 	}
 	respond 404

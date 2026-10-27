@@ -81,16 +81,21 @@ public on_votekick_choice(id, menu, item)
 		return PLUGIN_HANDLED
 	g_wants_kick[id] = userid
 
-	// Counted again: players may have left while the menu was open.
-	new players[32], count, votes
-	get_players(players, count, "ch")
-	if (count < KICK_MIN_HUMANS)
-		return PLUGIN_HANDLED
+	// Counted again: players may have left while the menu was open. The other humans playing (in a team) vote; the
+	// target does not.
+	new players[32], count = humans_playing(players), others, votes
 	for (new i = 0; i < count; i++)
-		if (players[i] != target && g_wants_kick[players[i]] == userid)
+	{
+		if (players[i] == target)
+			continue
+		others++
+		if (g_wants_kick[players[i]] == userid)
 			votes++
-	// The share of the other humans (the target does not vote), rounded up: with 5 others, 3.
-	new goal = floatround(SHARE * float(count - 1), floatround_ceil)
+	}
+	if (others + 1 < KICK_MIN_HUMANS)
+		return PLUGIN_HANDLED
+	// Their share, rounded up: with 5 others, 3.
+	new goal = floatround(SHARE * float(others), floatround_ceil)
 
 	new name[32], target_name[32]
 	get_user_name(id, name, charsmax(name))

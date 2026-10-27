@@ -22,6 +22,7 @@ installé avec Ansible depuis Ubuntu (WSL sous Windows convient). Le serveur tou
 | [PHP](https://www.php.net) | Fait tourner les pages de stats | PHP License |
 | [Python](https://www.python.org) | Le relais de l'IA (`ai/relay.py`), bibliothèque standard seulement | PSF |
 | [Claude](https://www.anthropic.com/api) (l'API d'Anthropic, optionnel) | Les répliques des bots et le maître du jeu | service payant |
+| [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) | Télécharge CS 1.6 au premier démarrage | conditions de Valve |
 
 L'image du jeu télécharge les huit premières au build ; versions et empreintes SHA-256 dans
 [server/Dockerfile](../../server/Dockerfile). Caddy, PHP et Python sont leurs propres images Docker
@@ -44,8 +45,11 @@ git clone https://github.com/pazpop/cs-war3-ai.git
 Puis ouvre un nouveau terminal (pour les commandes d'Ansible), et `cd cs-war3-ai`.
 
 1. Un nom DNS qui pointe vers le VPS : c'est `domain` dans [ansible/inventory.yml](../../ansible/inventory.yml),
-   avec le fuseau horaire du serveur `timezone` (les logs, les classements et le journal le suivent). Les messages du chat : [server/messages.txt](../../server/messages.txt).
-2. Une clé SSH pour Ansible (`ansible_ssh_private_key_file` dans l'inventaire), copiée sur le compte de l'hébergeur :
+   avec le fuseau horaire du serveur `timezone` (les logs, les classements et le journal le suivent). Les messages
+   du chat : [server/messages.txt](../../server/messages.txt). Commite tes changements : `deploy.yml` ne copie que
+   les fichiers commités.
+2. Une clé SSH pour Ansible (indique-la dans `ansible_ssh_private_key_file`, dans l'inventaire), copiée sur le compte
+   de l'hébergeur :
    `ssh-keygen -t ed25519 -f ~/.ssh/<ta clé>`, puis `ssh-copy-id -i ~/.ssh/<ta clé>.pub debian@<domaine>`
 3. Copie [ansible/personal.example.yml](../../ansible/personal.example.yml) en `ansible/personal.yml` (ignoré par git)
    et remplis-le : le compte de l'hébergeur, ton compte et sa clé publique (un autre `ssh-keygen`), le dossier des
@@ -110,7 +114,7 @@ rate) :
   le MVP : le premier du tableau des scores.
 - `announcer.sma` : les voix et les messages du premier kill, des multi-kills et des séries. Les joueurs téléchargent
   les voix en HTTP (FastDL).
-- `block_test.sma` : bloque les commandes de débogage `test` et `test2` de War3FT, ouvertes à tous les joueurs
+- `block_debug.sma` : bloque les commandes de débogage `test` et `test2` de War3FT, ouvertes à tous les joueurs
   (elles remplissent les logs).
 - `bots.sma` : chaque bot de [server/bots.txt](../../server/bots.txt) joue le plus souvent sa propre race de War3FT,
   porte son propre skin dans chaque équipe, et a un niveau de 1 à 5 à chaque carte (son XP ne s'additionne jamais :
@@ -121,7 +125,7 @@ rate) :
   sauvegarde en fin de manche, qui n'arrive jamais ici.
 - `damage.sma` : les dégâts que le joueur inflige, sous le viseur, à chaque coup.
 - `fresh_start.sma` : quand le premier humain arrive sur un serveur de bots seuls, la partie redémarre
-  (`sv_restart`) : tous les scores à zéro, un départ équitable (pas dans les 10 dernières minutes d'une carte).
+  (`sv_restart`) : tous les scores à zéro, un départ équitable (une fois par carte, pas dans ses 10 dernières minutes).
   L'XP, le classement du mois et les succès restent.
 - `help.sma` : `/help` ou `help` dans le chat, ou `help` dans la console, rouvre le guide.
 - `high_ping.sma` : un ping au-dessus de 300 ms pendant 50 secondes, et un joueur est expulsé.
@@ -137,11 +141,11 @@ rate) :
   `yb_spraypaints 0`.
 - `rank_tag.sma` : le top 10 affiche sa place dans le chat, `[#3] nom : message` ; le top 3 du mois passé,
   `[Champion]`.
-- `rtv.sma` : `rtv` dans le chat ; à 60 % de tous les humains du serveur, le vote d'adminvote sur 4 cartes au hasard
+- `rtv.sma` : `rtv` dans le chat ; à 60 % des humains qui jouent (dans une équipe), le vote d'adminvote sur 4 cartes au hasard
   (pas dans les 2 dernières minutes de la carte, quand mapchooser vote).
 - `slash_commands.sma` : `/nextmap`, `/currentmap`, `/timeleft`, `/thetime` (AMX Mod X ne les connaît que sans le
   `/`) : toutes les commandes marchent alors avec un `/`.
-- `votekick.sma` : un joueur est expulsé quand 60 % des autres humains l'ont choisi (3 humains au moins ; les admins
+- `votekick.sma` : un joueur est expulsé quand 60 % des autres humains qui jouent l'ont choisi (3 humains au moins ; les admins
   ne sont pas dans le menu). De nouveau dans la journée : banni 5 minutes, puis 30 (compté par SteamID).
 - `web_stats.sma` : pour la page de stats, garde le nom de chaque humain (en SQLite, War3FT ne garde que le SteamID),
   et recopie le top 100 du classement de combat de CS (`/rank`, `/top15`) à chaque début de carte. `/mystats` : le
@@ -258,8 +262,8 @@ des actions :
   le jeu, le relais et la page de stats, et s'affiche `[AI] Zed` dans le tableau des scores. Les bots se souviennent
   de chaque humain (par SteamID, dans le volume du relais) : depuis quand il joue, la dernière carte jouée ensemble,
   comment il s'en sort contre eux, et le score de chaque bot contre lui ; aussi l'entrée du journal d'hier, pour en
-  parler. Un bot tué 5 fois par un joueur, plus qu'il ne l'a tué, le voit comme son rival, et c'est lui qui
-  l'accueille. Les bots ne se moquent jamais des joueurs : leur prompt l'interdit, et le modérateur refuse une telle
+  parler. Un bot tué 5 fois par un joueur, plus qu'il ne l'a tué, le voit comme son rival, et le salue en
+  premier. Les bots ne se moquent jamais des joueurs : leur prompt l'interdit, et le modérateur refuse une telle
   réplique.
 - **Les questions** : un message avec un `?` reçoit en général la réponse d'un bot, qui a le guide des joueurs
   ([stats/guide.html](../../stats/guide.html), en texte, environ 2 000 tokens) sous les yeux ; un nouveau reçoit un conseil tiré du guide

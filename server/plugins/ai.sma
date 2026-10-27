@@ -18,7 +18,7 @@
 #define RELAY_IP "10.27.15.10"
 #define RELAY_PORT 27100
 #define TIMEOUT 30.0          // seconds to wait for an answer: a few requests to Claude (names, a line, its check)
-#define MAX_PENDING 16        // requests waiting at once: the map's summaries all go together (up to 12 humans)
+#define MAX_PENDING 20        // requests waiting at once: the map's summaries go together (16 humans, 4 places left)
 #define COACH_RESERVE 4       // places the coach's summaries and timed tips leave free for the other events
 #define STATE_AT 600.0        // seconds into the map when the Game Master looks at the game: once, halfway
 #define EVENT_TIME 180.0      // seconds a bounty, a duel or a boss lasts
@@ -96,13 +96,12 @@ public client_putinserver(id)
 }
 
 // A human changes their name during the game: the relay checks the new one at once (an offensive one: renamed), not
-// only at the next map or look. A second later: the game applies the name after this.
+// only at the next map or look. A second later: the game applies the name after this. A check already waiting is kept
+// (it sends the name the player has then): changing names faster than that cannot keep every one unchecked.
 public client_infochanged(id)
 {
-	if (!is_user_connected(id) || is_user_bot(id) || !name_changed(id))
-		return
-	remove_task(TASK_NAME + id)
-	set_task(1.0, "send_name", TASK_NAME + id)
+	if (is_user_connected(id) && !is_user_bot(id) && name_changed(id) && !task_exists(TASK_NAME + id))
+		set_task(1.0, "send_name", TASK_NAME + id)
 }
 
 public send_name(task)
@@ -691,11 +690,7 @@ coach_mode(id, bool:on)
 // Every 5 minutes, each human who played: the relay answers only those who typed /coach on.
 public coach_every()
 {
-	new players[32], count, stats[STATSX_MAX_STATS], body[MAX_BODYHITS]
-	get_players(players, count, "ch")
-	for (new i = 0; i < count; i++)
-		if (get_user_wstats(players[i], 0, stats, body) && stats[0] + stats[1] > 0)
-			send_coach(players[i], "every")
+	coach_all("every")
 }
 
 // Near the map's end, each human who played gets their summary: one strength, one thing to work on.
@@ -705,11 +700,17 @@ public check_summary()
 	if (g_summary_sent || left <= 0 || left > SUMMARY_AT)
 		return
 	g_summary_sent = true
+	coach_all("summary")
+}
+
+// Each human who killed or died on this map: their numbers to the coach.
+coach_all(const kind[])
+{
 	new players[32], count, stats[STATSX_MAX_STATS], body[MAX_BODYHITS]
-	get_players(players, count, "ch")
+	get_players(players, count, "ch")  // c: no bots; h: no HLTV
 	for (new i = 0; i < count; i++)
 		if (get_user_wstats(players[i], 0, stats, body) && stats[0] + stats[1] > 0)
-			send_coach(players[i], "summary")
+			send_coach(players[i], kind)
 }
 
 // The player's numbers on this map: kills, deaths, headshots, shots and hits, where the hits landed, each weapon used,

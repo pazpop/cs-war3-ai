@@ -38,6 +38,20 @@ stock log_say(const who[], const text[])
 	log_message("^"%s^" say ^"%s^"", who_clean, text_clean)
 }
 
+// The humans in a team (T or CT), into players: the ones a vote counts. A player moved to spectator (away) does not.
+stock humans_playing(players[32])
+{
+	new all[32], count, playing
+	get_players(all, count, "ch")  // c: no bots; h: no HLTV
+	for (new i = 0; i < count; i++)
+	{
+		new team = get_user_team(all[i])  // 1: T, 2: CT
+		if (team == 1 || team == 2)
+			players[playing++] = all[i]
+	}
+	return playing
+}
+
 // A chat command typed without / or !: not a chat line. Ours, then War3FT's (it reads them with or without /, and
 // its item names buy the item).
 stock const COMMANDS[][] = { "help", "votekick", "rtv", "nextmap", "currentmap", "timeleft", "thetime",

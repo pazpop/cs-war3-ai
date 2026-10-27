@@ -112,7 +112,8 @@ anyone who wants to run their own server, and get players to come back and bring
   the scroll. The guides say so; War3FT has no setting to hide them.
 - After a start, AMX Mod X's `nextmap` does not find the start map and picks the cycle's first one: `de_dust2` (the
   start map, `entrypoint.sh`) is the last line of `mapcycle.txt`, so the cycle goes on in order.
-- The game's log is echoed to the console by `mp_logecho` (off: IPs and team chat would land in Docker's logs).
+- The game's log is echoed to the console by `mp_logecho` (off: the IPs would land in Docker's logs). The chat
+  reaches the console anyway (the game prints it): hlds's Docker log is kept small (compose.yml).
   `sv_logecho` does not exist here.
 - `client_disconnected(id, drop)`: `drop` is false at a map's end, true when a player leaves or is kicked.
 - The relay's prompts quote players' words with `quoted()` (`ensure_ascii=False`): with escape codes, the moderator

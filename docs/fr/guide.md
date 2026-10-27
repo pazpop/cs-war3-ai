@@ -44,8 +44,8 @@ Choisis une race dans le premier menu. Puis, dans le chat :
 | `/shopmenu`, `/shopmenu2` | Acheter des objets |
 | `/itemsinfo`, `/itemsinfo2` | Ce que font les objets |
 | `/war3help` | L'aide de War3FT |
-| `/rtv` | Demander une nouvelle carte (vote à 60 % des humains) |
-| `/votekick` | Voter pour exclure un joueur : à 60 % des autres humains (3 humains au moins) |
+| `/rtv` | Demander une nouvelle carte (vote à 60 % des humains qui jouent) |
+| `/votekick` | Voter pour exclure un joueur : à 60 % des autres humains qui jouent (3 humains au moins) |
 | `/rank`, `/top15` | Ton rang au combat, le top 15 (le top 10 affiche sa place dans le chat) |
 | `/ach` | Tes succès : 14 objectifs, de ton premier kill jusqu'à 10 000 |
 | `/mystats` | Le lien vers ta page sur le site de stats |
@@ -116,7 +116,7 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2`.
   stats.
 - **/coach** : un conseil du coach IA, en privé. `/coach on` : un toutes les 5 minutes (`/coach off` pour arrêter).
   Vers la fin de chaque carte, tu reçois un bilan.
-- À la fin de chaque carte, ta carte sur une ligne : kills, morts, meilleure série, headshots, et ta place du mois
+- À la fin de chaque carte, le bilan de ta carte en une ligne : kills, morts, meilleure série, headshots, et ta place du mois
   avant et après.
 - Le top 10 affiche sa place dans le chat ; le top 3 du mois passé, l'étiquette **[Champion]**.
 - Dans le chat : **[HELP]** une commande, **[INFO]** le serveur, **[STATS]** le top 5 du mois à chaque début de
@@ -132,7 +132,7 @@ Ce que fait chacun : `/itemsinfo` et `/itemsinfo2`.
 - Les bots ont un niveau de 1 à 5, tiré à chaque carte : ton XP est à toi, la leur ne s'accumule jamais.
 - **Pose-leur une question** sur le jeu : un message avec un **?** reçoit en général une réponse, comme
   *which race is good for a beginner?*
-- Arrive sur un serveur de bots seuls, et la partie **redémarre** : les scores de la carte repartent de zéro (l'XP
+- Si tu arrives sur un serveur où il n'y a que des bots, la partie **redémarre** : les scores de la carte repartent de zéro (l'XP
   et les classements restent).
 
 ## Le maître du jeu
@@ -147,7 +147,7 @@ suite un joueur déjà choisi.
 | Duel | Deux joueurs d'équipes opposées : le premier qui tue l'autre gagne le prix, en 3 minutes. |
 | Défi | Un objectif pour chaque humain, en 2 minutes : des kills, des headshots ou des kills au couteau. Le premier qui l'atteint gagne le prix. Ton compte s'affiche dans le chat. |
 | Boss | Un bot brille en rouge, avec 500 points de vie : qui l'abat gagne le prix. Après 3 minutes, il redevient un bot normal. |
-| Gravité basse | 30 secondes de sauts immenses pour tout le monde. |
+| Gravité réduite | 30 secondes de sauts immenses pour tout le monde. |
 | Pluie d'or | **1500 $** pour chaque joueur. |
 | Pluie d'XP | **100 XP** pour chaque humain, pour la race jouée. |
 | Cadeau | Un objet des boutiques de War3FT pour tous : bottes, griffes, cape, anneau… |

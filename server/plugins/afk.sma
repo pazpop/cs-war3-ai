@@ -52,9 +52,10 @@ public check_players()
 			continue
 
 		new TeamName:team = get_member(id, m_iTeam)
-		new bool:moved = mouse_moved(id)
-		// A key pressed or released since the last check: a key held down (crouching...) does not keep a player in.
+		// A key pressed or released since the last check: a key held down (crouching...) does not keep a player in,
+		// nor the view a held turn key (+left, +right) keeps turning.
 		new buttons = get_user_button(id)
+		new bool:moved = mouse_moved(id) && !(buttons & (IN_LEFT | IN_RIGHT))
 		new bool:pressed = buttons != g_buttons[id]
 		g_buttons[id] = buttons
 		// Already out of the game, a key pressed or released, or the mouse moved: nothing to do.

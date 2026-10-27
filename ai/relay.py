@@ -100,7 +100,7 @@ GM_SYSTEM = (
     "wins the prize.\n"
     "- xp_rain: 100 War3FT XP for every human.\n"
     "- item_gift: a random War3FT shop item for everyone.\n"
-    "- none: no event; line can be a short comment on the game, or empty.\n"
+    "- none: no event; line is a short comment on the game.\n"
     "The prize of a bounty, a duel, a challenge or a boss: $3000 and 200 War3FT XP.\n"
     "Make the game fairer or more fun: bounties on players far ahead, never on someone who struggles. "
     "Vary: do not repeat the last event. target and target2 are player ids from the list, 0 when unused; challenge "
@@ -197,7 +197,7 @@ def forget():
     day."""
     day_ago = time.monotonic() - 24 * 3600
     with lock:
-        db.execute("DELETE FROM players WHERE last_seen < date('now', ?)", (f"-{FORGET_DAYS} days",))
+        db.execute("DELETE FROM players WHERE last_seen < date('now', 'localtime', ?)", (f"-{FORGET_DAYS} days",))
         db.execute("DELETE FROM rivals WHERE steamid NOT IN (SELECT steamid FROM players)")
         db.execute("DELETE FROM coach_on WHERE steamid NOT IN (SELECT steamid FROM players)")
         db.execute("DELETE FROM story WHERE day < ?", (yesterday(),))
@@ -507,10 +507,10 @@ def bot_line(bot, situation, steamid, name, guide=False, player=None):
              f"{persona(me)}. {RULES.format(limit=limit)}"
     if guide:
         system += f"\n\nThe server's guide, for questions about the game (answer from it, never invent):\n{GUIDE}"
+    # The recent chat, and yesterday on the server from the journal (already checked by the moderator): something to
+    # talk about.
     with lock:
         chat = "\n".join(recent_chat) or "(empty)"
-    # Yesterday on the server, from the journal (already checked by the moderator): something to talk about.
-    with lock:
         row = db.execute("SELECT text FROM journal WHERE day = ?", (yesterday(),)).fetchone()
     news = f"Yesterday on this server (mention it only when it fits): {quoted(row[0])}\n\n" if row else ""
     prompt = f"Recent chat:\n{chat}\n\n{news}What you know: {memory(steamid, name, me)}\n\n{situation}\nYour line:"

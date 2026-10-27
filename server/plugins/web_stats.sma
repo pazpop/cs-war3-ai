@@ -84,7 +84,8 @@ public save_name(id)
 		ON CONFLICT (steamid) DO UPDATE SET name = excluded.name, seen = excluded.seen", g_steamid[id], name_sql)
 }
 
-// The ranking is by SteamID (csstats_rank 1): every bot shares the SteamID "BOT", left out below. In one transaction:
+// The ranking is by SteamID (csstats_rank 1): every bot shares the SteamID "BOT", left out below. The position is
+// the humans' own (rank_tag.sma's [#n] counts the same way); /rank, CSX's, counts the bots' row too. In one transaction:
 // the stats page never sees the table half written.
 export_combat_ranking()
 {
@@ -98,8 +99,6 @@ export_combat_ranking()
 	{
 		do
 		{
-			// CSX's own place, as in /rank and /top15 (the skipped rows below keep theirs).
-			new place = index + 1
 			index = get_stats(index, stats, bodyhits, name, charsmax(name), steamid, charsmax(steamid))
 			if (!is_real_steamid(steamid))
 				continue
@@ -109,7 +108,7 @@ export_combat_ranking()
 			SQL_QuoteString(Empty_Handle, steamid_sql, charsmax(steamid_sql), steamid)
 			// stats[]: 0 kills, 1 deaths, 2 headshots, 3 team kills, 4 shots, 5 hits, 6 damage.
 			run("INSERT INTO cs_war3_ai_combat VALUES (%d, '%s', '%s', %d, %d, %d, %d, %d, %d)",
-				place, steamid_sql, name_sql, stats[0], stats[1], stats[2], stats[4], stats[5], stats[6])
+				count, steamid_sql, name_sql, stats[0], stats[1], stats[2], stats[4], stats[5], stats[6])
 		}
 		while (index && count < COMBAT_TOP)
 	}
