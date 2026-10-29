@@ -1,6 +1,7 @@
 # The VPS system: updates, fail2ban, firewall, SSH on 2222 only, Docker, and no more provider account.
 # After init.yml, as deploy on 2222. Can be run again (it also upgrades the system packages), but it reboots the VPS
 # when an update needs it: run it when nobody plays.
+#   source vault.sh
 #   ansible-playbook -i ansible/inventory.yml ansible/config.yml
 - name: The VPS system
   hosts: cs
@@ -9,8 +10,43 @@
   force_handlers: true
   vars_files:
     - personal.yml
+    - vault.yml
 
   tasks:
+    - name: Check the account settings before touching the server
+      ansible.builtin.assert:
+        that:
+          - vault_personal_password | default('') is match('^(\$6\$.+)?$')
+        fail_msg: "vault_personal_password (ansible/vault.yml, optional): a SHA-512 hash from: openssl passwd -6"
+        quiet: true
+
+    # Same as init.yml, but runnable again: a new key replaces the old one. exclusive: only this key gets in.
+    - name: Install each account's key
+      ansible.posix.authorized_key:
+        user: "{{ item.user }}"
+        key: "{{ lookup('file', item.key) }}"
+        exclusive: true
+      loop:
+        - { user: deploy, key: "{{ ansible_ssh_private_key_file }}.pub" }
+        - { user: "{{ personal_user }}", key: "{{ personal_key }}" }
+
+    # Optional: with a password, your account's sudo asks for it; without one, it does not (init.yml).
+    - name: Give your account its password
+      ansible.builtin.user:
+        name: "{{ personal_user }}"
+        password: "{{ vault_personal_password }}"
+      when: vault_personal_password | default('') | length > 0
+      no_log: true
+
+    - name: Let deploy use sudo without a password, and your account with its password if it has one
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/90-accounts
+        content: |
+          deploy ALL=(ALL) NOPASSWD:ALL
+          {{ personal_user }} ALL=(ALL) {{ '' if vault_personal_password | default('') else 'NOPASSWD:' }}ALL
+        mode: "0440"
+        validate: visudo -cf %s
+
     - name: Upgrade the whole system
       ansible.builtin.apt:
         update_cache: true

@@ -66,7 +66,8 @@ Puis ouvre un nouveau terminal (pour les commandes d'Ansible), et `cd cs-war3-ai
    EDITOR=nano ansible-vault create ansible/vault.yml
    ```
    Dedans, optionnel : `vault_anthropic_key: sk-ant-...`, pour l'IA (voir [L'IA](#lia-optionnel)). Un coffre vide
-   convient : `{}`.
+   convient : `{}`. Optionnel aussi : `vault_personal_password`, le hash d'un mot de passe pour ton compte
+   (`openssl passwd -6`) : son `sudo` le demande alors (`config.yml`).
 
 ## Installer le VPS
 

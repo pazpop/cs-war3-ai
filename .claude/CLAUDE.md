@@ -61,7 +61,7 @@ anyone who wants to run their own server, and get players to come back and bring
 - No software installed or removed without the owner's "yes".
 - Commits on main; the owner pushes.
 - The VPS is in production: prepare, the owner runs the playbooks. Read it over SSH only with the owner's consent
-  (`ssh -p 2222 -i ~/.ssh/cs_pazpop_net deploy@cs.pazpop.net`), and mask IPs and SteamIDs in what you show.
+  (`ssh -p 2222 -i ~/.ssh/deploy deploy@cs.pazpop.net`), and mask IPs and SteamIDs in what you show.
 - sshd keeps the first value of each setting: our drop-in is `00-pazpop.conf`, read before cloud-init's
   `50-cloud-init.conf` (which turns password auth back on).
 
