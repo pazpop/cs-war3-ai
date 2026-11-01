@@ -1,5 +1,8 @@
 # cs-war3-ai
 
+Read `../methode/METHODE.md` first (the owner's private repository), at each return to the project. This file holds only
+what differs from it and what is specific to the project.
+
 A Counter-Strike 1.6 server with War3FT and YaPB bots. Goals: have fun building it, leave a repository useful to
 anyone who wants to run their own server, and get players to come back and bring friends.
 
@@ -54,12 +57,9 @@ anyone who wants to run their own server, and get players to come back and bring
 
 ## Rules
 
-- Answer in French, in short sentences. Shell commands in docs: Bash for Ubuntu.
-- Simplest option first; state the cost of a fancier one.
-- Nothing personal in the repository: no name, email, IP, PC path. Only "pazpop". Personal values go in
-  `ansible/personal.yml` (ignored).
-- No software installed or removed without the owner's "yes".
-- Commits on main; the owner pushes.
+- Divergence: the repository, its docs and what players see are in English (see Decisions). Answers stay in French.
+- Frozen since 2026-10-27: no full review; fix only on a real signal (heartbeat alert, AMX Mod X error, complaint).
+- Personal values go in `ansible/personal.yml` (ignored).
 - The VPS is in production: prepare, the owner runs the playbooks. Read it over SSH only with the owner's consent
   (`ssh -p 2222 -i ~/.ssh/deploy deploy@cs.pazpop.net`), and mask IPs and SteamIDs in what you show.
 - sshd keeps the first value of each setting: our drop-in is `00-pazpop.conf`, read before cloud-init's
