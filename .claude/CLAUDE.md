@@ -3,7 +3,7 @@
 Shared method: `../methode/METHODE.md` (the owner's private repository). This file holds only what differs from it
 and what is specific to the project.
 
-Type: game (JEUX.md), servers (SERVEURS.md). Status: PROD.
+Type: game (@../../methode/JEUX.md), servers (@../../methode/SERVEURS.md). Status: PROD.
 
 A Counter-Strike 1.6 server with War3FT and YaPB bots. Goals: have fun building it, leave a repository useful to
 anyone who wants to run their own server, and get players to come back and bring friends.
