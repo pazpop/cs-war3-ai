@@ -58,7 +58,6 @@ anyone who wants to run their own server, and get players to come back and bring
 ## Rules
 
 - Divergence: the repository, its docs and what players see are in English (see Decisions). Answers stay in French.
-- Frozen since 2026-10-27: no full review; fix only on a real signal (heartbeat alert, AMX Mod X error, complaint).
 - Personal values go in `ansible/personal.yml` (ignored).
 - The VPS is in production: prepare, the owner runs the playbooks. Read it over SSH only with the owner's consent
   (`ssh -p 2222 -i ~/.ssh/deploy deploy@cs.pazpop.net`), and mask IPs and SteamIDs in what you show.
