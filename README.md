@@ -36,6 +36,7 @@ For a smooth game: [docs/client.md](docs/client.md).
 ## Run your own server
 
 The server runs in Docker on a VPS, deployed with Ansible: [docs/installation.md](docs/installation.md).
+The design choices, and why: [docs/decisions.md](docs/decisions.md).
 
 ## License
 

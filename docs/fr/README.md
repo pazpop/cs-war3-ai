@@ -37,6 +37,7 @@ Pour un jeu fluide : [client.md](client.md).
 ## Monter ton propre serveur
 
 Le serveur tourne dans Docker sur un VPS, déployé avec Ansible : [installation.md](installation.md).
+Les choix de conception, et pourquoi : [decisions.md](decisions.md).
 
 ## Licence
 
