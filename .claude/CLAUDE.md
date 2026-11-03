@@ -3,13 +3,15 @@
 Read `../methode/METHODE.md` first (the owner's private repository), at each return to the project. This file holds only
 what differs from it and what is specific to the project.
 
+Type: game (JEUX.md), servers (SERVEURS.md). Status: PROD.
+
 A Counter-Strike 1.6 server with War3FT and YaPB bots. Goals: have fun building it, leave a repository useful to
 anyone who wants to run their own server, and get players to come back and bring friends.
 
 ## Decisions
 
 - No OpenTofu: the VPS was ordered by hand, Ansible does everything else.
-- The VPS: `cs.pazpop.net` (`domain` in `ansible/inventory.yml`), Debian 13. Never write its IP in the repository.
+- The VPS: `cs.pazpop.net` (`domain` in `ansible/inventory.yml`), Debian 13.
 - One VPS for everything, in Docker: HLDS, Caddy (stats and guide over HTTP and HTTPS), a second Caddy for FastDL,
   PHP.
 - `stats/status.php`: the live state in JSON (A2S_INFO, cached 15 s, CORS open), read by pazpop.net's `servers.js`.
@@ -59,10 +61,8 @@ anyone who wants to run their own server, and get players to come back and bring
 
 - Divergence: the repository, its docs and what players see are in English (see Decisions). Answers stay in French.
 - Personal values go in `ansible/personal.yml` (ignored).
-- The VPS is in production: prepare, the owner runs the playbooks. Read it over SSH only with the owner's consent
+- Read the VPS over SSH only with the owner's consent
   (`ssh -p 2222 -i ~/.ssh/deploy deploy@cs.pazpop.net`), and mask IPs and SteamIDs in what you show.
-- sshd keeps the first value of each setting: our drop-in is `00-pazpop.conf`, read before cloud-init's
-  `50-cloud-init.conf` (which turns password auth back on).
 
 ## Licenses
 
@@ -86,8 +86,6 @@ anyone who wants to run their own server, and get players to come back and bring
   the paths listed in `caddy/fastdl.Caddyfile` (War3FT precaches `wc3.css` too): a new client file needs its path.
 - The in-game browser (MOTD) cannot open today's HTTPS (error -113): the stats pages are also served over HTTP.
 - Docker Desktop on Windows forwards UDP badly: play tests happen on the VPS.
-- Caddy does not reread its Caddyfile: `deploy.yml` restarts it when it changes (`caddy reload` can leave the old
-  settings running).
 - YaPB's `yb_difficulty_auto` balances each bot against the others and pushes them up to Expert: keep it off,
   use `yb_difficulty_min`/`max`.
 - YaPB's English bot names include a racial slur: our own list replaces it. `server/bots.txt` is the one list of
@@ -102,8 +100,7 @@ anyone who wants to run their own server, and get players to come back and bring
 - A player's SteamID can be STEAM_ID_PENDING (or STEAM_ID_LAN) on arrival, shared by many players: the plugins
   wait for `client_authorized` and accept only IDs that start with `STEAM_<digit>:`.
 - No ReChecker: its cheat list dates from 2020 and modern cheats inject in memory, so it would catch almost nothing.
-- Ansible's `copy` never deletes: a file removed from the repository stays on the VPS. `deploy.yml` deletes
-  `server/plugins/` first (a forgotten .sma would be compiled); anywhere else (a page in `stats/`), remove it by hand.
+- `deploy.yml` deletes `server/plugins/` first: a forgotten .sma would be compiled.
 - War3FT's zip bundles AMX Mod X build 5467: the Dockerfile lays a later 1.10 build's `dlls/`, `modules/` and
   `data/gamedata/` over it (5487 has the fix for a crash on a dropped connection). Renovate does not see it: check by hand.
 - With `csdm_active 1`, War3FT turns off everything that respawns a player or keeps their gear (`_SHARED_Spawn`,
